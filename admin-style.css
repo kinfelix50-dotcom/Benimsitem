@@ -1,0 +1,102 @@
+body { background-color: #f8f9fa; }
+    .admin-header {
+      background-color: #0d6efd;
+      color: white;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .admin-header .navbar-brand {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+    }
+    .admin-header .navbar-nav .nav-link {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .admin-header .navbar-nav .nav-link:hover {
+      color: white;
+    }
+    .content-section {
+      padding: 1.5rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+      margin-bottom: 2rem;
+    }
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    .urun-row-img, .order-item-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .urun-table th, .urun-table td {
+      vertical-align: middle;
+      font-size: 0.9rem;
+    }
+    .urun-table .discount-badge {
+      background-color: #dc3545;
+      color: white;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.8rem;
+    }
+    .vitrin-urun-secimi {
+      height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      background-color: #fff;
+    }
+    .kategori-list-item {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #eee;
+    }
+    .kategori-list-item:last-child { border-bottom: none; }
+    .nav-tabs .nav-link { color: #495057; }
+    .nav-tabs .nav-link.active {
+      color: #0d6efd;
+      border-color: #dee2e6 #dee2e6 #fff;
+      font-weight: 600;
+    }
+    .alert-fixed {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1050;
+      width: 80%;
+      max-width: 500px;
+      text-align: center;
+    }
+    .vitrin-bolumu {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #eee;
+    }
+    .vitrin-bolumu:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .accordion-button:not(.collapsed) {
+      background-color: #f8f9fa;
+      color: #2c3e50;
+    }
+    .accordion-button:focus {
+      box-shadow: none;
+    }
+    .urun-table .detay-column {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .vitrin-bolumu p, #detayModalIcerik p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }

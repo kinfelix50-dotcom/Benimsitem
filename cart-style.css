@@ -1,0 +1,117 @@
+body {
+    background-color: #f8f9fa;
+  }
+  .cart-item-img {
+    width: 65px;
+    height: 65px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  .cart-item {
+    border-bottom: 1px solid #e9ecef;
+    padding: 15px 10px;
+    background-color: #fff;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .cart-summary {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .quantity-control {
+    width: 120px;
+  }
+  .navbar-brand-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  .navbar-brand-text:hover {
+    color: #f39c12;
+  }
+  .navbar .btn-icon-only {
+    padding: 0.5rem;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+  .navbar .btn-icon-only .bi, .navbar .btn-icon-only .fas {
+    font-size: 1.4rem;
+  }
+  .cart-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    border-radius: 50%;
+  }
+  .price-details {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+  .price-details .original-price {
+    text-decoration: line-through;
+    color: #adb5bd;
+  }
+  .price-details .discounted-price {
+    color: #28a745;
+    font-weight: bold;
+  }
+  @media (max-width: 767.98px) {
+    .navbar-container {
+      flex-direction: column;
+      gap: 5px;
+      padding: 0.2rem 1rem;
+      color: #28a745;
+    }
+    .navbar-brand-text {
+      margin-bottom: 0.5rem;
+      font-size: 1.3rem;
+    }
+    .navbar-buttons {
+      width: 100%;
+      justify-content: center;
+    }
+    .navbar .btn-icon-only {
+      width: 60px;
+      height: 37px;
+    }
+    .navbar .btn-icon-only .bi, .navbar .btn-icon-only .fas {
+      font-size: 1.2rem;
+    }
+  }
+  .modal-content {
+    border-radius: 12px;
+  }
+  .modal-header {
+    background-color: #f0f2f5;
+    border-bottom: 1px solid #e0e4e8;
+  }
+  .modal-title {
+    color: #2c3e50;
+    font-weight: 600;
+  }
+  .invalid-feedback {
+    display: none;
+  }
+  .form-control.is-invalid + .invalid-feedback {
+    display: block;
+  }
+.btn-icon-only {
+     background-color: #ffffff;
+     height:35px !important;
+     width:55px !important;
+    color: #2c3e50;
+    border-color: #b9b3b3;
+    font-weight: 600;
+  }
+  
