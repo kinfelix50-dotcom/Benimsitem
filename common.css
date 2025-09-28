@@ -1,0 +1,16 @@
+.navbar-buttons .btn {
+  background-color: #fff !important;
+  border-color: #dddddd !important;
+}
+.navbar-buttons .btn[onclick*="cart.html"] i {
+  color: #000 !important;
+}
+.navbar-buttons .btn[onclick*="cart.html"]:hover {
+  background-color: #333333 !important;
+  border-color: #333333 !important;
+}
+.navbar-buttons .cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+}

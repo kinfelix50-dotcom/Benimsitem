@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MehtapStore Admin Paneli</title>  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous">
+  <!-- jsPDF ve autoTable kütüphaneleri -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- DejaVuSans fontu (isteğe bağlı, yoksa Helvetica kullanılacak) -->
+  <script src="js/DejaVuSans.js"></script>
+  <!-- Ana script dosyanız -->
+  <script src="js/script.js"></script>
+  
+  
+
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Header ve Navigasyon Stilleri */
+    .admin-header {
+      background-color: #0d6efd;
+      color: white;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .admin-header .navbar-brand {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+    }
+    .admin-header .navbar-nav .nav-link {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .admin-header .navbar-nav .nav-link:hover {
+      color: white;
+    }
+
+    /* Genel İçerik Kutusu Stilleri */
+    .content-section {
+      padding: 1rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Form ve Kontrol Stilleri */
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    .form-control:focus, .form-select:focus, .btn:focus {
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+      border-color: #86b7fe;
+    }
+
+    /* Resim Boyutlandırma ve Düzenlemeler */
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .urun-row-img, .order-item-img, .vitrin-urun-img {
+      width: 45px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .urun-resmi {
+      max-width: 150px;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+    }
+    #detayModalIcerik img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    /* Ürün Tablosu Stilleri */
+    .urun-table {
+      width: 100%;
+      table-layout: auto;
+    }
+    .urun-table th, .urun-table td {
+      vertical-align: middle;
+      font-size: 0.9rem;
+      padding: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .urun-table th {
+      font-weight: 600;
+      background-color: #f1f3f5;
+    }
+    .urun-table .discount-badge {
+      background-color: #dc3545;
+      color: white;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    .urun-table .detay-column {
+      max-width: 150px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Mobil cihazlar için tablo optimizasyonu */
+    @media (max-width: 768px) {
+      .urun-table {
+        font-size: 0.85rem;
+      }
+      .urun-table th, .urun-table td {
+        padding: 6px;
+      }
+      .urun-table .detay-column {
+        max-width: 100px;
+      }
+      .urun-row-img {
+        width: 35px;
+        height: 35px;
+      }
+      .urun-table .badge {
+        font-size: 0.7rem;
+      }
+      .urun-table .btn-sm {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+      }
+    }
+
+    /* Tabloyu kaydırma için kapsayıcı */
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Vitrin Yönetimi Stilleri */
+    .vitrin-urun-secimi {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ced4da;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      background-color: #fff;
+    }
+    .vitrin-bolumu {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .vitrin-bolumu:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    /* Kategori Listesi Stilleri */
+    .kategori-list-item {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kategori-list-item:last-child {
+      border-bottom: none;
+    }
+    .kategori-list-item button {
+      font-size: 0.85rem;
+    }
+
+    /* Tab Navigasyonu Stilleri */
+    .nav-tabs .nav-link {
+      color: #495057;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+    .nav-tabs .nav-link.active {
+      color: #0d6efd;
+      border-color: #dee2e6 #dee2e6 #fff;
+      font-weight: 600;
+    }
+    .nav-tabs .nav-link:hover:not(.active) {
+      color: #0d6efd;
+      border-color: transparent transparent #dee2e6;
+    }
+
+    /* Bildirim Alanı Stilleri */
+    .alert-fixed {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1050;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    }
+
+    /* Akordiyon Stilleri (Siparişler için) */
+    .accordion-button:not(.collapsed) {
+      background-color: #e9ecef;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    .accordion-button:focus {
+      box-shadow: none;
+    }
+    .accordion-body {
+      background-color: #f8f9fa;
+      border-top: 1px solid #e2e3e5;
+    }
+
+    /* Genel Metin ve Liste Stilleri */
+    .vitrin-bolumu p, #detayModalIcerik p {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+    .list-group, .accordion {
+      margin-bottom: 0;
+    }
+    .list-group:empty::before, .accordion:empty::before {
+      content: 'İçerik bulunmamaktadır.';
+      display: block;
+      padding: 0.75rem;
+      color: #6c757d;
+      text-align: center;
+      background-color: #e9ecef;
+      border-radius: 0.25rem;
+      margin-top: 1rem;
+    }
+   
+    /* Vitrin Ürün Seçimi Stilleri */
+    #vitrinFormBaslik  {
+      color: #000;
+      text-align: center;
+      background-color: #e9ecef;
+      
+    }
+    #vitrinUrunSecimi {
+      height: 200px;
+      overflow-y: scroll;
+      border: 1px solid #ced4da;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 0.25rem;
+    }
+    #vitrinUrunSecimi .form-check {
+      margin-bottom: 5px;
+    }
+    
+    #vitrinUrunSecimi .form-check-input {
+      margin-top: 0.3em;
+    }
+    .vitrin-secim-urun-img {
+      width: 35px;
+      height: 35px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    #vitrinUrunSecimi .form-check {
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    #vitrinUrunSecimi .form-check:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    
+    /* Marka Logosu Stilleri */
+    .marka-logo-img {
+      width: 35px;
+      height: 35px;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .urun-table th.marka-logo-column,
+    .urun-table td.marka-logo-column {
+      width: 60px;
+      text-align: center;
+    }
+    .detay-marka-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 15px;
+    }
+    #markaLogoPreview {
+      max-width: 60px;
+      max-height: 60px;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      margin-top: 10px;
+    }
+    #urunResimPreview {
+      max-width: 60px;
+      max-height: 60px;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      margin-top: 10px;
+    }
+    @media (max-width: 768px) {
+      .marka-logo-img {
+        width: 30px;
+        height: 30px;
+      }
+      .urun-table th.marka-logo-column,
+      .urun-table td.marka-logo-column {
+        width: 50px;
+      }
+      #markaLogoPreview, #urunResimPreview {
+        max-width: 50px;
+        max-height: 50px;
+      }
+      .navbar-dark .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+    }
+  </style>
+  <style>
+    body {
+      background-color: #ffffff !important;
+    }
+    .product-card {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    .brands-section {
+      box-shadow: 0 0px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+    .product-scroll-item {
+      margin-right: 3px;
+    }
+    .navbar-buttons .btn {
+      background-color: #fff !important;
+      border-color: #dddddd !important;
+      padding: 6px !important;
+    }
+    .navbar-buttons .btn i {
+      color: #000 !important;
+      font-size: 1.2rem !important;
+      line-height: 1 !important;
+    }
+    .navbar-buttons .btn:hover {
+      background-color: #333333 !important;
+      border-color: #333333 !important;
+    }
+    .navbar-buttons .btn:hover i {
+      color: #fff !important;
+    }
+    .navbar-buttons .cart-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      font-size: 0.7rem;
+    }
+    .ad-banner {
+      background-color: #025c90;
+      color: white;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 0 8px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .countdown {
+      font-size: 0.75rem;
+      margin-left: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .countdown span {
+      display: inline-block;
+      margin: 0 2px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .clock-icon {
+      margin-right: 4px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <!-- Sepet Bildirimi -->
+  <div id="sepetBildirim" class="alert alert-success text-center py-2 fixed-top w-100 d-none" style="z-index: 9999;">
+    Ürün sepete eklendi!
+  </div>
+
+  <!-- Reklam Bantı -->
+  <div class="ad-banner">
+    <span>Tüm Ürünlerde %20 İndirim Fırsatını Kaçırma!</span>
+    <div class="countdown" id="countdown">
+      <i class="bi bi-clock clock-icon"></i>
+      <span id="hours">00</span>:
+      <span id="minutes">00</span>:
+      <span id="seconds">00</span>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-white sticky-top shadow">
+    <div class="container navbar-container">
+      <a class="navbar-brand m-0" href="index.html" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000;">
+        MehtapStore Admin
+      </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAdmin" aria-controls="navbarNavAdmin" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAdmin">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center flex-wrap justify-content-end">
+            <li class="nav-item me-2 mb-2 mb-lg-0">
+              <a href="index.html" class="btn btn-light btn-sm w-100"><i class="fas fa-external-link-alt me-2"></i>Mağaza Sayfasına Dön</a>
+            </li>
+            <li class="nav-item me-2 mb-2 mb-lg-0">
+              <button type="button" class="btn btn-success btn-sm w-100" id="yedekleBtn"><i class="fas fa-download me-2"></i>Verileri Yedekle</button>
+            </li>
+            <li class="nav-item me-2 mb-2 mb-lg-0">
+              <button type="button" class="btn btn-primary btn-sm w-100" id="geriYukleBtn"><i class="fas fa-upload me-2"></i>Verileri Geri Yükle</button>
+              <input type="file" id="geriYukleInput" class="d-none" accept=".json" onchange="verileriGeriYukle(event)">
+            </li>
+            <li class="nav-item me-2 mb-2 mb-lg-0">
+              <button type="button" class="btn btn-warning btn-sm w-100" id="excelExportBtn"><i class="fas fa-file-excel me-2"></i>Excel'e Aktar</button>
+            </li>
+            <li class="nav-item mb-2 mb-lg-0">
+              <button type="button" class="btn btn-info btn-sm w-100" id="excelImportBtn"><i class="fas fa-file-import me-2"></i>Excel'den Yükle</button>
+              <input type="file" id="excelImportInput" class="d-none" accept=".xlsx,.xls" onchange="urunleriExceldenYukle(event)">
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+<p>
+  <div id="bildirimAlani" class="alert-fixed d-none"></div>
+
+  <div class="container-fluid px-3">
+    <div class="row mb-3 justify-content-end">
+      <div class="col-md-5 col-lg-4">
+        <div class="input-group shadow-sm">
+          <input type="text" id="urunArama" class="form-control" placeholder="Ürün adı veya stok koduyla ara...">
+          <button class="btn btn-primary" type="button" id="aramaButonu"><i class="fas fa-search"></i></button>
+        </div>
+      </div>
+    </div>
+</p>
+    <div class="content-section">
+      <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" id="urun-tab" data-bs-toggle="tab" data-bs-target="#urunYonetimi" type="button" role="tab" aria-controls="urunYonetimi" aria-selected="true">
+            <i class="fas fa-box me-2"></i>Ürün Yönetimi
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="kategori-tab" data-bs-toggle="tab" data-bs-target="#kategoriYonetimi" type="button" role="tab" aria-controls="kategoriYonetimi" aria-selected="false">
+            <i class="fas fa-tags me-2"></i>Kategori Yönetimi
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="vitrin-tab" data-bs-toggle="tab" data-bs-target="#vitrinYonetimi" type="button" role="tab" aria-controls="vitrinYonetimi" aria-selected="false">
+            <i class="fas fa-image me-2"></i>Vitrin Yönetimi
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="siparis-tab" data-bs-toggle="tab" data-bs-target="#siparisYonetimi" type="button" role="tab" aria-controls="siparisYonetimi" aria-selected="false">
+            <i class="fas fa-shopping-cart me-2"></i>Sipariş Yönetimi
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="urunYonetimi" role="tabpanel" aria-labelledby="urun-tab">
+          <div class="card mb-4 shadow-sm">
+            <div class="card-header" style="background-color: #eeeeee; text-white">
+              <h5 id="urunFormBaslik">Yeni Ürün Ekle / Ürün Düzenle</h5>
+            </div>
+            <div class="card-body">
+              <form id="urunForm" class="row g-3">
+                <div class="col-md-4">
+                  <label for="urunAd" class="form-label">Ürün Adı</label>
+                  <input type="text" id="urunAd" class="form-control" placeholder="Örn: Akıllı Telefon X" required>
+                </div>
+                <div class="col-md-2">
+                  <label for="urunFiyat" class="form-label">Fiyat (TL)</label>
+                  <input type="number" id="urunFiyat" class="form-control" placeholder="0.00" min="0.01" step="0.01" required>
+                </div>
+                <div class="col-md-2">
+                  <label for="urunIndirim" class="form-label">İndirim Oranı (%)</label>
+                  <input type="number" id="urunIndirim" class="form-control" placeholder="0" min="0" max="100" step="1">
+                </div>
+                <div class="col-md-4">
+                  <label for="urunResimFile" class="form-label">Ürün Resmi</label>
+                  <input type="file" id="urunResimFile" class="form-control" accept="image/*">
+                  <img id="urunResimPreview" class="urun-resmi mt-2 d-none" alt="Resim Önizleme">
+                  <small class="text-muted mt-2">Ya da URL ile eklemek için:</small>
+                  <input type="url" id="urunResim" class="form-control mt-2" placeholder="https://example.com/resim.jpg">
+                </div>
+                <div class="col-md-2">
+                  <label for="urunKategori" class="form-label">Kategori</label>
+                  <select id="urunKategori" class="form-select" required>
+                    <option value="" disabled selected>Kategori Seç</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+  <label for="urunMarka" class="form-label">Marka</label>
+  <input type="text" id="urunMarka" class="form-control" placeholder="Belirtilmemiş">
+</div>
+                <div class="col-md-4">
+                  <label for="markaLogoFile" class="form-label">Marka Logo (İsteğe Bağlı)</label>
+                  <input type="file" id="markaLogoFile" class="form-control" accept="image/*">
+                  <img id="markaLogoPreview" class="marka-logo-img mt-2 d-none" alt="Logo Önizleme">
+                  <small class="text-muted mt-2">Ya da URL ile eklemek için:</small>
+                  <input type="url" id="markaLogo" class="form-control mt-2" placeholder="https://example.com/marka-logo.jpg">
+                </div>
+                <div class="col-md-2">
+                  <label for="urunStok" class="form-label">Stok Adedi</label>
+                  <input type="number" id="urunStok" class="form-control" placeholder="0" min="0" required>
+                </div>
+                <div class="col-md-3">
+                  <label for="stokKodu" class="form-label">Stok Kodu (Otomatik)</label>
+                  <input type="text" id="stokKodu" class="form-control" readonly placeholder="Otomatik Oluşturulacak">
+                </div>
+                <div class="col-md-5 d-flex align-items-end">
+                  <div class="form-check me-3">
+                    <input type="checkbox" id="anasayfadaGoster" class="form-check-input">
+                    <label for="anasayfadaGoster" class="form-check-label">Anasayfada Göster</label>
+                  </div>
+                  <div class="form-check me-3">
+                    <input type="checkbox" id="yeniUrun" class="form-check-input">
+                    <label for="yeniUrun" class="form-check-label">Yeni Ürün</label>
+                  </div>
+                  <div class="form-check">
+                    <input type="checkbox" id="ucretsizKargo" class="form-check-input">
+                    <label for="ucretsizKargo" class="form-check-label">Ücretsiz Kargo</label>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <label for="urunDetay" class="form-label">Detay Açıklama (Paragraflı)</label>
+                  <textarea id="urunDetay" class="form-control" rows="5" placeholder="Her paragraf için yeni bir satır kullanın..."></textarea>
+                  <small class="text-muted">Paragraflar için her yeni satıra geçin (Enter tuşu).</small>
+                </div>
+                <div class="col-md-2 d-grid">
+                  <button type="submit" id="ekleDuzenleBtn" class="btn btn-primary mt-auto"><i class="fas fa-plus-circle me-2"></i>Ekle</button>
+                </div>
+                <input type="hidden" id="urunId">
+              </form>
+            </div>
+          </div>
+          <hr class="my-3">
+          <h4 class="mb-3">Tüm Ürünler (<span id="urunListesiBaslik">Kategorilere Göre</span>)</h4>
+          <div id="urunlerListesi" class="table-responsive"></div>
+        </div>
+
+        <div class="tab-pane fade" id="kategoriYonetimi" role="tabpanel" aria-labelledby="kategori-tab">
+          <h4 class="mb-3">Kategori Ekle / Düzenle / Sil</h4>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <div class="input-group">
+                <input type="text" id="yeniKategori" class="form-control" placeholder="Yeni Kategori Adı">
+                <button class="btn btn-success" type="button" id="kategoriEkleBtn"><i class="fas fa-plus me-2"></i>Kategori Ekle</button>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <ul id="kategoriListesi" class="list-group"></ul>
+            </div>
+          </div>
+          <div class="modal fade" id="kategoriDuzenleModal" tabindex="-1" aria-labelledby="kategoriDuzenleModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="kategoriDuzenleModalLabel">Kategori Düzenle</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="duzenlenenKategori" class="form-label">Yeni Kategori Adı</label>
+                    <input type="text" class="form-control" id="duzenlenenKategori" placeholder="Kategori adını girin">
+                    <input type="hidden" id="eskiKategori">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                  <button type="button" class="btn btn-primary" id="kategoriDuzenleKaydetBtn"><i class="fas fa-save me-2"></i>Kaydet</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="vitrinYonetimi" role="tabpanel" aria-labelledby="vitrin-tab">
+          <div class="card mb-4 shadow-sm">
+            <div class="card-header" style="background-color: #eeeeee; text-white">
+              <h5 id="vitrinFormBaslik">Yeni Vitrin Oluştur / Düzenle</h5>
+            </div>
+            <div class="card-body">
+              <form id="vitrinForm" class="row g-3 mb-3">
+                <div class="col-md-5">
+                  <label for="vitrinAdi" class="form-label">Vitrin Adı</label>
+                  <input type="text" id="vitrinAdi" class="form-control" placeholder="Örn: Haftanın Fırsatları" required>
+                </div>
+                <div class="col-md-5">
+                  <label for="vitrinUrunSecimi" class="form-label">Vitrine Eklenecek Ürünler (Çoklu Seçim)</label>
+                  <div id="vitrinUrunSecimi" class="vitrin-urun-secimi form-control"></div>
+                </div>
+                <div class="col-md-2 d-grid">
+                  <button type="submit" id="vitrinEkleDuzenleBtn" class="btn btn-info mt-auto"><i class="fas fa-plus-square me-2"></i>Vitrin Ekle</button>
+                </div>
+                <input type="hidden" id="vitrinId">
+              </form>
+            </div>
+          </div>
+          <h4 class="mb-3">Mevcut Vitrinler</h4>
+          <div class="ro">
+            <div class="col-12">
+              <ul id="vitrinListesi" class="list-group"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="siparisYonetimi" role="tabpanel" aria-labelledby="siparis-tab">
+          <h4 class="mb-3">Sipariş Yönetimi</h4>
+          <div id="siparisListesi" class="accordion"></div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="detayModal" tabindex="-1" aria-labelledby="detayModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="detayModalLabel">Ürün Detayı</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detayModalIcerik"></div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let urunler = [];
+    let kategoriler = [];
+    let vitrinler = [];
+    let siparisler = [];
+    let adresler = [];
+    let duzenlenenUrunId = null;
+    let duzenlenenVitrinId = null;
+    const { jsPDF } = window.jspdf;
+
+    // Güvenli JSON ayrıştırma
+    function safeParseJSON(key, defaultValue) {
+      try {
+        const data = localStorage.getItem(key);
+        if (data === null || data === undefined || data === "undefined") {
+          console.warn(`safeParseJSON: Anahtar '${key}' bulunamadı veya 'undefined' stringi. Varsayılan değer döndürülüyor.`);
+          return defaultValue;
+        }
+        const parsedData = JSON.parse(data);
+        if (parsedData === null || parsedData === undefined) {
+          console.warn(`safeParseJSON: Anahtar '${key}' için ayrıştırılan veri boş/tanımsız. Varsayılan değer döndürülüyor. Ham veri:`, data);
+          return defaultValue;
+        }
+        return parsedData;
+      } catch (err) {
+        console.error(`safeParseJSON Hata: '${key}' anahtarı ayrıştırılamadı. Hata:`, err, `Sorunlu Veri:`, localStorage.getItem(key));
+        bildirimGoster(`Veri hatası: '${key}' yüklenemedi. Konsolu kontrol edin.`, 'danger');
+        return defaultValue;
+      }
+    }
+
+    // HTML karakterlerini güvenli hale getir
+    function escapeHTML(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/`/g, '&#96;')
+        .replace(/\\/g, '\\\\');
+    }
+
+    // Ürün detayını paragraflara böl
+    function formatDescriptionToParagraphs(text) {
+      if (!text || text.trim() === '') return '<p class="text-muted">Detay açıklama yok</p>';
+      return text.split('\n')
+        .filter(line => line.trim())
+        .map(line => `<p>${escapeHTML(line.trim())}</p>`)
+        .join('');
+    }
+
+    // İndirimli fiyat hesapla
+    function calculateDiscountedPrice(fiyat, indirim) {
+      fiyat = Number(fiyat) || 0;
+      indirim = Number(indirim) || 0;
+      if (isNaN(fiyat) || fiyat < 0) return 0;
+      if (indirim < 0 || indirim > 100) return fiyat;
+      return indirim ? fiyat * (1 - indirim / 100) : fiyat;
+    }
+
+    // Benzersiz ID oluştur
+    function generateUniqueId(prefix = '') {
+      return prefix + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // Stok kodu oluştur
+    function stokKoduOlustur() {
+      const mevcutKodlar = urunler.map(u => u.stokKodu || '');
+      let maxNum = 0;
+      mevcutKodlar.forEach(kod => {
+        const num = parseInt(kod.replace('STK-', '')) || 0;
+        if (num > maxNum) maxNum = num;
+      });
+      return `STK-${(maxNum + 1).toString().padStart(4, '0')}`;
+    }
+
+    // Dosyayı base64 formatına çevir
+    function dosyaToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Dosya okuma hatası'));
+        reader.readAsDataURL(file);
+      });
+    }
+  // --- Sipariş Yönetimi (PDF Kısmı) ---
+    function printOrderAsPDF(orderId) {
+  try {
+    let orders = safeParseJSON('orders', []);
+    const order = orders.find(o => o.id === orderId);
+
+    if (!order) {
+      bildirimGoster('Sipariş bulunamadı!', 'danger');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) {
+      console.error('jsPDF kütüphanesi yüklenmedi!');
+      bildirimGoster('PDF kütüphanesi yüklenemedi! Konsolu kontrol edin.', 'danger');
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // Font ayarları
+    if (typeof DejaVuSans !== 'undefined') {
+      try {
+        doc.addFileToVFS('DejaVuSans.ttf', DejaVuSans);
+        doc.addFont('DejaVuSans.ttf', 'DejaVuSans', 'normal');
+        doc.setFont('DejaVuSans', 'normal');
+      } catch (err) {
+        console.warn('DejaVuSans fontu yüklenemedi, Helvetica kullanılıyor:', err);
+        doc.setFont('Helvetica', 'normal');
+      }
+    } else {
+      doc.setFont('Helvetica', 'normal');
+    }
+
+    const primaryColor = '#007bff';
+    const secondaryColor = '#6c757d';
+    const textColor = '#343a40';
+    const lightBgColor = '#f8f9fa';
+
+    let currentY = 20;
+    const marginX = 15;
+    const pageWidth = doc.internal.pageSize.width;
+    const availableWidth = pageWidth - (2 * marginX); // 180 mm
+    const maxTextWidthForSplit = availableWidth / 2 - 10;
+    const defaultLineHeight = 5;
+
+    // Header
+    doc.setFontSize(24);
+    doc.setTextColor(primaryColor);
+    doc.text('MehtapStore', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 20;
+
+    // Info box
+    doc.setFillColor(lightBgColor);
+    doc.rect(marginX, currentY - 5, availableWidth, 45, 'F');
+
+    doc.setFontSize(12);
+    doc.setTextColor(textColor);
+    doc.text('Müşteri Bilgileri', marginX + 5, currentY);
+    doc.text('Sipariş Bilgileri', pageWidth / 2 + 45, currentY);
+    currentY += 8;
+
+    const customerInfoX = marginX + 5;
+    const orderInfoRightEdgeX = pageWidth - marginX - 5;
+
+    let tempCurrentY = currentY;
+    const customerFullName = escapeHTML(order.fullName || 'Belirtilmemiş');
+    const splitFullName = doc.splitTextToSize(customerFullName, maxTextWidthForSplit);
+    doc.text(splitFullName, customerInfoX, tempCurrentY);
+    tempCurrentY += splitFullName.length * defaultLineHeight;
+
+    const customerPhone = `Telefon: ${escapeHTML(order.phone || 'Belirtilmemiş')}`;
+    const splitPhone = doc.splitTextToSize(customerPhone, maxTextWidthForSplit);
+    doc.text(splitPhone, customerInfoX, tempCurrentY);
+    tempCurrentY += splitPhone.length * defaultLineHeight;
+
+    const customerAddress = `Adres: ${escapeHTML(order.address || 'Belirtilmemiş')}`;
+    const splitAddress = doc.splitTextToSize(customerAddress, maxTextWidthForSplit);
+    doc.text(splitAddress, customerInfoX, tempCurrentY);
+
+    let orderInfoY = currentY;
+    const dateText = `Tarih: ${new Date(order.date).toLocaleString('tr-TR')}`;
+    doc.text(dateText, orderInfoRightEdgeX, orderInfoY, { align: 'right' });
+    orderInfoY += defaultLineHeight;
+
+    const statusText = {
+      pending: 'Beklemede',
+      shipped: 'Kargoda',
+      delivered: 'Teslim Edildi'
+    }[order.status] || 'Bilinmeyen Durum';
+    doc.text(`Durum: ${statusText}`, orderInfoRightEdgeX, orderInfoY, { align: 'right' });
+    orderInfoY += 15;
+
+    currentY = Math.max(tempCurrentY, orderInfoY);
+
+    // Product table
+    const tableData = [];
+    let totalOriginalPrice = 0;
+    let totalDiscountAmount = 0;
+    let totalNetPrice = 0;
+
+    const urunler = safeParseJSON('urunler', []);
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach(item => {
+        const urun = urunler.find(u => u.id === item.id);
+        const originalPrice = Number(urun?.fiyat || item.fiyat || 0);
+        const indirimOrani = Number(item.indirim) || 0;
+        const netFiyat = calculateDiscountedPrice(originalPrice, indirimOrani);
+        const adet = Number(item.adet) || 1;
+        const indirimTutari = (originalPrice - netFiyat) * adet;
+        totalOriginalPrice += originalPrice * adet;
+        totalDiscountAmount += indirimTutari;
+        totalNetPrice += netFiyat * adet;
+
+        const productName = escapeHTML(item.ad || 'Bilinmeyen');
+
+        tableData.push([
+          productName,
+          `${adet}`,
+          `${originalPrice.toFixed(2)} TL`,
+          `%${indirimOrani}`,
+          `${netFiyat.toFixed(2)} TL`,
+          `${(netFiyat * adet).toFixed(2)} TL`
+        ]);
+      });
+    }
+
+    doc.autoTable({
+  startY: currentY,
+  head: [['Ürün Adı', 'Adet', 'Birim Fiyat', 'İndirim', 'Net Fiyat', 'Toplam']],
+  body: tableData,
+  theme: 'striped',
+  styles: {
+    font: typeof DejaVuSans !== 'undefined' ? 'DejaVuSans' : 'Helvetica',
+    fontSize: 8,
+    cellPadding: 2,
+    lineColor: '#dee2e6',
+    lineWidth: 0.1,
+    textColor: textColor,
+    overflow: 'linebreak'
+  },
+  headStyles: {
+    fillColor: primaryColor,
+    textColor: '#ffffff',
+    fontSize: 8,
+    halign: 'center'
+  },
+  bodyStyles: {
+    halign: 'left'
+  },
+  didParseCell: function(data) {
+    if (data.column.index === 0 && data.cell.text) {
+      const text = data.cell.text.join('').trim();
+      if (text.length > 40) {
+        data.cell.text = doc.splitTextToSize(text.substring(0, 40) + '...', 50);
+      }
+    }
+  },
+  didDrawPage: function(data) {
+    doc.setFont(typeof DejaVuSans !== 'undefined' ? 'DejaVuSans' : 'Helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(secondaryColor);
+    doc.text(`Sayfa ${doc.internal.getNumberOfPages()}`, pageWidth - marginX, doc.internal.pageSize.height - 10, {
+      align: 'right'
+    });
+  }
+});
+    currentY = doc.autoTable.previous.finalY + 10;
+
+    doc.setFontSize(10); // Özet font boyutunu küçülttük
+    doc.setTextColor(textColor);
+
+    const summaryRightAlignX = pageWidth - marginX - 3;
+    const summaryLineHeight = 6; // Özet satır yüksekliğini azalttık
+
+    const totalOriginalPriceText = `Genel Toplam: ${totalOriginalPrice.toFixed(2)} TL`;
+    const totalDiscountAmountText = `Toplam İndirim: ${totalDiscountAmount.toFixed(2)} TL`;
+    const totalNetPriceText = `Kalan Net Tutar: ${totalNetPrice.toFixed(2)} TL`;
+
+    doc.text(totalOriginalPriceText, summaryRightAlignX - doc.getTextWidth(totalOriginalPriceText), currentY);
+    currentY += summaryLineHeight;
+    doc.text(totalDiscountAmountText, summaryRightAlignX - doc.getTextWidth(totalDiscountAmountText), currentY);
+    currentY += summaryLineHeight;
+    doc.text(totalNetPriceText, summaryRightAlignX - doc.getTextWidth(totalNetPriceText), currentY);
+
+    doc.save(`siparis_${escapeHTML(orderId)}.pdf`);
+    bildirimGoster('Sipariş PDF\'ye aktarıldı!', 'success');
+  } catch (err) {
+    console.error('PDF oluşturma hatası:', err);
+    bildirimGoster('PDF oluşturulamadı! Konsolu kontrol edin.', 'danger');
+  }
+}
+    // Verileri yükle
+    function loadData() {
+      try {
+        urunler = safeParseJSON('urunler', []);
+        urunler.forEach(urun => {
+          delete urun.isNew;
+          urun.anasayfadaGoster = !!urun.anasayfadaGoster;
+          urun.yeniUrun = !!urun.yeniUrun;
+          urun.ucretsizKargo = !!urun.ucretsizKargo;
+        });
+        localStorage.setItem('urunler', JSON.stringify(urunler));
+        kategoriler = safeParseJSON('kategoriler', []);
+        vitrinler = safeParseJSON('vitrinler', []);
+        siparisler = safeParseJSON('orders', []);
+        adresler = safeParseJSON('adresler', []);
+
+        if (!localStorage.getItem('adresler') || localStorage.getItem('adresler') === "undefined") {
+          localStorage.setItem('adresler', JSON.stringify([]));
+        }
+      } catch (err) {
+        console.error('Veri yükleme hatası:', err);
+        bildirimGoster('Veriler yüklenirken hata oluştu!', 'danger');
+        urunler = [];
+        kategoriler = [];
+        vitrinler = [];
+        siparisler = [];
+        adresler = [];
+      }
+    }
+
+    // Bildirim göster
+    function bildirimGoster(mesaj, tip = 'success') {
+      const bildirimAlani = document.getElementById('bildirimAlani');
+      if (!bildirimAlani) return;
+      bildirimAlani.innerHTML = `
+        <div class="alert alert-${tip} alert-dismissible fade show" role="alert">
+          ${escapeHTML(mesaj)}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+      bildirimAlani.classList.remove('d-none');
+      setTimeout(() => {
+        const alert = bildirimAlani.querySelector('.alert');
+        if (alert) new bootstrap.Alert(alert).close();
+        bildirimAlani.classList.add('d-none');
+      }, 3000);
+    }
+
+    // Kategorileri yükle
+    function kategorileriYukle() {
+      const select = document.getElementById('urunKategori');
+      if (!select) return;
+      select.innerHTML = '<option value="" disabled selected>Kategori Seç</option>';
+      kategoriler.forEach(k => {
+        const option = document.createElement('option');
+        option.value = k;
+        option.textContent = k;
+        select.appendChild(option);
+      });
+
+      const kategoriListesi = document.getElementById('kategoriListesi');
+      if (!kategoriListesi) return;
+      kategoriListesi.innerHTML = '';
+      if (!kategoriler.length) {
+        kategoriListesi.innerHTML = '<p class="text-muted text-center">Kategori bulunmamaktadır.</p>';
+        return;
+      }
+
+      kategoriler.forEach(k => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item kategori-list-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          ${escapeHTML(k)}
+          <div>
+            <button type="button" class="btn btn-primary btn-sm me-1 kategori-duzenle-btn" data-kategori="${escapeHTML(k)}"><i class="fas fa-edit"></i></button>
+            <button type="button" class="btn btn-danger btn-sm kategori-sil-btn" data-kategori="${escapeHTML(k)}"><i class="fas fa-trash"></i></button>
+          </div>`;
+        kategoriListesi.appendChild(li);
+      });
+
+      document.querySelectorAll('.kategori-duzenle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const kategori = btn.dataset.kategori;
+          document.getElementById('duzenlenenKategori').value = kategori;
+          document.getElementById('eskiKategori').value = kategori;
+          new bootstrap.Modal(document.getElementById('kategoriDuzenleModal')).show();
+        });
+      });
+      document.querySelectorAll('.kategori-sil-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const kategori = btn.dataset.kategori;
+          if (urunler.some(u => u.kategori === kategori)) {
+            bildirimGoster('Bu kategoriye ait ürünler var, önce onları silin veya kategoriyi değiştirin!', 'danger');
+            return;
+          }
+          if (confirm(`"${kategori}" kategorisi silinsin mi?`)) {
+            kategoriler = kategoriler.filter(k => k !== kategori);
+            localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+            kategorileriYukle();
+            bildirimGoster('Kategori silindi!', 'success');
+          }
+        });
+      });
+    }
+
+    // Kategori ekle
+    function kategoriEkle() {
+      const yeniKategori = document.getElementById('yeniKategori').value.trim();
+      if (!yeniKategori) {
+        bildirimGoster('Kategori adı girin!', 'danger');
+        return;
+      }
+      if (kategoriler.includes(yeniKategori)) {
+        bildirimGoster('Bu kategori zaten var!', 'danger');
+        return;
+      }
+      kategoriler.push(yeniKategori);
+      localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+      document.getElementById('yeniKategori').value = '';
+      kategorileriYukle();
+      bildirimGoster('Kategori eklendi!', 'success');
+    }
+
+    // Kategori düzenle
+    function kategoriDuzenle() {
+      const eskiKategori = document.getElementById('eskiKategori').value;
+      const yeniKategori = document.getElementById('duzenlenenKategori').value.trim();
+      if (!yeniKategori) {
+        bildirimGoster('Yeni kategori adı girin!', 'danger');
+        return;
+      }
+      if (kategoriler.includes(yeniKategori) && yeniKategori !== eskiKategori) {
+        bildirimGoster('Bu kategori zaten var!', 'danger');
+        return;
+      }
+      const index = kategoriler.indexOf(eskiKategori);
+      if (index !== -1) {
+        kategoriler[index] = yeniKategori;
+        urunler.forEach(u => {
+          if (u.kategori === eskiKategori) u.kategori = yeniKategori;
+        });
+        localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+        localStorage.setItem('urunler', JSON.stringify(urunler));
+        kategorileriYukle();
+        urunleriGoster();
+        bildirimGoster('Kategori güncellendi!', 'success');
+        const kategoriModal = bootstrap.Modal.getInstance(document.getElementById('kategoriDuzenleModal'));
+        if (kategoriModal) {
+          kategoriModal.hide();
+        } else {
+          console.warn('Kategori düzenleme modalı bulunamadı veya zaten kapalı.');
+        }
+      } else {
+        bildirimGoster('Kategori bulunamadı!', 'danger');
+      }
+    }
+
+    // Ürün satırı oluştur
+    function olusturUrunSatiri(urun) {
+      const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
+      let etiketlerHtml = '';
+      if (urun.yeniUrun) {
+        etiketlerHtml += `<span class="badge bg-info me-1">Yeni Ürün</span>`;
+      }
+      if (urun.ucretsizKargo) {
+        etiketlerHtml += `<span class="badge bg-success me-1">Ücretsiz Kargo</span>`;
+      }
+      if (urun.anasayfadaGoster) {
+        etiketlerHtml += `<span class="badge bg-primary me-1">Anasayfada</span>`;
+      }
+      return `
+        <tr>
+          <td><img src="${escapeHTML(urun.resim)}" class="urun-row-img" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/45'"></td>
+          <td>
+            ${escapeHTML(urun.ad)}
+            <div class="mt-1">${etiketlerHtml}</div>
+          </td>
+          <td class="marka-logo-column">
+            <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/35')}" class="marka-logo-img" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/35''">
+          </td>
+          <td>${escapeHTML(urun.marka || 'Belirtilmemiş')}</td>
+          <td>
+            ${urun.indirim ? `<span class="text-decoration-line-through text-muted">₺${urun.fiyat.toFixed(2)}</span><br>` : `₺${urun.fiyat.toFixed(2)}`}
+            ${urun.indirim ? `<span class="text-success">₺${indirimliFiyat.toFixed(2)}</span>` : ''}
+          </td>
+          <td>${urun.indirim ? `<span class="badge bg-danger">${urun.indirim}%</span>` : '-'}</td>
+          <td>${urun.stok}</td>
+          <td>${escapeHTML(urun.stokKodu || 'Yok')}</td>
+          <td><span class="badge bg-${urun.anasayfadaGoster ? 'success' : 'secondary'}">${urun.anasayfadaGoster ? 'Evet' : 'Hayır'}</span></td>
+          <td class="detay-column">
+            ${urun.detay ? `
+              <div class="text-muted small">${escapeHTML(urun.detay.substr(0, 50))}${urun.detay.length > 50 ? '...' : ''}</div>
+              <button type="button" class="btn btn-link btn-sm detay-btn" data-id="${escapeHTML(urun.id)}">Detaylar</button>
+            ` : '-'}
+          </td>
+          <td>
+            <button type="button" class="btn btn-primary btn-sm me-1 duzenle-btn" data-id="${escapeHTML(urun.id)}"><i class="fas fa-edit"></i></button>
+            <button type="button" class="btn btn-danger btn-sm sil-btn" data-id="${escapeHTML(urun.id)}"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+    }
+
+    function detayGoster(urunId) {
+      const urun = urunler.find(u => u.id === urunId);
+      if (urun) {
+        const modal = new bootstrap.Modal(document.getElementById('detayModal'));
+        document.getElementById('detayModalIcerik').innerHTML = `
+          <img src="${escapeHTML(urun.resim)}" class="urun-resmi" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/150'">
+          <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/60')}" class="detay-marka-logo" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/60'">
+          <p><strong>Marka:</strong> ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
+          ${formatDescriptionToParagraphs(urun.detay)}
+        `;
+        modal.show();
+      }
+    }
+
+    function urunleriGoster(filtre = '') {
+      const urunlerListesiDiv = document.getElementById('urunlerListesi');
+      const baslik = document.getElementById('urunListesiBaslik');
+      if (!urunlerListesiDiv || !baslik) return;
+
+      urunlerListesiDiv.innerHTML = '';
+      let filtrelenmisUrunler = urunler;
+
+      if (filtre) {
+        const arama = filtre.toLowerCase();
+        filtrelenmisUrunler = urunler.filter(u =>
+          (u.ad && u.ad.toLowerCase().includes(arama)) ||
+          (u.stokKodu && u.stokKodu.toLowerCase().includes(arama)) ||
+          (u.marka && u.marka.toLowerCase().includes(arama))
+        );
+        baslik.textContent = 'Arama Sonuçları';
+      } else {
+        baslik.textContent = 'Kategorilere Göre';
+      }
+
+      if (!filtrelenmisUrunler.length) {
+        urunlerListesiDiv.innerHTML = '<p class="text-muted text-center">Ürün bulunmamaktadır.</p>';
+        return;
+      }
+
+      const accordionContainer = document.createElement('div');
+      accordionContainer.id = 'urunKategoriAccordion';
+      accordionContainer.className = 'accordion';
+
+      const kategoriMap = new Map();
+      kategoriler.forEach(k => kategoriMap.set(k, []));
+      if (!kategoriMap.has('Diğer')) {
+        kategoriMap.set('Diğer', []);
+      }
+
+      filtrelenmisUrunler.forEach(u => {
+        const kat = u.kategori && kategoriMap.has(u.kategori) ? u.kategori : 'Diğer';
+        kategoriMap.get(kat).push(u);
+      });
+
+      Array.from(kategoriMap.keys()).sort((a, b) => {
+        if (a === 'Diğer') return 1;
+        if (b === 'Diğer') return -1;
+        return a.localeCompare(b);
+      }).forEach((kategori, index) => {
+        const urunlerBuKategoride = kategoriMap.get(kategori);
+        if (urunlerBuKategoride.length > 0) {
+          const accordionItem = document.createElement('div');
+          accordionItem.className = 'accordion-item';
+          const headerId = `heading${index}`;
+          const collapseId = `collapse${index}`;
+          const isCollapsed = !filtre;
+          const expanded = filtre ? 'true' : 'false';
+          const showClass = filtre ? 'show' : '';
+
+          accordionItem.innerHTML = `
+            <h2 class="accordion-header" id="${headerId}">
+              <button class="accordion-button ${isCollapsed ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${expanded}" aria-controls="${collapseId}">
+                ${escapeHTML(kategori)} (${urunlerBuKategoride.length} Ürün)
+              </button>
+            </h2>
+            <div id="${collapseId}" class="accordion-collapse collapse ${showClass}" aria-labelledby="${headerId}" data-bs-parent="#urunKategoriAccordion">
+              <div class="accordion-body p-0">
+                <table class="table table-hover urun-table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Resim</th>
+                      <th>Ürün Adı</th>
+                      <th class="marka-logo-column">Marka Logosu</th>
+                      <th>Marka</th>
+                      <th>Fiyat</th>
+                      <th>İndirim</th>
+                      <th>Stok</th>
+                      <th>Stok Kodu</th>
+                      <th>Anasayfada</th>
+                      <th>Detay</th>
+                      <th>İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${urunlerBuKategoride.map(u => olusturUrunSatiri(u)).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+          accordionContainer.appendChild(accordionItem);
+        }
+      });
+
+      urunlerListesiDiv.appendChild(accordionContainer);
+
+      document.querySelectorAll('.detay-btn').forEach(btn => {
+        btn.addEventListener('click', () => detayGoster(btn.dataset.id));
+      });
+      document.querySelectorAll('.duzenle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          urunDuzenle(btn.dataset.id);
+        });
+      });
+      document.querySelectorAll('.sil-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          urunSil(btn.dataset.id);
+        });
+      });
+    }
+
+    async function urunKaydet(e) {
+      e.preventDefault();
+      const ad = document.getElementById('urunAd').value.trim();
+      const fiyat = parseFloat(document.getElementById('urunFiyat').value);
+      const indirim = parseInt(document.getElementById('urunIndirim').value) || 0;
+      const urunResimFile = document.getElementById('urunResimFile').files[0];
+      const urunResimUrl = document.getElementById('urunResim').value.trim();
+      const kategori = document.getElementById('urunKategori').value;
+      const marka = document.getElementById('urunMarka').value.trim();
+      const markaLogoFile = document.getElementById('markaLogoFile').files[0];
+      const markaLogoUrl = document.getElementById('markaLogo').value.trim();
+      const stok = parseInt(document.getElementById('urunStok').value);
+      const stokKodu = duzenlenenUrunId ? document.getElementById('stokKodu').value.trim() : stokKoduOlustur();
+      const detay = document.getElementById('urunDetay').value.trim();
+      const yeniUrun = document.getElementById('yeniUrun').checked;
+      const ucretsizKargo = document.getElementById('ucretsizKargo').checked;
+      const anasayfadaGoster = document.getElementById('anasayfadaGoster').checked;
+
+      let isValid = true;
+      if (!ad) {
+        document.getElementById('urunAd').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunAd').classList.remove('is-invalid');
+      }
+      if (isNaN(fiyat) || fiyat <= 0) {
+        document.getElementById('urunFiyat').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunFiyat').classList.remove('is-invalid');
+      }
+      if (indirim < 0 || indirim > 100) {
+        document.getElementById('urunIndirim').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunIndirim').classList.remove('is-invalid');
+      }
+      if (!urunResimFile && !urunResimUrl) {
+        document.getElementById('urunResimFile').classList.add('is-invalid');
+        document.getElementById('urunResim').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunResimFile').classList.remove('is-invalid');
+        document.getElementById('urunResim').classList.remove('is-invalid');
+      }
+      if (urunResimUrl && !/^(https?:\/\/)/.test(urunResimUrl)) {
+        document.getElementById('urunResim').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunResim').classList.remove('is-invalid');
+      }
+      if (!kategori) {
+        document.getElementById('urunKategori').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunKategori').classList.remove('is-invalid');
+      }
+      if (!marka) {
+        document.getElementById('urunMarka').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunMarka').classList.remove('is-invalid');
+      }
+      if (isNaN(stok) || stok < 0) {
+        document.getElementById('urunStok').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('urunStok').classList.remove('is-invalid');
+      }
+      if (urunResimFile && !urunResimFile.type.startsWith('image/')) {
+        document.getElementById('urunResimFile').classList.add('is-invalid');
+        bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
+        isValid = false;
+      }
+      if (urunResimFile && urunResimFile.size > 2 * 1024 * 1024) { // 2MB sınır
+        document.getElementById('urunResimFile').classList.add('is-invalid');
+        bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
+        isValid = false;
+      }
+      if (markaLogoFile && !markaLogoFile.type.startsWith('image/')) {
+        document.getElementById('markaLogoFile').classList.add('is-invalid');
+        bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
+        isValid = false;
+      }
+      if (markaLogoFile && markaLogoFile.size > 2 * 1024 * 1024) { // 2MB sınır
+        document.getElementById('markaLogoFile').classList.add('is-invalid');
+        bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
+        isValid = false;
+      }
+      if (markaLogoUrl && !/^(https?:\/\/)/.test(markaLogoUrl)) {
+        document.getElementById('markaLogo').classList.add('is-invalid');
+        isValid = false;
+      } else {
+        document.getElementById('markaLogo').classList.remove('is-invalid');
+      }
+
+      if (!isValid) {
+        bildirimGoster('Zorunlu alanları doğru doldurun! İndirim 0-100 arası.', 'danger');
+        return;
+      }
+
+      if (!duzenlenenUrunId && urunler.some(u => u.stokKodu === stokKodu)) {
+        bildirimGoster('Bu stok kodu zaten kullanımda, lütfen farklı bir kod girin veya boş bırakın.', 'danger');
+        return;
+      }
+      if (duzenlenenUrunId) {
+        const existingProductWithSameStokKodu = urunler.find(u => u.stokKodu === stokKodu && u.id !== duzenlenenUrunId);
+        if (existingProductWithSameStokKodu) {
+          bildirimGoster('Bu stok kodu başka bir ürüne ait, lütfen farklı bir kod girin.', 'danger');
+          return;
+        }
+      }
+
+      let resim = urunResimUrl || 'https://via.placeholder.com/150';
+      if (urunResimFile) {
+        try {
+          resim = await dosyaToBase64(urunResimFile);
+        } catch (err) {
+          console.error('Dosya yükleme hatası:', err);
+          bildirimGoster('Ürün resmi yüklenemedi!', 'danger');
+          return;
+        }
+      }
+
+      let markaLogo = markaLogoUrl || '';
+      if (markaLogoFile) {
+        try {
+          markaLogo = await dosyaToBase64(markaLogoFile);
+        } catch (err) {
+          console.error('Dosya yükleme hatası:', err);
+          bildirimGoster('Marka logosu yüklenemedi!', 'danger');
+          return;
+        }
+      } else if (!markaLogoUrl) {
+        markaLogo = 'https://via.placeholder.com/35        ';
+      }
+
+      const urun = {
+        id: duzenlenenUrunId || generateUniqueId('u-'),
+        ad,
+        fiyat,
+        indirim,
+        resim,
+        kategori,
+        marka,
+        markaLogo,
+        stok,
+        stokKodu,
+        anasayfadaGoster,
+        detay,
+        yeniUrun,
+        ucretsizKargo
+      };
+
+      if (duzenlenenUrunId) {
+        const i = urunler.findIndex(u => u.id === duzenlenenUrunId);
+        if (i !== -1) {
+          urunler[i] = urun;
+          bildirimGoster('Ürün güncellendi!');
+        }
+      } else {
+        urunler.push(urun);
+        bildirimGoster('Ürün eklendi!');
+      }
+
+      localStorage.setItem('urunler', JSON.stringify(urunler));
+      formuTemizle();
+      urunleriGoster();
+      vitrinBloklariGoster();
+      urunSecenekleriniYukle();
+      siparisleriGoster();
+    }
+
+    function formuTemizle() {
+  document.getElementById('urunForm').reset();
+  document.getElementById('urunId').value = '';
+  document.getElementById('stokKodu').value = stokKoduOlustur();
+  document.getElementById('markaLogo').value = '';
+  document.getElementById('markaLogoFile').value = '';
+  document.getElementById('markaLogoPreview').classList.add('d-none');
+  document.getElementById('urunResim').value = '';
+  document.getElementById('urunResimFile').value = '';
+  document.getElementById('urunResimPreview').classList.add('d-none');
+  document.getElementById('ekleDuzenleBtn').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Ekle';
+  document.getElementById('urunFormBaslik').textContent = 'Yeni Ürün Ekle';
+  document.getElementById('urunMarka').value = 'Belirtilmemiş'; // Varsayılan olarak "Belirtilmemiş" ayarla
+  duzenlenenUrunId = null;
+  document.querySelectorAll('.form-control, .form-select, #markaLogoFile, #urunResimFile').forEach(input => {
+    input.classList.remove('is-invalid');
+  });
+}
+
+function urunDuzenle(id) {
+  const u = urunler.find(u => u.id === id);
+  if (u) {
+    duzenlenenUrunId = id;
+    document.getElementById('urunAd').value = u.ad;
+    document.getElementById('urunFiyat').value = u.fiyat;
+    document.getElementById('urunIndirim').value = u.indirim || 0;
+    document.getElementById('urunKategori').value = u.kategori;
+    document.getElementById('urunMarka').value = u.marka || 'Belirtilmemiş'; // Marka yoksa "Belirtilmemiş" ayarla
+    document.getElementById('urunStok').value = u.stok;
+    document.getElementById('stokKodu').value = u.stokKodu || '';
+    document.getElementById('anasayfadaGoster').checked = u.anasayfadaGoster;
+    document.getElementById('yeniUrun').checked = u.yeniUrun;
+    document.getElementById('ucretsizKargo').checked = u.ucretsizKargo;
+    document.getElementById('urunDetay').value = u.detay || '';
+
+    // Ürün resmi önizleme
+    const urunResimPreview = document.getElementById('urunResimPreview');
+    if (u.resim) {
+      if (u.resim.startsWith('data:image')) {
+        urunResimPreview.src = u.resim;
+        document.getElementById('urunResim').value = '';
+      } else {
+        urunResimPreview.src = 'https://via.placeholder.com/60';
+        document.getElementById('urunResim').value = u.resim;
+      }
+      urunResimPreview.classList.remove('d-none');
+    } else {
+      urunResimPreview.classList.add('d-none');
+    }
+    document.getElementById('urunResimFile').value = '';
+
+    
+    document.getElementById('urunFormBaslik').textContent = 'Ürün Düzenle';
+    const urunYonetimiTab = document.getElementById('urunYonetimi');
+    const urunTabButton = document.getElementById('urun-tab');
+    if (urunYonetimiTab) {
+      urunYonetimiTab.classList.add('show', 'active');
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        if (pane.id !== 'urunYonetimi') pane.classList.remove('show', 'active');
+      });
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.id !== 'urun-tab') link.classList.remove('active');
+      });
+    }
+    if (urunTabButton) urunTabButton.classList.add('active');
+  }
+}
+
+async function urunKaydet(e) {
+  e.preventDefault();
+  const ad = document.getElementById('urunAd').value.trim();
+  const fiyat = parseFloat(document.getElementById('urunFiyat').value);
+  const indirim = parseInt(document.getElementById('urunIndirim').value) || 0;
+  const urunResimFile = document.getElementById('urunResimFile').files[0];
+  const urunResimUrl = document.getElementById('urunResim').value.trim();
+  const kategori = document.getElementById('urunKategori').value;
+  const marka = document.getElementById('urunMarka').value.trim() || 'Belirtilmemiş'; // Boşsa veya "Belirtilmemiş" kabul et
+  const markaLogoFile = document.getElementById('markaLogoFile').files[0];
+  const markaLogoUrl = document.getElementById('markaLogo').value.trim();
+  const stok = parseInt(document.getElementById('urunStok').value);
+  const stokKodu = duzenlenenUrunId ? document.getElementById('stokKodu').value.trim() : stokKoduOlustur();
+  const detay = document.getElementById('urunDetay').value.trim();
+  const yeniUrun = document.getElementById('yeniUrun').checked;
+  const ucretsizKargo = document.getElementById('ucretsizKargo').checked;
+  const anasayfadaGoster = document.getElementById('anasayfadaGoster').checked;
+
+  let isValid = true;
+  if (!ad) {
+    document.getElementById('urunAd').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunAd').classList.remove('is-invalid');
+  }
+  if (isNaN(fiyat) || fiyat <= 0) {
+    document.getElementById('urunFiyat').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunFiyat').classList.remove('is-invalid');
+  }
+  if (indirim < 0 || indirim > 100) {
+    document.getElementById('urunIndirim').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunIndirim').classList.remove('is-invalid');
+  }
+  if (!urunResimFile && !urunResimUrl) {
+    document.getElementById('urunResimFile').classList.add('is-invalid');
+    document.getElementById('urunResim').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunResimFile').classList.remove('is-invalid');
+    document.getElementById('urunResim').classList.remove('is-invalid');
+  }
+  if (urunResimUrl && !/^(https?:\/\/)/.test(urunResimUrl)) {
+    document.getElementById('urunResim').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunResim').classList.remove('is-invalid');
+  }
+  if (!kategori) {
+    document.getElementById('urunKategori').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunKategori').classList.remove('is-invalid');
+  }
+  if (isNaN(stok) || stok < 0) {
+    document.getElementById('urunStok').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('urunStok').classList.remove('is-invalid');
+  }
+  if (urunResimFile && !urunResimFile.type.startsWith('image/')) {
+    document.getElementById('urunResimFile').classList.add('is-invalid');
+    bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
+    isValid = false;
+  }
+  if (urunResimFile && urunResimFile.size > 2 * 1024 * 1024) { // 2MB sınır
+    document.getElementById('urunResimFile').classList.add('is-invalid');
+    bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
+    isValid = false;
+  }
+  if (markaLogoFile && !markaLogoFile.type.startsWith('image/')) {
+    document.getElementById('markaLogoFile').classList.add('is-invalid');
+    bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
+    isValid = false;
+  }
+  if (markaLogoFile && markaLogoFile.size > 2 * 1024 * 1024) { // 2MB sınır
+    document.getElementById('markaLogoFile').classList.add('is-invalid');
+    bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
+    isValid = false;
+  }
+  if (markaLogoUrl && !/^(https?:\/\/)/.test(markaLogoUrl)) {
+    document.getElementById('markaLogo').classList.add('is-invalid');
+    isValid = false;
+  } else {
+    document.getElementById('markaLogo').classList.remove('is-invalid');
+  }
+
+  if (!isValid) {
+    bildirimGoster('Zorunlu alanları doğru doldurun! İndirim 0-100 arası.', 'danger');
+    return;
+  }
+
+  if (!duzenlenenUrunId && urunler.some(u => u.stokKodu === stokKodu)) {
+    bildirimGoster('Bu stok kodu zaten kullanımda, lütfen farklı bir kod girin veya boş bırakın.', 'danger');
+    return;
+  }
+  if (duzenlenenUrunId) {
+    const existingProductWithSameStokKodu = urunler.find(u => u.stokKodu === stokKodu && u.id !== duzenlenenUrunId);
+    if (existingProductWithSameStokKodu) {
+      bildirimGoster('Bu stok kodu başka bir ürüne ait, lütfen farklı bir kod girin.', 'danger');
+      return;
+    }
+  }
+
+  let resim = urunResimUrl || 'https://via.placeholder.com/150';
+  if (urunResimFile) {
+    try {
+      resim = await dosyaToBase64(urunResimFile);
+    } catch (err) {
+      console.error('Dosya yükleme hatası:', err);
+      bildirimGoster('Ürün resmi yüklenemedi!', 'danger');
+      return;
+    }
+  }
+
+  let markaLogo = markaLogoUrl || '';
+  if (markaLogoFile) {
+    try {
+      markaLogo = await dosyaToBase64(markaLogoFile);
+    } catch (err) {
+      console.error('Dosya yükleme hatası:', err);
+      bildirimGoster('Marka logosu yüklenemedi!', 'danger');
+      return;
+    }
+  } else if (!markaLogoUrl) {
+    markaLogo = '';
+  }
+
+  const urun = {
+    id: duzenlenenUrunId || generateUniqueId('u-'),
+    ad,
+    fiyat,
+    indirim,
+    resim,
+    kategori,
+    marka,
+    markaLogo,
+    stok,
+    stokKodu,
+    anasayfadaGoster,
+    detay,
+    yeniUrun,
+    ucretsizKargo
+  };
+
+  if (duzenlenenUrunId) {
+    const i = urunler.findIndex(u => u.id === duzenlenenUrunId);
+    if (i !== -1) {
+      urunler[i] = urun;
+      bildirimGoster('Ürün güncellendi!');
+    }
+  } else {
+    urunler.push(urun);
+    bildirimGoster('Ürün eklendi!');
+  }
+
+  localStorage.setItem('urunler', JSON.stringify(urunler));
+  formuTemizle();
+  urunleriGoster();
+  vitrinBloklariGoster();
+  urunSecenekleriniYukle();
+  siparisleriGoster();
+}
+
+    function urunSil(id) {
+      if (!confirm('Ürün silinsin mi? Bu işlem geri alınamaz!')) return;
+      urunler = urunler.filter(u => u.id !== id);
+      vitrinler.forEach(v => {
+        v.urunIds = v.urunIds.filter(uId => uId !== id);
+      });
+      let sepetItems = safeParseJSON('sepet', []);
+      sepetItems = sepetItems.filter(item => item.id !== id);
+      localStorage.setItem('sepet', JSON.stringify(sepetItems));
+      siparisler.forEach(siparis => {
+        siparis.items = siparis.items.map(item => {
+          if (item.id === id) {
+            return { ...item, ad: `[Silinmiş Ürün] ${item.ad}`, resim: 'https://via.placeholder.com/45/ccc/fff?text=Silindi' };
+          }
+          return item;
+        });
+      });
+      localStorage.setItem('orders', JSON.stringify(siparisler));
+      localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+      localStorage.setItem('urunler', JSON.stringify(urunler));
+      bildirimGoster('Ürün silindi!', 'success');
+      formuTemizle();
+      urunleriGoster();
+      vitrinBloklariGoster();
+      urunSecenekleriniYukle();
+      siparisleriGoster();
+    }
+
+    function urunSecenekleriniYukle() {
+      const vitrinUrunSecimi = document.getElementById('vitrinUrunSecimi');
+      if (!vitrinUrunSecimi) return;
+      vitrinUrunSecimi.innerHTML = '';
+      if (urunler.length === 0) {
+        vitrinUrunSecimi.innerHTML = '<p class="text-muted text-center">Henüz ürün bulunmamaktadır. Vitrin oluşturmak için ürün ekleyin.</p>';
+        return;
+      }
+      urunler.forEach(u => {
+        const indirimliFiyat = calculateDiscountedPrice(u.fiyat, u.indirim);
+        let etiketlerHtml = '';
+        if (u.indirim > 0) {
+          etiketlerHtml += `<span class="badge bg-danger ms-2">İndirimli (%${u.indirim})</span>`;
+        }
+        if (u.yeniUrun) {
+          etiketlerHtml += `<span class="badge bg-info ms-2">Yeni Ürün</span>`;
+        }
+        if (u.ucretsizKargo) {
+          etiketlerHtml += `<span class="badge bg-success ms-2">Ücretsiz Kargo</span>`;
+        }
+        if (u.anasayfadaGoster) {
+          etiketlerHtml += `<span class="badge bg-primary ms-2">Anasayfada</span>`;
+        }
+        const div = document.createElement('div');
+        div.className = 'form-check d-flex align-items-center';
+        div.innerHTML = `
+          <input class="form-check-input vitrin-urun-checkbox me-2" type="checkbox" value="${escapeHTML(u.id)}" id="vitrinUrun${escapeHTML(u.id)}">
+          <img src="${escapeHTML(u.resim)}" class="vitrin-secim-urun-img me-2" alt="${escapeHTML(u.ad)}" onerror="this.src='https://via.placeholder.com/30'">
+          <label class="form-check-label" for="vitrinUrun${escapeHTML(u.id)}">
+            ${escapeHTML(u.ad)} (${u.indirim ? `<span class="text-decoration-line-through text-muted">₺${u.fiyat.toFixed(2)}</span> ₺${indirimliFiyat.toFixed(2)}` : `₺${u.fiyat.toFixed(2)}`}) - Stok: ${u.stok}
+            ${etiketlerHtml}
+          </label>`;
+        vitrinUrunSecimi.appendChild(div);
+      });
+    }
+
+    function vitrinBloklariGoster() {
+      const vitrinListesi = document.getElementById('vitrinListesi');
+      if (!vitrinListesi) return;
+      vitrinListesi.innerHTML = '';
+      if (!vitrinler.length) {
+        vitrinListesi.innerHTML = '<p class="text-muted text-center">Henüz vitrin bulunmamaktadır.</p>';
+        return;
+      }
+
+      const accordion = document.createElement('div');
+      accordion.className = 'accordion';
+      accordion.id = 'vitrinAccordion';
+
+      vitrinler.forEach((vitrin, index) => {
+        const urunlerBuVitrin = urunler.filter(u => vitrin.urunIds.includes(u.id));
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'accordion-item';
+        const headerId = `vitrinHeading${index}`;
+        const collapseId = `vitrinCollapse${index}`;
+
+        accordionItem.innerHTML = `
+          <h2 class="accordion-header" id="${headerId}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}">
+              ${escapeHTML(vitrin.ad)} (${urunlerBuVitrin.length} Ürün)
+            </button>
+          </h2>
+          <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="${headerId}" data-bs-parent="#vitrinAccordion">
+    <div class="accordion-body">
+        <div class="row">
+            ${urunlerBuVitrin.map(urun => `
+                <div class="col-md-3 mb-3">
+                    <div class="card h-100 p-2">
+                        <div class="d-flex align-items-center">
+                            <img src="${escapeHTML(urun.resim)}" class="me-3" alt="${escapeHTML(urun.ad)}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;" onerror="this.src='https://via.placeholder.com/80'">
+
+                            <div class="d-flex flex-column">
+                                <h6 class="card-title mb-1">${escapeHTML(urun.ad)}</h6>
+                                <p class="card-text mb-0">
+                                    ${urun.indirim ? `<span class="text-decoration-line-through text-muted me-2">₺${urun.fiyat.toFixed(2)}</span> ` : ''}
+                                    ₺${calculateDiscountedPrice(urun.fiyat, urun.indirim).toFixed(2)}
+                                    ${urun.indirim ? `<span class="badge bg-danger ms-2">${urun.indirim}%</span>` : ''}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+        
+        <div class="d-flex gap-2 mt-3">
+            <button type="button" class="btn btn-primary btn-sm vitrin-duzenle-btn" data-id="${escapeHTML(vitrin.id)}"><i class="fas fa-edit me-2"></i>Düzenle</button>
+            <button type="button" class="btn btn-danger btn-sm vitrin-sil-btn" data-id="${escapeHTML(vitrin.id)}"><i class="fas fa-trash me-2"></i>Sil</button>
+        </div>
+    </div>
+</div>
+
+              
+        `;
+        accordion.appendChild(accordionItem);
+      });
+
+      vitrinListesi.appendChild(accordion);
+
+      document.querySelectorAll('.vitrin-duzenle-btn').forEach(btn => {
+        btn.addEventListener('click', () => vitrinDuzenle(btn.dataset.id));
+      });
+      document.querySelectorAll('.vitrin-sil-btn').forEach(btn => {
+        btn.addEventListener('click', () => vitrinSil(btn.dataset.id));
+      });
+    }
+
+    function vitrinKaydet(e) {
+      e.preventDefault();
+      try {
+        const adInput = document.getElementById('vitrinAdi');
+        const seciliUrunlerCheckboxes = document.querySelectorAll('.vitrin-urun-checkbox:checked');
+        const ad = adInput.value.trim();
+        const seciliUrunler = Array.from(seciliUrunlerCheckboxes).map(cb => cb.value);
+
+        if (!ad) {
+          bildirimGoster('Vitrin adı boş olamaz!', 'danger');
+          adInput.focus();
+          return;
+        }
+        if (seciliUrunler.length === 0) {
+          bildirimGoster('Lütfen vitrine en az bir ürün seçin!', 'danger');
+          return;
+        }
+
+        const isNewVitrin = duzenlenenVitrinId === null;
+        if (isNewVitrin && vitrinler.some(v => v.ad.toLowerCase() === ad.toLowerCase())) {
+          bildirimGoster('Bu isimde bir vitrin zaten var! Lütfen farklı bir isim girin.', 'danger');
+          adInput.focus();
+          return;
+        }
+
+        const vitrin = {
+          id: isNewVitrin ? generateUniqueId('v-') : duzenlenenVitrinId,
+          ad,
+          urunIds: seciliUrunler
+        };
+
+        if (isNewVitrin) {
+          vitrinler.push(vitrin);
+          bildirimGoster('Vitrin oluşturuldu!', 'success');
+        } else {
+          const index = vitrinler.findIndex(v => v.id === duzenlenenVitrinId);
+          if (index !== -1) {
+            vitrinler[index] = vitrin;
+            bildirimGoster('Vitrin güncellendi!', 'success');
+          } else {
+            bildirimGoster('Vitrin bulunamadı!', 'danger');
+            return;
+          }
+        }
+
+        localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+        vitrinFormuTemizle();
+        vitrinBloklariGoster();
+      } catch (err) {
+        console.error('Vitrin kaydetme hatası:', err);
+        bildirimGoster('Vitrin kaydedilemedi!', 'danger');
+      }
+    }
+
+    function vitrinFormuTemizle() {
+      document.getElementById('vitrinForm').reset();
+      document.getElementById('vitrinId').value = '';
+      document.getElementById('vitrinEkleDuzenleBtn').innerHTML = '<i class="fas fa-plus-square me-2"></i>Vitrin Ekle';
+      document.getElementById('vitrinFormBaslik').textContent = 'Yeni Vitrin Oluştur';
+      duzenlenenVitrinId = null;
+      document.querySelectorAll('.vitrin-urun-checkbox').forEach(cb => cb.checked = false);
+    }
+
+    function vitrinDuzenle(id) {
+      const vitrin = vitrinler.find(v => v.id === id);
+      if (vitrin) {
+        duzenlenenVitrinId = id;
+        document.getElementById('vitrinAdi').value = vitrin.ad;
+        document.querySelectorAll('.vitrin-urun-checkbox').forEach(cb => {
+          cb.checked = vitrin.urunIds.includes(cb.value);
+        });
+        document.getElementById('vitrinEkleDuzenleBtn').innerHTML = '<i class="fas fa-save me-2"></i>Kaydet';
+        document.getElementById('vitrinFormBaslik').textContent = 'Vitrin Düzenle';
+        const vitrinYonetimiTab = document.getElementById('vitrinYonetimi');
+        const vitrinTabButton = document.getElementById('vitrin-tab');
+        if (vitrinYonetimiTab) {
+          vitrinYonetimiTab.classList.add('show', 'active');
+          document.querySelectorAll('.tab-pane').forEach(pane => {
+            if (pane.id !== 'vitrinYonetimi') pane.classList.remove('show', 'active');
+          });
+          document.querySelectorAll('.nav-link').forEach(link => {
+            if (link.id !== 'vitrin-tab') link.classList.remove('active');
+          });
+        }
+        if (vitrinTabButton) vitrinTabButton.classList.add('active');
+      }
+    }
+
+    function vitrinSil(id) {
+      if (!confirm('Vitrin silinsin mi?')) return;
+      vitrinler = vitrinler.filter(v => v.id !== id);
+      localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+      bildirimGoster('Vitrin silindi!', 'success');
+      vitrinFormuTemizle();
+      vitrinBloklariGoster();
+    }
+
+     
+ // Siparişleri listele
+    function siparisleriGoster() {
+      const liste = document.getElementById('siparisListesi');
+      if (!liste) return;
+      liste.innerHTML = '<p class="text-muted">Siparişler yükleniyor...</p>';
+      if (!siparisler.length) {
+        liste.innerHTML = '<p class="text-muted">Henüz sipariş bulunmamaktadır.</p>';
+        return;
+      }
+
+      const validSiparisler = siparisler.filter(s => s.id && s.date && Array.isArray(s.items));
+      if (validSiparisler.length !== siparisler.length) {
+        console.warn('Geçersiz siparişler tespit edildi:', siparisler.filter(s => !s.id || !s.date || !Array.isArray(s.items)));
+        bildirimGoster('Bazı siparişler hatalı, yalnızca geçerli siparişler gösteriliyor.', 'warning');
+      }
+
+      liste.innerHTML = '';
+      validSiparisler.forEach((siparis, index) => {
+        const id = escapeHTML(siparis.id || 'Bilinmeyen');
+        const statusText = {
+          pending: 'Beklemede',
+          shipped: 'Kargoda',
+          delivered: 'Teslim Edildi'
+        }[siparis.status] || 'Bilinmeyen Durum';
+        const statusBadge = {
+          pending: 'bg-warning',
+          shipped: 'bg-primary',
+          delivered: 'bg-success'
+        }[siparis.status] || 'bg-secondary';
+
+        const hesaplananToplam = (siparis.items || []).reduce((sum, item) => {
+          const urun = urunler.find(u => u.id === item.id);
+          const orijinalFiyat = urun ? Number(urun.fiyat) : Number(item.fiyat) || 0;
+          const indirim = Number(item.indirim) || 0;
+          const indirimliFiyat = calculateDiscountedPrice(orijinalFiyat, indirim);
+          return sum + (item.adet || 1) * indirimliFiyat;
+        }, 0);
+
+        const siparisElement = document.createElement('div');
+        siparisElement.className = 'accordion-item';
+        siparisElement.innerHTML = `
+          <h2 class="accordion-header" id="siparisHeading${index}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#siparisCollapse${index}" aria-expanded="false" aria-controls="siparisCollapse${index}">
+              Sipariş #${id} - ${siparis.date ? new Date(siparis.date).toLocaleString('tr-TR') : 'Bilinmeyen'} (<span class="badge ${statusBadge}">${statusText}</span>)
+            </button>
+          </h2>
+          <div id="siparisCollapse${index}" class="accordion-collapse collapse" aria-labelledby="siparisHeading${index}" data-bs-parent="#siparisListesi">
+            <div class="accordion-body">
+              <p><strong>Ad Soyad:</strong> ${escapeHTML(siparis.fullName || 'Belirtilmemiş')}</p>
+              <p><strong>Kullanıcı E-posta:</strong> ${escapeHTML(siparis.userEmail || 'Bilinmeyen')}</p>
+              <p><strong>Adres:</strong> ${escapeHTML(siparis.address || 'Belirtilmemiş')}</p>
+              <p><strong>Telefon:</strong> ${escapeHTML(siparis.phone || 'Belirtilmemiş')}</p>
+              <ul class="list-group mb-3">
+                ${(siparis.items || []).map(item => {
+                  const urun = urunler.find(u => u.id === item.id);
+                  const orijinalFiyat = urun ? Number(urun.fiyat) : Number(item.fiyat) || 0;
+                  const indirim = Number(item.indirim) || 0;
+                  const indirimliFiyat = calculateDiscountedPrice(orijinalFiyat, indirim);
+                  return `
+                    <li class="list-group-item d-flex align-items-center">
+                      <img src="${escapeHTML(item.resim || '')}" class="order-item-img me-3" alt="${escapeHTML(item.ad || 'Bilinmeyen')}" onerror="this.src='https://via.placeholder.com/45'">
+                      <div>
+                        <h6 class="mb-1">${escapeHTML(item.ad || 'Bilinmeyen')}</h6>
+                        <p class="mb-0 text-muted">
+                          <small>Adet: ${item.adet || 1}</small><br>
+                          <small>Fiyat: ₺${orijinalFiyat.toFixed(2)}</small>
+                          ${indirim ? `<br><small>İndirim: %${indirim}</small>` : ''}
+                          ${indirim ? `<br><span class="text-warning">İndirimli: ₺${indirimliFiyat.toFixed(2)}</span>` : ''}
+                        </p>
+                      </div>
+                    </li>`;
+                }).join('')}
+              </ul>
+              <p><strong>Toplam:</strong> ₺${hesaplananToplam.toFixed(2)}</p>
+              <div class="text-end">
+                <select class="siparis-durum form-select form-select-sm d-inline-block w-auto me-2" data-id="${id}">
+                  <option value="" disabled ${!siparis.status ? 'selected' : ''}>Durum Seç</option>
+                  <option value="pending" ${siparis.status === 'pending' ? 'selected' : ''}>Beklemede</option>
+                  <option value="shipped" ${siparis.status === 'shipped' ? 'selected' : ''}>Kargoda</option>
+                  <option value="delivered" ${siparis.status === 'delivered' ? 'selected' : ''}>Teslim Edildi</option>
+                </select>
+                <button type="button" class="btn btn-info btn-sm me-1 siparis-pdf-btn" data-id="${id}"><i class="fas fa-file-pdf"></i> PDF İndir</button>
+                <button type="button" class="btn btn-danger btn-sm siparis-sil-btn" data-id="${id}"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+          </div>`;
+        liste.appendChild(siparisElement);
+      });
+
+      document.querySelectorAll('.siparis-durum').forEach(select => {
+        select.addEventListener('change', e => siparisDurumGuncelle(e.target.dataset.id, e.target.value));
+      });
+      document.querySelectorAll('.siparis-sil-btn').forEach(btn => {
+        btn.addEventListener('click', () => siparisSil(btn.dataset.id));
+      });
+      document.querySelectorAll('.siparis-pdf-btn').forEach(btn => {
+        btn.addEventListener('click', () => printOrderAsPDF(btn.dataset.id));
+      });
+    }
+    
+    // Sipariş durumunu güncelle
+    function siparisDurumGuncelle(siparisId, yeniDurum) {
+      const siparis = siparisler.find(s => s.id === siparisId);
+      if (siparis) {
+        siparis.status = yeniDurum;
+        localStorage.setItem('orders', JSON.stringify(siparisler));
+        bildirimGoster('Sipariş durumu güncellendi!', 'success');
+        siparisleriGoster();
+      } else {
+        bildirimGoster('Sipariş bulunamadı!', 'danger');
+      }
+    }
+
+    // Sipariş sil
+    function siparisSil(siparisId) {
+      if (!confirm(`Sipariş ${siparisId} silinsin mi?`)) return;
+      const index = siparisler.findIndex(s => s.id === siparisId);
+      if (index !== -1) {
+        const siparis = siparisler[index];
+        siparis.items.forEach(item => {
+          const u = urunler.find(u => u.id === item.id);
+          if (u) {
+            u.stok = (u.stok || 0) + (item.adet || 0);
+          }
+        });
+        localStorage.setItem('urunler', JSON.stringify(urunler));
+        siparisler.splice(index, 1);
+        localStorage.setItem('orders', JSON.stringify(siparisler));
+        bildirimGoster('Sipariş silindi ve stoklar güncellendi!', 'success');
+        siparisleriGoster();
+        urunleriGoster();
+      } else {
+        bildirimGoster('Sipariş bulunamadı!', 'danger');
+      }
+    }
+
+    // Verileri yedekle
+    function verileriYedekle() {
+      try {
+        const yedek = {
+          urunler,
+          kategoriler,
+          vitrinler,
+          siparisler,
+          adresler
+        };
+        const yedekJSON = JSON.stringify(yedek);
+        const blob = new Blob([yedekJSON], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mehtapstore_yedek_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        bildirimGoster('Veriler yedeklendi!', 'success');
+      } catch (err) {
+        console.error('Yedekleme hatası:', err);
+        bildirimGoster('Veriler yedeklenemedi!', 'danger');
+      }
+    }
+
+    // Verileri geri yükle
+    function verileriGeriYukle(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const yedek = JSON.parse(e.target.result);
+          if (yedek.urunler) {
+            urunler = yedek.urunler.map(u => ({
+              ...u,
+              id: u.id || generateUniqueId('u-'),
+              anasayfadaGoster: !!u.anasayfadaGoster,
+              yeniUrun: !!u.yeniUrun,
+              ucretsizKargo: !!u.ucretsizKargo
+            }));
+            localStorage.setItem('urunler', JSON.stringify(urunler));
+          }
+          if (yedek.kategoriler) {
+            kategoriler = yedek.kategoriler.filter(k => typeof k === 'string');
+            localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+          }
+          if (yedek.vitrinler) {
+            vitrinler = yedek.vitrinler.map(v => ({
+              ...v,
+              id: v.id || generateUniqueId('v-'),
+              urunIds: v.urunIds.filter(id => urunler.some(u => u.id === id))
+            }));
+            localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+          }
+          if (yedek.siparisler) {
+            siparisler = yedek.siparisler.map(s => ({
+              ...s,
+              id: s.id || generateUniqueId('s-'),
+              items: Array.isArray(s.items) ? s.items : []
+            }));
+            localStorage.setItem('orders', JSON.stringify(siparisler));
+          }
+          if (yedek.adresler) {
+            adresler = yedek.adresler.map(a => ({
+              ...a,
+              id: a.id || generateUniqueId('a-')
+            }));
+            localStorage.setItem('adresler', JSON.stringify(adresler));
+          }
+          bildirimGoster('Veriler geri yüklendi!', 'success');
+          kategorileriYukle();
+          urunleriGoster();
+          vitrinBloklariGoster();
+          siparisleriGoster();
+          urunSecenekleriniYukle();
+        } catch (err) {
+          console.error('Geri yükleme hatası:', err);
+          bildirimGoster('Veriler geri yüklenemedi!', 'danger');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Excel'e aktar
+    function urunleriExceleAktar() {
+  try {
+    // Excel'e aktarılacak verileri hazırla
+    const wsData = [
+      ['ID', 'Ad', 'Fiyat', 'İndirim (%)', 'Net Fiyat', 'Kategori', 'Marka', 'Marka Logo', 'Stok', 'Stok Kodu', 'Resim URL', 'Anasayfada Göster', 'Yeni Ürün', 'Ücretsiz Kargo', 'Detay']
+    ];
+    urunler.forEach(u => {
+      const indirimliFiyat = calculateDiscountedPrice(u.fiyat, u.indirim);
+      wsData.push([
+        u.id,
+        u.ad,
+        u.fiyat,
+        u.indirim || 0,
+        indirimliFiyat.toFixed(2),
+        u.kategori,
+        u.marka || 'Belirtilmemiş', // Marka alanı eklendi
+        u.markaLogo && !u.markaLogo.startsWith('data:image') ? u.markaLogo : '', // Base64 hariç
+        u.stok,
+        u.stokKodu || '',
+        u.resim && !u.resim.startsWith('data:image') ? u.resim : '', // Base64 hariç
+        u.anasayfadaGoster ? 'Evet' : 'Hayır',
+        u.yeniUrun ? 'Evet' : 'Hayır',
+        u.ucretsizKargo ? 'Evet' : 'Hayır',
+        u.detay || ''
+      ]);
+    });
+
+    // Çalışma sayfası oluştur
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Sütun genişliklerini ayarla
+    ws['!cols'] = [
+      { wch: 10 }, // ID
+      { wch: 30 }, // Ad
+      { wch: 10 }, // Fiyat
+      { wch: 10 }, // İndirim
+      { wch: 10 }, // Net Fiyat
+      { wch: 20 }, // Kategori
+      { wch: 20 }, // Marka
+      { wch: 30 }, // Marka Logo
+      { wch: 10 }, // Stok
+      { wch: 15 }, // Stok Kodu
+      { wch: 30 }, // Resim URL
+      { wch: 15 }, // Anasayfada Göster
+      { wch: 10 }, // Yeni Ürün
+      { wch: 15 }, // Ücretsiz Kargo
+      { wch: 50 }  // Detay
+    ];
+
+    // Çalışma kitabı oluştur
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ürünler');
+
+    // Excel dosyasını oluştur ve indir
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(data, 'mehtapstore_urunler.xlsx');
+    bildirimGoster('Ürünler Excel\'e aktarıldı!', 'success');
+  } catch (err) {
+    console.error('Excel aktarma hatası:', err);
+    bildirimGoster('Excel aktarımı başarısız! Konsolu kontrol edin.', 'danger');
+  }
+}
+
+    // Excel'den ürünleri yükle
+    function urunleriExceldenYukle(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const ws = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const headers = jsonData[0];
+      const rows = jsonData.slice(1).filter(row => row.length > 0);
+
+      const idIndex = headers.indexOf('ID');
+      const adIndex = headers.indexOf('Ad');
+      const fiyatIndex = headers.indexOf('Fiyat');
+      const indirimIndex = headers.indexOf('İndirim (%)');
+      const kategoriIndex = headers.indexOf('Kategori');
+      const markaIndex = headers.indexOf('Marka');
+      const markaLogoIndex = headers.indexOf('Marka Logo');
+      const stokIndex = headers.indexOf('Stok');
+      const stokKoduIndex = headers.indexOf('Stok Kodu');
+      const resimIndex = headers.indexOf('Resim URL');
+      const anasayfadaIndex = headers.indexOf('Anasayfada Göster');
+      const yeniUrunIndex = headers.indexOf('Yeni Ürün');
+      const ucretsizKargoIndex = headers.indexOf('Ücretsiz Kargo');
+      const detayIndex = headers.indexOf('Detay');
+
+      const yeniUrunler = [];
+      const hataliSatirlar = [];
+
+      rows.forEach((row, index) => {
+        const id = row[idIndex]?.toString().trim() || generateUniqueId('u-');
+        const ad = row[adIndex]?.toString().trim();
+        const fiyat = parseFloat(row[fiyatIndex]);
+        const indirim = parseInt(row[indirimIndex]) || 0;
+        const kategori = row[kategoriIndex]?.toString().trim();
+        const marka = row[markaIndex]?.toString().trim() || 'Belirtilmemiş';
+        const markaLogo = row[markaLogoIndex]?.toString().trim() || '';
+        const stok = parseInt(row[stokIndex]);
+        const stokKodu = row[stokKoduIndex]?.toString().trim() || stokKoduOlustur();
+        const resim = row[resimIndex]?.toString().trim();
+        const anasayfadaGoster = row[anasayfadaIndex]?.toString().trim().toLowerCase() === 'evet';
+        const yeniUrun = row[yeniUrunIndex]?.toString().trim().toLowerCase() === 'evet';
+        const ucretsizKargo = row[ucretsizKargoIndex]?.toString().trim().toLowerCase() === 'evet';
+        const detay = row[detayIndex]?.toString().trim() || '';
+
+        // Doğrulama
+        if (!ad || isNaN(fiyat) || fiyat <= 0 || !kategori || !kategoriler.includes(kategori) || isNaN(stok) || stok < 0 || !resim || indirim < 0 || indirim > 100) {
+          hataliSatirlar.push(index + 2);
+          return;
+        }
+
+        // Stok kodu kontrolü
+        if (yeniUrunler.some(u => u.stokKodu === stokKodu) || urunler.some(u => u.stokKodu === stokKodu && u.id !== id)) {
+          hataliSatirlar.push(index + 2);
+          return;
+        }
+
+        // Marka logo URL doğrulaması (isteğe bağlı)
+        if (markaLogo && !/^(https?:\/\/)/.test(markaLogo)) {
+          hataliSatirlar.push(index + 2);
+          return;
+        }
+
+        yeniUrunler.push({
+          id,
+          ad,
+          fiyat,
+          indirim,
+          kategori,
+          marka,
+          markaLogo,
+          stok,
+          stokKodu,
+          resim,
+          anasayfadaGoster,
+          yeniUrun,
+          ucretsizKargo,
+          detay
+        });
+      });
+
+      if (hataliSatirlar.length > 0) {
+        bildirimGoster(`Hatalı satırlar tespit edildi: ${hataliSatirlar.join(', ')}. Bu satırlar atlandı.`, 'warning');
+      }
+
+      if (yeniUrunler.length > 0) {
+        urunler = [...urunler.filter(u => !yeniUrunler.some(nu => nu.id === u.id)), ...yeniUrunler];
+        localStorage.setItem('urunler', JSON.stringify(urunler));
+        kategorileriYukle();
+        urunleriGoster();
+        vitrinBloklariGoster();
+        urunSecenekleriniYukle();
+        bildirimGoster(`${yeniUrunler.length} ürün başarıyla yüklendi!`, 'success');
+      } else {
+        bildirimGoster('Yüklenecek geçerli ürün bulunamadı!', 'warning');
+      }
+    } catch (err) {
+      console.error('Excel yükleme hatası:', err);
+      bildirimGoster('Excel dosyasından veri yüklenemedi! Konsolu kontrol edin.', 'danger');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+    // Olay dinleyicilerini ekle
+    document.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  kategorileriYukle();
+  urunleriGoster();
+  vitrinBloklariGoster();
+  siparisleriGoster();
+  urunSecenekleriniYukle();
+
+  document.getElementById('urunForm')?.addEventListener('submit', urunKaydet);
+  document.getElementById('kategoriEkleBtn')?.addEventListener('click', kategoriEkle);
+  document.getElementById('kategoriDuzenleKaydetBtn')?.addEventListener('click', kategoriDuzenle);
+  document.getElementById('vitrinForm')?.addEventListener('submit', vitrinKaydet);
+  document.getElementById('aramaButonu')?.addEventListener('click', () => {
+    const arama = document.getElementById('urunArama').value.trim();
+    urunleriGoster(arama);
+  });
+  document.getElementById('urunArama')?.addEventListener('input', () => {
+    const arama = document.getElementById('urunArama').value.trim();
+    urunleriGoster(arama);
+  });
+  document.getElementById('yeniKategori')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      kategoriEkle();
+    }
+  });
+  document.getElementById('yedekleBtn')?.addEventListener('click', verileriYedekle);
+  document.getElementById('geriYukleBtn')?.addEventListener('click', () => {
+    document.getElementById('geriYukleInput').click();
+  });
+  document.getElementById('excelExportBtn')?.addEventListener('click', urunleriExceleAktar);
+  document.getElementById('excelImportBtn')?.addEventListener('click', () => {
+    document.getElementById('excelImportInput').click();
+  });
+});
+  
+  // Ürün resmi dosya yükleme önizlemesi
+  const urunResimFileInput = document.getElementById('urunResimFile');
+  if (urunResimFileInput) {
+    urunResimFileInput.addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById('urunResimPreview');
+      if (file) {
+        try {
+          const base64 = await dosyaToBase64(file);
+          preview.src = base64;
+          preview.classList.remove('d-none');
+        } catch (err) {
+          console.error('Önizleme hatası:', err);
+          bildirimGoster('Ürün resmi önizlemesi oluşturulamadı!', 'danger');
+        }
+      } else {
+        preview.classList.add('d-none');
+      }
+    });
+  }
+
+  // Ürün resmi URL önizlemesi
+  const urunResimInput = document.getElementById('urunResim');
+  if (urunResimInput) {
+    urunResimInput.addEventListener('input', function(e) {
+      const url = e.target.value.trim();
+      const preview = document.getElementById('urunResimPreview');
+      if (url) {
+        preview.src = url;
+        preview.classList.remove('d-none');
+      } else {
+        preview.classList.add('d-none');
+      }
+    });
+  }
+
+  // Marka logosu dosya yükleme önizlemesi
+  const markaLogoFileInput = document.getElementById('markaLogoFile');
+  if (markaLogoFileInput) {
+    markaLogoFileInput.addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      const preview = document.getElementById('markaLogoPreview');
+      if (file) {
+        try {
+          const base64 = await dosyaToBase64(file);
+          preview.src = base64;
+          preview.classList.remove('d-none');
+        } catch (err) {
+          console.error('Önizleme hatası:', err);
+          bildirimGoster('Logo önizlemesi oluşturulamadı!', 'danger');
+        }
+      } else {
+        preview.classList.add('d-none');
+      }
+    });
+  }
+
+  // Marka logosu URL önizlemesi
+  const markaLogoInput = document.getElementById('markaLogo');
+  if (markaLogoInput) {
+    markaLogoInput.addEventListener('input', function(e) {
+      const url = e.target.value.trim();
+      const preview = document.getElementById('markaLogoPreview');
+      if (url) {
+        preview.src = url;
+        preview.classList.remove('d-none');
+      } else {
+        preview.classList.add('d-none');
+      }
+    });
+  }
+
+  </script>
+ 
+   <script src="js/jspdf.umd.min.js"></script>
+<script src="js/DejaVuSans.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous">
+      </script>
+      
+</body>
+</html>
