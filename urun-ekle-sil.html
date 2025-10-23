@@ -2418,6 +2418,39 @@ async function urunKaydet(e) {
     });
   }
 
+// data/urunler.json dosyasını yükle
+async function loadJSONData() {
+  try {
+    const response = await fetch('./data/urunler.json');
+    if (!response.ok) {
+      throw new Error('JSON dosyası bulunamadı');
+    }
+    const data = await response.json();
+    
+    // JSON'dan gelen verileri kullan
+    urunler = data.urunler || [];
+    kategoriler = data.kategoriler || [];
+    vitrinler = data.vitrinler || [];
+    kullanicilar = data.kullanicilar || [];
+    
+    // Sayfayı güncelle
+    urunleriGoster();
+    kategorileriYukle();
+    kullanicilariGoster();
+    vitrinBloklariGoster();
+    
+  } catch (error) {
+    console.error('JSON yükleme hatası:', error);
+    // Hata durumunda localStorage'dan yükle
+    loadDataFromLocalStorage();
+  }
+}
+
+// Sayfa yüklendiğinde JSON'dan verileri yükle
+document.addEventListener('DOMContentLoaded', function() {
+  loadJSONData();
+});
+
   </script>
  
    <script src="js/jspdf.umd.min.js"></script>
