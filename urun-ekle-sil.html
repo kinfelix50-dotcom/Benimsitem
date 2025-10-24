@@ -2054,88 +2054,48 @@ async function urunKaydet(e) {
     }
 
     // Verileri yedekle
-    function verileriYedekle() {
-      try {
-        const yedek = {
-          urunler,
-          kategoriler,
-          vitrinler,
-          siparisler,
-          adresler
-        };
-        const yedekJSON = JSON.stringify(yedek);
-        const blob = new Blob([yedekJSON], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mehtapstore_yedek_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        bildirimGoster('Veriler yedeklendi!', 'success');
-      } catch (err) {
-        console.error('Yedekleme hatası:', err);
-        bildirimGoster('Veriler yedeklenemedi!', 'danger');
-      }
-    }
+    // Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('DOM yüklendi, veriler yükleniyor...');
+  
+  // Önce tüm event listener'ları kur
+  setupEventListeners();
+  
+  // Sonra verileri yükle
+  await loadData();
+});
 
-    // Verileri geri yükle
-    function verileriGeriYukle(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const yedek = JSON.parse(e.target.result);
-          if (yedek.urunler) {
-            urunler = yedek.urunler.map(u => ({
-              ...u,
-              id: u.id || generateUniqueId('u-'),
-              anasayfadaGoster: !!u.anasayfadaGoster,
-              yeniUrun: !!u.yeniUrun,
-              ucretsizKargo: !!u.ucretsizKargo
-            }));
-            localStorage.setItem('urunler', JSON.stringify(urunler));
-          }
-          if (yedek.kategoriler) {
-            kategoriler = yedek.kategoriler.filter(k => typeof k === 'string');
-            localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
-          }
-          if (yedek.vitrinler) {
-            vitrinler = yedek.vitrinler.map(v => ({
-              ...v,
-              id: v.id || generateUniqueId('v-'),
-              urunIds: v.urunIds.filter(id => urunler.some(u => u.id === id))
-            }));
-            localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
-          }
-          if (yedek.siparisler) {
-            siparisler = yedek.siparisler.map(s => ({
-              ...s,
-              id: s.id || generateUniqueId('s-'),
-              items: Array.isArray(s.items) ? s.items : []
-            }));
-            localStorage.setItem('orders', JSON.stringify(siparisler));
-          }
-          if (yedek.adresler) {
-            adresler = yedek.adresler.map(a => ({
-              ...a,
-              id: a.id || generateUniqueId('a-')
-            }));
-            localStorage.setItem('adresler', JSON.stringify(adresler));
-          }
-          bildirimGoster('Veriler geri yüklendi!', 'success');
-          kategorileriYukle();
-          urunleriGoster();
-          vitrinBloklariGoster();
-          siparisleriGoster();
-          urunSecenekleriniYukle();
-        } catch (err) {
-          console.error('Geri yükleme hatası:', err);
-          bildirimGoster('Veriler geri yüklenemedi!', 'danger');
-        }
-      };
-      reader.readAsText(file);
-    }
+function setupEventListeners() {
+  const urunForm = document.getElementById('urunForm');
+  if (urunForm) {
+    urunForm.addEventListener('submit', urunKaydet);
+    urunForm.addEventListener('reset', formuTemizle);
+  }
+
+  const kullaniciForm = document.getElementById('kullaniciForm');
+  if (kullaniciForm) {
+    kullaniciForm.addEventListener('submit', kullaniciKaydet);
+    kullaniciForm.addEventListener('reset', kullaniciFormuTemizle);
+  }
+
+  const vitrinForm = document.getElementById('vitrinForm');
+  if (vitrinForm) {
+    vitrinForm.addEventListener('submit', vitrinKaydet);
+    vitrinForm.addEventListener('reset', vitrinFormuTemizle);
+  }
+
+  const kategoriEkleBtn = document.getElementById('kategoriEkleBtn');
+  if (kategoriEkleBtn) {
+    kategoriEkleBtn.addEventListener('click', kategoriEkle);
+  }
+
+  const kategoriDuzenleKaydetBtn = document.getElementById('kategoriDuzenleKaydetBtn');
+  if (kategoriDuzenleKaydetBtn) {
+    kategoriDuzenleKaydetBtn.addEventListener('click', kategoriDuzenle);
+  }
+
+  // Diğer event listener'lar...
+}
 
     // Excel'e aktar
     function urunleriExceleAktar() {
@@ -2418,38 +2378,48 @@ async function urunKaydet(e) {
     });
   }
 
-// data/urunler.json dosyasını yükle
-async function loadJSONData() {
-  try {
-    const response = await fetch('./data/mehtapstore_yedek_2025-09-28.json');
-    if (!response.ok) {
-      throw new Error('JSON dosyası bulunamadı');
-    }
-    const data = await response.json();
-    
-    // JSON'dan gelen verileri kullan
-    urunler = data.urunler || [];
-    kategoriler = data.kategoriler || [];
-    vitrinler = data.vitrinler || [];
-    kullanicilar = data.kullanicilar || [];
-    
-    // Sayfayı güncelle
-    urunleriGoster();
-    kategorileriYukle();
-    kullanicilariGoster();
-    vitrinBloklariGoster();
-    
-  } catch (error) {
-    console.error('JSON yükleme hatası:', error);
-    // Hata durumunda localStorage'dan yükle
-    loadDataFromLocalStorage();
-  }
-}
-
-// Sayfa yüklendiğinde JSON'dan verileri yükle
-document.addEventListener('DOMContentLoaded', function() {
-  loadJSONData();
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', async function() {
+  console.log('DOM yüklendi, veriler yükleniyor...');
+  
+  // Önce tüm event listener'ları kur
+  setupEventListeners();
+  
+  // Sonra verileri yükle
+  await loadData();
 });
+
+function setupEventListeners() {
+  const urunForm = document.getElementById('urunForm');
+  if (urunForm) {
+    urunForm.addEventListener('submit', urunKaydet);
+    urunForm.addEventListener('reset', formuTemizle);
+  }
+
+  const kullaniciForm = document.getElementById('kullaniciForm');
+  if (kullaniciForm) {
+    kullaniciForm.addEventListener('submit', kullaniciKaydet);
+    kullaniciForm.addEventListener('reset', kullaniciFormuTemizle);
+  }
+
+  const vitrinForm = document.getElementById('vitrinForm');
+  if (vitrinForm) {
+    vitrinForm.addEventListener('submit', vitrinKaydet);
+    vitrinForm.addEventListener('reset', vitrinFormuTemizle);
+  }
+
+  const kategoriEkleBtn = document.getElementById('kategoriEkleBtn');
+  if (kategoriEkleBtn) {
+    kategoriEkleBtn.addEventListener('click', kategoriEkle);
+  }
+
+  const kategoriDuzenleKaydetBtn = document.getElementById('kategoriDuzenleKaydetBtn');
+  if (kategoriDuzenleKaydetBtn) {
+    kategoriDuzenleKaydetBtn.addEventListener('click', kategoriDuzenle);
+  }
+
+  // Diğer event listener'lar...
+}
 
   </script>
  
