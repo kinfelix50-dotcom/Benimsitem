@@ -1,1 +1,57 @@
-
+{
+  "urunler": [
+    {
+      "id": "u-1",
+      "ad": "Örnek Akıllı Telefon",
+      "fiyat": 2999.99,
+      "indirim": 15,
+      "resim": "https://via.placeholder.com/300",
+      "kategori": "Elektronik",
+      "marka": "TechBrand",
+      "markaLogo": "https://via.placeholder.com/60",
+      "stok": 25,
+      "stokKodu": "STK-0001",
+      "anasayfadaGoster": true,
+      "yeniUrun": true,
+      "ucretsizKargo": true,
+      "detay": "Bu yüksek kaliteli akıllı telefon mükemmel performans sunar.\nUzun pil ömrü ve hızlı şarj özellikleri.\n2 yıl garanti."
+    },
+    {
+      "id": "u-2",
+      "ad": "Spor Ayakkabı",
+      "fiyat": 499.99,
+      "indirim": 10,
+      "resim": "https://via.placeholder.com/300",
+      "kategori": "Giyim",
+      "marka": "SporMarka",
+      "markaLogo": "https://via.placeholder.com/60",
+      "stok": 50,
+      "stokKodu": "STK-0002",
+      "anasayfadaGoster": true,
+      "yeniUrun": false,
+      "ucretsizKargo": true,
+      "detay": "Rahat ve dayanıklı spor ayakkabı.\nSu geçirmez malzeme.\nÇeşitli renk seçenekleri."
+    }
+  ],
+  "kategoriler": ["Elektronik", "Giyim", "Ev & Yaşam", "Kozmetik"],
+  "vitrinler": [
+    {
+      "id": "v-1",
+      "ad": "Haftanın Fırsatları",
+      "urunIds": ["u-1", "u-2"]
+    }
+  ],
+  "kullanicilar": [
+    {
+      "id": "USR-1",
+      "ad": "Admin",
+      "soyad": "Kullanıcı",
+      "email": "admin@mehtapstore.com",
+      "telefon": "+905551234567",
+      "adres": "Örnek Mah. Test Cad. No:123 İstanbul",
+      "rol": "admin",
+      "aktif": true,
+      "sifre": "hashedpassword123"
+    }
+  ]
+}
