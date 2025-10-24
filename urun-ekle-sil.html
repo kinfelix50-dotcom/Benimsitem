@@ -2054,47 +2054,76 @@ async function urunKaydet(e) {
     }
 
     // Verileri yedekle
-    // Sayfa yüklendiğinde
-document.addEventListener('DOMContentLoaded', async function() {
-  console.log('DOM yüklendi, veriler yükleniyor...');
-  
-  // Önce tüm event listener'ları kur
-  setupEventListeners();
-  
-  // Sonra verileri yükle
-  await loadData();
-});
-
-function setupEventListeners() {
-  const urunForm = document.getElementById('urunForm');
-  if (urunForm) {
-    urunForm.addEventListener('submit', urunKaydet);
-    urunForm.addEventListener('reset', formuTemizle);
+    // Güncellenmiş JSON yükleme fonksiyonu
+async function loadFromJSON() {
+  try {
+    console.log('JSON dosyası yükleniyor...');
+    
+    // GitHub Pages için doğru yollar - REPO_ADINIZI değiştirin
+    const repoAdi = 'Benimsitem'; // BU KISMI KENDİ REPO ADINIZLA DEĞİŞTİRİN
+    const possiblePaths = [
+      `/${repoAdi}/data/urunler.json`,  // GitHub Pages için
+      './data/urunler.json',           // Lokal geliştirme için
+      'data/urunler.json',             // Alternatif yol
+      '/data/urunler.json'             // Başka alternatif
+    ];
+    
+    let jsonData = null;
+    let successfulPath = '';
+    
+    for (const path of possiblePaths) {
+      try {
+        console.log(`Denenen yol: ${path}`);
+        const response = await fetch(path);
+        
+        // Response'u kontrol et
+        const contentType = response.headers.get('content-type');
+        console.log(`Response status: ${response.status}, Content-Type: ${contentType}`);
+        
+        if (response.ok) {
+          const text = await response.text();
+          console.log(`Gelen veri (ilk 200 karakter): ${text.substring(0, 200)}`);
+          
+          // Gelen verinin JSON olup olmadığını kontrol et
+          if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+            jsonData = JSON.parse(text);
+            successfulPath = path;
+            console.log(`✅ JSON başarıyla yüklendi: ${path}`);
+            break;
+          } else {
+            console.warn(`❌ ${path} JSON değil, HTML dönüyor olabilir`);
+          }
+        }
+      } catch (err) {
+        console.log(`${path} yüklenemedi:`, err);
+      }
+    }
+    
+    if (jsonData) {
+      urunler = jsonData.urunler || [];
+      kategoriler = jsonData.kategoriler || [];
+      vitrinler = jsonData.vitrinler || [];
+      kullanicilar = jsonData.kullanicilar || [];
+      siparisler = jsonData.siparisler || [];
+      
+      console.log(`✅ JSON'dan yüklenen veriler: ${urunler.length} ürün, ${kategoriler.length} kategori`);
+      
+      // localStorage'ı da güncelle
+      localStorage.setItem('urunler', JSON.stringify(urunler));
+      localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+      localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+      localStorage.setItem('kullanicilar', JSON.stringify(kullanicilar));
+      
+      return true;
+    } else {
+      console.warn('❌ Hiçbir JSON dosyası yüklenemedi, localStorage kullanılacak');
+      return false;
+    }
+    
+  } catch (error) {
+    console.error('❌ JSON yükleme hatası:', error);
+    return false;
   }
-
-  const kullaniciForm = document.getElementById('kullaniciForm');
-  if (kullaniciForm) {
-    kullaniciForm.addEventListener('submit', kullaniciKaydet);
-    kullaniciForm.addEventListener('reset', kullaniciFormuTemizle);
-  }
-
-  const vitrinForm = document.getElementById('vitrinForm');
-  if (vitrinForm) {
-    vitrinForm.addEventListener('submit', vitrinKaydet);
-    vitrinForm.addEventListener('reset', vitrinFormuTemizle);
-  }
-
-  const kategoriEkleBtn = document.getElementById('kategoriEkleBtn');
-  if (kategoriEkleBtn) {
-    kategoriEkleBtn.addEventListener('click', kategoriEkle);
-  }
-
-  const kategoriDuzenleKaydetBtn = document.getElementById('kategoriDuzenleKaydetBtn');
-  if (kategoriDuzenleKaydetBtn) {
-    kategoriDuzenleKaydetBtn.addEventListener('click', kategoriDuzenle);
-  }
-
-  // Diğer event listener'lar...
 }
 
     // Excel'e aktar
