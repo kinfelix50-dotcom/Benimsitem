@@ -151,7 +151,79 @@ function printOrderAsPDF(orderId) {
   doc.text(totalText, doc.internal.pageSize.width - marginX - textWidth, currentY);
   currentY += 15;
 
+  // Sipariş açıklaması
+  console.log('Order note:', order.note);
+  if (order.note && order.note.trim()) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(textColor);
+    doc.text('Sipariş Açıklaması:', marginX, currentY);
+    currentY += 6;
+    const noteLines = doc.splitTextToSize(order.note, doc.internal.pageSize.width - (2 * marginX));
+    doc.text(noteLines, marginX, currentY);
+    currentY += noteLines.length * 6 + 10;
+  }
+
   doc.save(`siparis_${escapeHTML(order.id)}.pdf`);
+}
+
+// Excel yazdırma fonksiyonu
+function exportOrderToExcel(orderId) {
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem('orders')) || [];
+  } catch (e) {
+    console.error('orders JSON parse hatası:', e.message, 'Değer:', localStorage.getItem('orders'));
+    localStorage.setItem('orders', JSON.stringify([]));
+    alert('Sipariş verileri bozuk, sıfırlandı.');
+    return;
+  }
+  const order = orders.find(o => o.id === orderId);
+  if (!order) {
+    alert('Sipariş bulunamadı!');
+    return;
+  }
+
+  const rows = [];
+  if (order.items && Array.isArray(order.items)) {
+    order.items.forEach(item => {
+      rows.push({
+        'Ürün Adı': item.ad || '',
+        'Adet': Number(item.adet || 0),
+        'Birim Fiyat': Number(item.fiyat || 0).toFixed(2),
+        'Toplam': Number((item.fiyat * item.adet) || 0).toFixed(2)
+      });
+    });
+  }
+
+  // Toplam satırı ekle
+  rows.push({});
+  rows.push({
+    'Ürün Adı': 'Genel Toplam',
+    'Adet': '',
+    'Birim Fiyat': '',
+    'Toplam': Number(order.total).toFixed(2)
+  });
+
+  // Sipariş açıklaması
+  console.log('Order note for Excel:', order.note);
+  if (order.note && order.note.trim()) {
+    rows.push({});
+    rows.push({
+      'Ürün Adı': 'Sipariş Açıklaması',
+      'Adet': '',
+      'Birim Fiyat': '',
+      'Toplam': order.note
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows, { header: ['Ürün Adı', 'Adet', 'Birim Fiyat', 'Toplam'] });
+  ws['!cols'] = [ { wch: 40 }, { wch: 10 }, { wch: 15 }, { wch: 15 } ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Sipariş');
+
+  const filename = `siparis_${escapeHTML(order.id)}.xlsx`;
+  XLSX.writeFile(wb, filename);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -326,6 +398,9 @@ document.addEventListener('DOMContentLoaded', function () {
               <button class="btn btn-sm btn-info me-2 print-order" data-order-id="${safeOrderId}">
                 <i class="fas fa-file-pdf"></i> PDF İndir
               </button>
+              <button class="btn btn-sm btn-success me-2 export-excel" data-order-id="${safeOrderId}">
+                <i class="fas fa-file-excel"></i> Excel İndir
+              </button>
               ${order.status === 'pending' ? `
                 <button class="btn btn-danger btn-sm cancel-order" data-order-id="${safeOrderId}">Siparişi İptal Et</button>
               ` : ''}
@@ -338,6 +413,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.print-order').forEach(button => {
       button.addEventListener('click', () => printOrderAsPDF(button.dataset.orderId));
+    });
+
+    document.querySelectorAll('.export-excel').forEach(button => {
+      button.addEventListener('click', () => exportOrderToExcel(button.dataset.orderId));
     });
 
     document.querySelectorAll('.cancel-order').forEach(button => {
