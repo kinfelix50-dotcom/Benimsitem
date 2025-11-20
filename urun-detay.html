@@ -23,69 +23,123 @@
   
   
   <style>
-    body {
-      background-color: #ffffff !important;
+    /* Temel düzen ve modern ürün detay stilleri */
+    :root{
+      --primary:#EB8220;
+      --muted:#6c757d;
+      --card-bg:#ffffff;
+      --shadow: 0 6px 24px rgba(0,0,0,0.08);
     }
-    .product-card {
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    body{background:#f7f7f8;font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,'Noto Sans',sans-serif}
+    .product-view{background:var(--card-bg);border-radius:12px;box-shadow:var(--shadow);padding:24px;margin-bottom:24px}
+    .gallery-main{border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
+    .gallery-main img{max-width:100%;height:auto;object-fit:contain}
+    .thumbnails{display:flex;gap:8px;margin-top:12px}
+    .thumb{width:64px;height:64px;border-radius:6px;overflow:hidden;border:1px solid #e9e9e9;cursor:pointer}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+    .product-title{font-size:1.4rem;font-weight:700;margin-bottom:6px}
+    .product-meta{color:var(--muted);font-size:0.9rem;margin-bottom:12px}
+    .price-old{color:#9aa0a6;text-decoration:line-through;margin-right:10px}
+    .price-current{color:var(--primary);font-size:1.6rem;font-weight:700}
+    .badge-list .badge{margin-right:6px}
+    .buy-panel{position:sticky;top:90px;background:var(--card-bg);padding:16px;border-radius:10px;box-shadow:var(--shadow)}
+    /* Adet kontrolü: esnek ve dokunmatik uyumlu */
+    .qty-control{
+      display:inline-flex;
+      align-items:center;
+      gap:0.35rem;
+      min-width:100px;
+      max-width:220px;
     }
-    .brands-section {
-      box-shadow: 0 0px 8px rgba(0, 0, 0, 0.2) !important;
+    .qty-control .btn{
+      width:40px;
+      height:40px;
+      padding:0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:6px;
     }
-    .product-scroll-item {
-      margin-right: 3px;
+    .qty-control input[type=number]{
+      width:72px;
+      height:40px;
+      padding:0.25rem 0.35rem;
+      text-align:center;
+      border-radius:6px;
     }
-    .navbar-buttons .btn {
-      background-color: #fff !important;
-      border-color: #dddddd !important;
-      padding: 6px !important;
+    .qty-control input[type=number]::-webkit-inner-spin-button,
+    .qty-control input[type=number]::-webkit-outer-spin-button{ -webkit-appearance: none; margin:0 }
+    .qty-control input[type=number]{ -moz-appearance: textfield }
+    /* Yeni stepper stilleri (modern görünüm) */
+    .qty-stepper{display:inline-flex;align-items:center;gap:0.4rem;background:#fff;border:1px solid #e9e9e9;padding:4px;border-radius:8px}
+    .qty-stepper .qty-btn{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px}
+    .qty-stepper .qty-input{width:72px;height:36px;border:none;padding:0.25rem 0.35rem;text-align:center;background:transparent}
+    .qty-stepper .qty-input:focus{outline:none;box-shadow:none}
+    .tab-content .urun-detay-text p{margin-bottom:0.8rem}
+    .benzer-urunler-container{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+    .benzer-urun-kart{width:160px;border-radius:8px;overflow:hidden}
+    .benzer-urun-img{height:110px;object-fit:contain}
+    @media (max-width:991px){.buy-panel{position:relative;top:auto;margin-top:16px}}
+    /* Mobil uyumluluk iyileştirmeleri */
+    @media (max-width: 768px) {
+      .product-view { padding: 16px; }
+      .gallery-main { height: 300px; }
+      .gallery-main img { max-height: 100%; width: auto; }
+      .thumbnails { justify-content: center; }
+      .thumb { width: 50px; height: 50px; }
+      .product-title { font-size: 1.2rem; }
+      .price-current { font-size: 1.4rem; }
+      .qty-control { width: 100px; }
+      .buy-panel { padding: 12px; }
+      .buy-panel .btn { font-size: 0.9rem; }
+      .benzer-urunler-container { justify-content: center; }
+      .benzer-urun-kart { width: 140px; }
+      .benzer-urun-img { height: 100px; }
+      .tab-content .urun-detay-text p { font-size: 0.9rem; }
+      .ad-banner { padding: 6px 8px; font-size: 0.9rem; }
+      .countdown span { font-size: 0.8rem; }
     }
-    .navbar-buttons .btn i {
-      color: #000 !important;
-      font-size: 1.2rem !important;
-      line-height: 1 !important;
+    @media (max-width: 576px) {
+      .product-view { padding: 12px; }
+      .gallery-main { height: 250px; }
+      .thumbnails { gap: 4px; }
+      .thumb { width: 40px; height: 40px; }
+      .product-title { font-size: 1.1rem; }
+      .price-current { font-size: 1.3rem; }
+      .qty-control { width: 80px; }
+      .benzer-urun-kart { width: 120px; }
+      .benzer-urun-img { height: 80px; }
+      .navbar-brand { font-size: 1.1rem; }
+      .footer-section { margin-bottom: 20px; }
+      .social-links { justify-content: center; }
     }
-    .navbar-buttons .btn:hover {
-      background-color: #333333 !important;
-      border-color: #333333 !important;
+    /* Küçük ayarlar */
+    .ad-banner{background:linear-gradient(90deg,#025c90,#0177b6);color:#fff;padding:8px 12px}
+    /* Navbar buton ikonlarının beyaz zemin üzerinde görünmesi için */
+    .navbar-buttons .btn i { color: #000 !important; }
+    .navbar-buttons .btn { background-color: transparent !important; border-color: transparent !important; }
+    /* Mobil navbar iyileştirmeleri */
+    @media (max-width: 991px) {
+      .navbar-buttons { margin-top: 10px; }
+      .navbar-buttons .btn { margin: 2px; }
+      .ad-banner { padding: 6px 8px; font-size: 0.9rem; }
     }
-    .navbar-buttons .btn:hover i {
-      color: #fff !important;
+    /* Mobil iyileştirmeleri: sabit alt çubuğun yüksekliği ve vücut alt boşluğu */
+    .mobile-buy-bar{height:62px}
+    @media (max-width: 991px){
+      body{padding-bottom:80px}
     }
-    .navbar-buttons .cart-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      font-size: 0.7rem;
+    /* Thumbnails küçük ekranlarda yatay kaydırılabilir olsun */
+    @media (max-width: 576px){
+      .thumbnails{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+      .thumbnails .thumb{flex:0 0 auto}
     }
-    .ad-banner {
-      background-color: #025c90;
-      color: white;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
-      font-weight: bold;
-      padding: 0 8px;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .countdown {
-      font-size: 0.75rem;
-      margin-left: 8px;
-      display: flex;
-      align-items: center;
-    }
-    .countdown span {
-      display: inline-block;
-      margin: 0 2px;
-      padding: 2px 5px;
-      border-radius: 3px;
-    }
-    .clock-icon {
-      margin-right: 4px;
-      font-size: 0.9rem;
+    /* Ürün fiyatı ve toplamın mobil görünümü */
+    .price-current{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+    .price-current #totalPrice{font-size:0.9rem;color:#6c757d}
+    @media (max-width:768px){
+      .mobile-buy-bar .btn{padding:.5rem .75rem;font-size:0.95rem}
+      .d-grid.gap-2.flex-grow-1 .btn{padding:.5rem .75rem}
     }
   </style>
 </head>
@@ -107,12 +161,17 @@
   </div>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-white sticky-top shadow">
-    <div class="container navbar-container">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-white sticky-top shadow">
+    <div class="container">
       <a class="navbar-brand m-0" href="index.html" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000;">
         MehtapStore
       </a>
-      <div class="navbar-buttons" id="navbarButtons"></div>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="navbar-buttons ms-auto" id="navbarButtons"></div>
+      </div>
     </div>
   </nav>
 
@@ -210,40 +269,42 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-container">
-      <div class="footer-section">
-        <a href="index.html" class="footer-brand-text">MehtapStore</a>
-        <p>Bültenimize abone olun, kampanya ve yeniliklerden ilk siz haberdar olun.</p>
-        <form class="newsletter-form">
-          <input type="email" placeholder="E-posta adresiniz" required>
-          <button type="submit">Abone Ol</button>
-        </form>
-      </div>
-      <div class="footer-section">
-        <h4>Bizi Takip Edin</h4>
-        <div class="social-links">
-          <a href="#" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
-          <a href="#" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
-          <a href="#" target="_blank" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-3 col-md-6 footer-section">
+          <a href="index.html" class="footer-brand-text">MehtapStore</a>
+          <p>Bültenimize abone olun, kampanya ve yeniliklerden ilk siz haberdar olun.</p>
+          <form class="newsletter-form">
+            <input type="email" placeholder="E-posta adresiniz" required>
+            <button type="submit">Abone Ol</button>
+          </form>
         </div>
-      </div>
-      <div class="footer-section">
-        <h4>Hızlı Linkler</h4>
-        <ul class="footer-links">
-          <li><a href="/kullanim-kosullari">Kullanım Koşulları</a></li>
-          <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a></li>
-          <li><a href="/cerez-politikasi">Çerez Politikası</a></li>
-          <li><a href="/iptal-iade">İptal ve İade Koşulları</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h4>İletişim</h4>
-        <ul class="contact-info">
-          <li><i class="fas fa-envelope"></i> info@mehtapstore.com</li>
-          <li><i class="fas fa-phone"></i> 0 (555) 123 45 67</li>
-          <li><i class="fas fa-map-marker-alt"></i> Van, Türkiye</li>
-        </ul>
+        <div class="col-lg-3 col-md-6 footer-section">
+          <h4>Bizi Takip Edin</h4>
+          <div class="social-links">
+            <a href="#" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
+            <a href="#" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+            <a href="#" target="_blank" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 footer-section">
+          <h4>Hızlı Linkler</h4>
+          <ul class="footer-links">
+            <li><a href="/kullanim-kosullari">Kullanım Koşulları</a></li>
+            <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a></li>
+            <li><a href="/cerez-politikasi">Çerez Politikası</a></li>
+            <li><a href="/iptal-iade">İptal ve İade Koşulları</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3 col-md-6 footer-section">
+          <h4>İletişim</h4>
+          <ul class="contact-info">
+            <li><i class="fas fa-envelope"></i> info@mehtapstore.com</li>
+            <li><i class="fas fa-phone"></i> 0 (555) 123 45 67</li>
+            <li><i class="fas fa-map-marker-alt"></i> Van, Türkiye</li>
+          </ul>
+        </div>
       </div>
     </div>
     <div class="copyright">
@@ -517,6 +578,8 @@
       displayOrders();
     }
 
+    
+
     function displayOrders() {
       const ordersList = document.getElementById('ordersList');
       if (!ordersList) {
@@ -554,7 +617,7 @@
                 </table>
                 <div class="text-end">
                   <button class="btn btn-sm btn-info me-2" onclick="printOrderAsPDF('${safeOrderId}')"><i class="fas fa-file-pdf"></i> PDF İndir</button>
-                  ${order.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="cancelOrder('${safeOrderId}')">İptal Et</button>` : ''}
+                  ${order.status === 'pending' ? `<button class="btn btn-danger btn-sm ms-3" onclick="cancelOrder('${safeOrderId}')">İptal Et</button>` : ''}
                 </div>
               </div>
             </div>
@@ -752,70 +815,180 @@
       const stokDurumu = stokMiktari > 0 ? `${stokMiktari} adet` : 'Tükenmiş';
       const sepeteEkleDisabled = stokMiktari <= 0 ? 'disabled' : '';
 
-      const benzerUrunler = urunler
-        .filter(u => u.kategori === urun.kategori && u.id !== urun.id);
+      const benzerUrunler = urunler.filter(u => u.kategori === urun.kategori && u.id !== urun.id).slice(0,8);
 
       mainContent.innerHTML = `
-        <div class="row">
-          <div class="col-md-6 position-relative">
-            <img id="urunResim" class="product-img img-fluid" src="${escapeHTML(urun.resim || 'https://via.placeholder.com/400')}" alt="${escapeHTML(urun.ad || 'Ürün Resmi')}" data-bs-toggle="modal" data-bs-target="#resimModal">
-            <div id="urunBadges" class="product-badges">
-              ${isNew ? '<span class="badge bg-primary text-white">Yeni</span>' : ''}
-              ${urun.indirim ? `<span class="badge bg-danger text-white">%${escapeHTML(String(urun.indirim))} İndirim</span>` : ''}
-              ${urun.ucretsizKargo === true || urun.ucretsizKargo === 'true' ? '<span class="badge bg-success text-white">Ücretsiz Kargo</span>' : ''}
-            </div>
-          </div>
-          
-          <div class="col-md-6">
-            <h5 id="urunAdi" class="pt-3">${escapeHTML(urun.ad || 'Belirtilmemiş')}</h5>
+        <div class="product-view">
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb small mb-0">
+                  <li class="breadcrumb-item"><a href="index.html">Anasayfa</a></li>
+                  <li class="breadcrumb-item"><a href="index.html?kategori=${encodeURIComponent(urun.kategori || '')}">${escapeHTML(urun.kategori || 'Kategori')}</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">${escapeHTML(urun.ad || 'Ürün')}</li>
+                </ol>
+              </nav>
 
-            <p id="urunMarka" class="text-muted mb-1">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
-            <p id="urunKategori" class="text-muted mb-1">Kategori: ${escapeHTML(urun.kategori || 'Belirtilmemiş')}</p>
-            <p id="urunStokKodu" class="text-muted mb-3">Stok Kodu: ${escapeHTML(urun.stokKodu || 'Bilinmiyor')}</p>
-            <p id="urunStok" class="stock-status mb-3 ${stokMiktari <= 0 ? 'stock-out' : ''}">Stok: ${stokDurumu}        </p>
-            </div>
-            <div class="mb-3">
-              <p id="urunFiyat" class="original-price-text ${urun.indirim > 0 ? '' : 'd-none'}">${(urun.fiyat || 0).toFixed(2)} TL</p>
-              <h4 id="urunIndirimliFiyat" class="product-price-text">${indirimliFiyat.toFixed(2)} TL</h4>
-            </div>
-            
-            <div class="d-flex align-items-center gap-3 mb-3">
-              <div class="input-group quantity-input">
-                <button class="btn btn-outline-secondary" type="button" onclick="adetAyarla(-1)">-</button>
-                <input type="number" id="adetInput" class="form-control text-center" value="1" min="1" max="${stokMiktari}">
-                <button class="btn btn-outline-secondary" type="button" onclick="adetAyarla(1)">+</button>
+              <div class="gallery-main" id="galleryMain">
+                <img id="urunResim" src="${escapeHTML(urun.resim || 'https://via.placeholder.com/600')}" alt="${escapeHTML(urun.ad || '')}">
               </div>
-              <button id="sepeteEkleBtn" class="btn btn-primary ${sepeteEkleDisabled}" style="background-color: #EB8220; color: #ffffff;">Sepete Ekle</>
-              </button>
+
+              <div class="thumbnails mt-3 d-flex flex-row flex-wrap gap-2 justify-content-start" id="thumbnails">
+                ${urun.resim ? `<div class="thumb"><img src="${escapeHTML(urun.resim)}" alt="thumb"></div>` : ''}
+                ${Array.isArray(urun.ekResimler) ? urun.ekResimler.map(r=>`<div class="thumb"><img src="${escapeHTML(r)}" alt="thumb"></div>`).join('') : ''}
+              </div>
             </div>
-            <a href="index.html" class="btn btn-outline-secondary mb-3">Geri Dön</a>
-            <div class="accordion" id="urunDetayAccordion">
-              <div class="accordion-item">
-                <h2 class="accordion-header" id="detayHeading">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#detayCollapse" aria-expanded="false" aria-controls="detayCollapse">
-                    Ürün Detay
-                  </button>
-                </h2>
-                <div id="detayCollapse" class="accordion-collapse collapse" aria-labelledby="detayHeading" data-bs-parent="#urunDetayAccordion">
-                  <div class="accordion-body urun-detay-text">
-                    ${formatDetailText(urun.detay)}
+
+            <div class="col-lg-6">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h1 class="product-title mb-1">${escapeHTML(urun.ad || 'Belirtilmemiş')}</h1>
+                  <div class="d-flex align-items-center gap-2 product-meta small">
+                    <div class="text-muted">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</div>
+                    <div class="text-muted">•</div>
+                    <div class="text-muted">Stok Kodu: ${escapeHTML(urun.stokKodu || '-')}</div>
+                  </div>
+                </div>
+                <div class="text-end d-none d-md-block">
+                  <div class="badge-list mb-2">
+                    ${isNew ? '<span class="badge bg-primary">Yeni</span>' : ''}
+                    ${urun.indirim ? `<span class="badge bg-danger">%${escapeHTML(String(urun.indirim))} İndirim</span>` : ''}
+                    ${urun.ucretsizKargo ? '<span class="badge bg-success">Ücretsiz Kargo</span>' : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                  <div class="price-old ${urun.indirim ? '' : 'd-none'}">${(urun.fiyat||0).toFixed(2)} TL</div>
+                  <div class="price-current" data-unit-price="${indirimliFiyat}">
+                    ${indirimliFiyat.toFixed(2)} TL
+                    <div id="totalPrice" class="small text-muted mt-1">Toplam: ${indirimliFiyat.toFixed(2)} TL</div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rating text-warning">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <i class="far fa-star"></i>
+                  </div>
+                  <div class="share-buttons">
+                    <button class="btn btn-sm btn-outline-secondary" title="Paylaş"><i class="fas fa-share-alt"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary" title="Favori"><i class="far fa-heart"></i></button>
+                  </div>
+                </div>
+              </div>
+
+              <p class="mt-1 text-muted">Stok durumu: <strong>${stokDurumu}</strong></p>
+
+              <div class="d-flex gap-3 align-items-center mt-3 mb-3">
+                <!-- Modern adet stepper -->
+                <div class="qty-stepper d-inline-flex align-items-center" role="group" aria-label="Adet kontrolü">
+                  <button id="qtyMinus" class="btn btn-outline-secondary qty-btn" type="button" aria-label="Adet azalt"><i class="bi bi-dash-lg"></i></button>
+                  <input type="number" id="adetInput" class="form-control qty-input text-center" value="1" min="1" max="${stokMiktari}" role="spinbutton" aria-label="Ürün adedi" aria-valuemin="1" aria-valuemax="${stokMiktari}" aria-valuenow="1">
+                  <button id="qtyPlus" class="btn btn-outline-secondary qty-btn" type="button" aria-label="Adet arttır"><i class="bi bi-plus-lg"></i></button>
+                </div>
+                <div class="d-grid gap-2 flex-grow-1">
+                  <button id="sepeteEkleBtn" class="btn btn-lg btn-primary text-white" style="background:var(--primary)" ${sepeteEkleDisabled}><i class="bi bi-cart-plus me-2"></i> Sepete Ekle</button>
+                  <button id="hemenAlBtn" class="btn btn-outline-primary">Hemen Satın Al</button>
+                </div>
+              </div>
+
+              <div class="mt-4">
+                <ul class="nav nav-tabs" id="detailTabs" role="tablist">
+                  <li class="nav-item" role="presentation"><button class="nav-link active" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc" type="button" role="tab">Açıklama</button></li>
+                  <li class="nav-item" role="presentation"><button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs" type="button" role="tab">Özellikler</button></li>
+                  <li class="nav-item" role="presentation"><button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">Değerlendirmeler</button></li>
+                </ul>
+                <div class="tab-content p-3 border rounded-bottom">
+                  <div class="tab-pane fade show active urun-detay-text" id="desc" role="tabpanel">${formatDetailText(urun.detay)}</div>
+                  <div class="tab-pane fade" id="specs" role="tabpanel">
+                    <ul class="list-unstyled">
+                      ${urun.ozellikler ? Object.keys(urun.ozellikler).map(k=>`<li><strong>${escapeHTML(k)}:</strong> ${escapeHTML(String(urun.ozellikler[k]))}</li>`).join('') : '<li class="text-muted">Özellik bilgisi yok.</li>'}
+                    </ul>
+                  </div>
+                  <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <p class="text-muted">Henüz yorum yok.</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="benzer-urunler">
-          <h4>Benzer Ürünler</h4>
-          ${benzerUrunler.length > 0 ? `
-            <div class="benzer-urunler-container">
-              ${benzerUrunler.map(u => olusturBenzerUrunKart(u)).join('')}
+
+          <div class="mt-4 benzer-urunler">
+            <h4>Benzer Ürünler</h4>
+            <div class="row g-2 benzer-urunler-container">
+              ${benzerUrunler.length>0? benzerUrunler.map(u=>`
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+                  ${olusturBenzerUrunKart(u)}
+                </div>
+              `).join('') : '<p class="text-muted">Bu kategoride başka ürün bulunmamaktadır.</p>'}
             </div>
-          ` : '<p class="text-muted">Bu kategoride başka ürün bulunmamaktadır.</p>'}
+          </div>
+
+          <!-- Mobil için sabit satın alma çubuğu -->
+          <div class="mobile-buy-bar d-lg-none d-flex align-items-center justify-content-between p-2 border-top bg-white">
+            <div>
+              <div class="small text-muted">Fiyat</div>
+              <div class="fw-bold">${indirimliFiyat.toFixed(2)} TL</div>
+            </div>
+            <div class="d-flex gap-2" style="min-width:220px">
+              <button id="mobileSepeteEkle" class="btn btn-sm btn-primary w-100" ${sepeteEkleDisabled}><i class="bi bi-cart-plus me-1"></i> Sepete Ekle</button>
+              <button id="mobileHemenAl" class="btn btn-sm btn-outline-primary w-100">Satın Al</button>
+            </div>
+          </div>
         </div>
       `;
-      document.getElementById('modalResim').src = urun.resim || 'https://via.placeholder.com/400';
-      document.getElementById('sepeteEkleBtn').addEventListener('click', () => {
+
+      // Galeri thumbnail etkileşimi
+      document.querySelectorAll('#thumbnails .thumb').forEach(t => t.addEventListener('click', (e)=>{
+        const img = t.querySelector('img');
+        if(img && document.getElementById('urunResim')) document.getElementById('urunResim').src = img.src;
+      }));
+
+      // Modal resim butonu
+      const galleryMain = document.getElementById('galleryMain');
+      galleryMain.addEventListener('click', ()=>{
+        const modalImg = document.getElementById('modalResim');
+        if(modalImg) modalImg.src = document.getElementById('urunResim').src;
+        const m = new bootstrap.Modal(document.getElementById('resimModal'));
+        m.show();
+      });
+
+      // Qty controls
+      document.getElementById('qtyMinus').addEventListener('click', ()=>{ adetAyarla(-1); updateDisplayedTotal(); });
+      document.getElementById('qtyPlus').addEventListener('click', ()=>{ adetAyarla(1); updateDisplayedTotal(); });
+
+      // Update total when quantity input changes and support keyboard arrows
+      const adetInputEl = document.getElementById('adetInput');
+      if (adetInputEl) {
+        const syncQty = ()=>{
+          // ensure aria value and displayed total stay in sync
+          const raw = parseInt(adetInputEl.value, 10);
+          let v = Number.isNaN(raw) ? 1 : raw;
+          const maxStock = parseInt(adetInputEl.max, 10) || parseInt(adetInputEl.getAttribute('aria-valuemax'), 10) || null;
+          if (v < 1) v = 1;
+          if (maxStock && v > maxStock) {
+            v = maxStock;
+            adetInputEl.value = v;
+            bildirimGoster(`Stok yetersiz! Maksimum ${maxStock} adet ekleyebilirsiniz.`, 'warning');
+          }
+          adetInputEl.setAttribute('aria-valuenow', v);
+          updateDisplayedTotal();
+        };
+        adetInputEl.addEventListener('change', syncQty);
+        adetInputEl.addEventListener('input', syncQty);
+        adetInputEl.addEventListener('blur', syncQty);
+        adetInputEl.addEventListener('keydown', (e)=>{
+          if (e.key === 'ArrowUp') { e.preventDefault(); adetAyarla(1); syncQty(); }
+          if (e.key === 'ArrowDown') { e.preventDefault(); adetAyarla(-1); syncQty(); }
+        });
+      }
+
+      // Sepete ekle
+      document.getElementById('sepeteEkleBtn').addEventListener('click', ()=>{
         const adetInput = document.getElementById('adetInput');
         const adet = parseInt(adetInput ? adetInput.value : 1);
         const urunSepet = {
@@ -823,7 +996,7 @@
           ad: urun.ad,
           fiyat: indirimliFiyat,
           adet: adet,
-          resim: urun.resim || 'https://via.placeholder.com/400',
+          resim: urun.resim || '',
           stok: stokMiktari,
           indirim: urun.indirim || 0,
           originalPrice: urun.fiyat || 0,
@@ -831,8 +1004,43 @@
           detay: urun.detay || ''
         };
         if (sepet.ekle(urunSepet) && adetInput) {
+          // güncelleme için tekrar göster (stok değişikliği vb.)
           urunGoster();
         }
+      });
+
+      // Güncel toplamı gösteren fonksiyon
+      function updateDisplayedTotal() {
+        const qtyEl = document.getElementById('adetInput');
+        const priceEl = document.querySelector('.price-current');
+        const totalEl = document.getElementById('totalPrice');
+        if (!qtyEl || !priceEl || !totalEl) return;
+        const qty = parseInt(qtyEl.value) || 1;
+        const unit = parseFloat(priceEl.dataset.unitPrice) || parseFloat(priceEl.textContent) || 0;
+        const total = (unit * qty).toFixed(2);
+        totalEl.textContent = 'Toplam: ' + total + ' TL';
+      }
+
+      // İlk yüklemede toplamı ayarla
+      updateDisplayedTotal();
+
+      // Mobil alt çubuk butonlarını ana butonlara bağla
+      const mobileSepBtn = document.getElementById('mobileSepeteEkle');
+      if (mobileSepBtn) mobileSepBtn.addEventListener('click', ()=>{
+        const mainBtn = document.getElementById('sepeteEkleBtn');
+        if (mainBtn) mainBtn.click();
+      });
+      const mobileBuyBtn = document.getElementById('mobileHemenAl');
+      if (mobileBuyBtn) mobileBuyBtn.addEventListener('click', ()=>{
+        const mainBuy = document.getElementById('hemenAlBtn');
+        if (mainBuy) mainBuy.click();
+      });
+
+      // Hemen al butonu (demo: sepete ekle ve ödeme sayfasına yönlendir)
+      document.getElementById('hemenAlBtn').addEventListener('click', ()=>{
+        const adet = parseInt(document.getElementById('adetInput').value || '1');
+        const urunSepet = { id: urun.id, ad: urun.ad, fiyat: indirimliFiyat, adet, resim: urun.resim || '', stok: stokMiktari };
+        if(sepet.ekle(urunSepet)) window.location.href = 'cart.html';
       });
     }
 
@@ -849,6 +1057,8 @@
           yeniAdet = urun.stok;
         }
         input.value = yeniAdet;
+        // update aria for accessibility
+        try { input.setAttribute('aria-valuenow', Number(yeniAdet)); } catch(e){}
       }
     }
 

@@ -9,97 +9,123 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="css/index-style.css" rel="stylesheet">
   <style>
-      
-body {
-  background-color: #ffffff !important;
-}
-.product-card {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-}
-.brands-section {
-  box-shadow: 0 0px 8px rgba(0, 0, 0, 0.2) !important;
-}
-.product-scroll-item {
-  
-  margin-right: 3px; /* Kartlar arasında isteğe bağlı boşluk */
-}
+    body {
+      background-color: #ffffff !important;
+    }
+    .product-card {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    .brands-section {
+      box-shadow: 0 0px 8px rgba(0, 0, 0, 0.2) !important;
+    }
+    .product-scroll-item {
+      margin-right: 3px;
+    }
 
-/* Navbar ikon ayarları */
-.navbar-buttons .btn{
-  background-color: #fff !important; /* Siyah arka plan */  
-  border-color: #dddddd !important;
-.navbar-buttons .btn[onclick*="cart.html"] i {
-  color: #000 !important; /* Sepet ikonunun beyaz renkte olmasını sağlar */
-}
+    /* Navbar ikon ayarları */
+    .navbar-buttons .btn {
+      background-color: #fff !important;
+      border-color: #dddddd !important;
+    }
+    .navbar-buttons .btn[onclick*="cart.html"] i {
+      color: #000 !important;
+    }
+    .navbar-buttons .btn[onclick*="cart.html"]:hover {
+      background-color: #333333 !important;
+      border-color: #333333 !important;
+    }
+    .navbar-buttons .cart-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+    }
+    .product-image {
+      width: 100%;
+      height: 150px;
+      object-fit: contain;
+      padding: 10px;
+    }
 
-.navbar-buttons .btn[onclick*="cart.html"]:hover {
-  background-color: #333333 !important; /* Hover durumunda hafif gri ton */
-  border-color: #333333 !important;
-}
+    /* Geri sayım bantı */
+    .ad-banner {
+      background-color: #025c90;
+      color: white;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 0 8px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .countdown {
+      font-size: 0.75rem;
+      margin-left: 8px;
+      display: flex;
+      align-items: center;
+    }
+    .countdown span {
+      display: inline-block;
+      margin: 0 2px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    .clock-icon {
+      margin-right: 4px;
+      font-size: 0.9rem;
+    }
 
-.navbar-buttons .cart-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-}
-</style>
-<style>
-        .ad-banner {
-            background-color: #025c90; /* Koyu mavi */
-            color: white;
-            height: 40px; /* Yükseklik 40px */
-            display: flex;
-            align-items: center; /* Dikeyde ortala */
-            justify-content: center; /* Yatayda ortala */
-            font-size: 0.75rem; /* Yazı boyutunu küçülttük */
-            font-weight: bold;
-            padding: 0 8px; /* Padding */
-            overflow: hidden; /* Taşmayı önle */
-            white-space: nowrap; /* Tek satırda tut */
-        }
-        .countdown {
-            font-size: 0.75rem; /* Geri sayım yazı boyutu */
-            margin-left: 8px;
-            display: flex;
-            align-items: center;
-        }
-        .countdown span {
-            display: inline-block;
-            margin: 0 2px;
-            
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        .clock-icon {
-            margin-right: 4px;
-            font-size: 0.9rem;
-        }
-    </style>
+    /* Vitrin kaydırma */
+    .product-scroll-container {
+      display: flex;
+      overflow-x: auto;
+      padding: 10px 0;
+      gap: 12px;
+      scrollbar-width: thin;
+    }
+    .product-scroll-container::-webkit-scrollbar {
+      height: 6px;
+    }
+    .product-scroll-container::-webkit-scrollbar-thumb {
+      background-color: #aaa;
+      border-radius: 3px;
+    }
 
+    /* Rozet animasyonu */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.3); }
+      100% { transform: scale(1); }
+    }
+    .cart-badge.pulse {
+      animation: pulse 0.5s ease-out;
+    }
+  </style>
 </head>
-<body class="#">
+<body>
   <div id="sepetBildirim" class="alert alert-success text-center py-2 fixed-top w-100 d-none" style="z-index: 9999;">
     Sepete eklendi!
   </div>
- <!-- Reklam Bantı -->
-    <div class="ad-banner">
-        <span>Tüm Ürünlerde %20 İndirim Fırsatını Kaçırma!</span>
-        <div class="countdown" id="countdown">
-            <i class="bi bi-clock clock-icon"></i>
-            <span id="hours">00</span>:
-            <span id="minutes">00</span>:
-            <span id="seconds">00</span>
-        </div>
+
+  <div class="ad-banner">
+    <span>Tüm Ürünlerde %20 İndirim Fırsatını Kaçırma!</span>
+    <div class="countdown" id="countdown">
+      <i class="bi bi-clock clock-icon"></i>
+      <span id="hours">00</span>:<span id="minutes">00</span>:<span id="seconds">00</span>
     </div>
+  </div>
+
   <nav class="navbar navbar-dark bg-white sticky-top shadow">
     <div class="container navbar-container">
-    <a class="navbar-brand m-0" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600;">
-  <a class="navbar-brand" href="index.html" style="color: #000000;">MehtapStore
-</a>       
-    <div class="navbar-buttons" id="navbarButtons"></div>
-</div>
+      <a class="navbar-brand m-0" href="index.html" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000;">
+        MehtapStore
+      </a>
+      <div class="navbar-buttons" id="navbarButtons"></div>
+    </div>
   </nav>
- 
+
   <div class="offcanvas offcanvas-end" tabindex="-1" id="kategoriOffcanvas" aria-labelledby="kategoriOffcanvasLabel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title" id="kategoriOffcanvasLabel">Kategoriler</h5>
@@ -121,47 +147,21 @@ body {
         </div>
         <div class="modal-body">
           <ul class="nav nav-tabs mb-3">
-            <li class="nav-item">
-              <a class="nav-link active" data-bs-toggle="tab" href="#profileTab">Profil</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="tab" href="#passwordTab">Şifre Değiştir</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="tab" href="#ordersTab">Siparişler</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="tab" href="#addressesTab">Adreslerim</a>
-            </li>
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#profileTab">Profil</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#passwordTab">Şifre Değiştir</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ordersTab">Siparişler</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#addressesTab">Adreslerim</a></li>
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade show active" id="profileTab">
-              <div class="mb-3">
-                <label class="form-label">Kullanıcı Adı</label>
-                <input type="text" class="form-control" id="profileUsername" readonly>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">E-posta</label>
-                <input type="email" class="form-control" id="profileEmail" readonly>
-              </div>
+              <div class="mb-3"><label class="form-label">Kullanıcı Adı</label><input type="text" class="form-control" id="profileUsername" readonly></div>
+              <div class="mb-3"><label class="form-label">E-posta</label><input type="email" class="form-control" id="profileEmail" readonly></div>
             </div>
             <div class="tab-pane fade" id="passwordTab">
               <form id="changePasswordForm" novalidate>
-                <div class="mb-3">
-                  <label for="currentPassword" class="form-label">Mevcut Şifre</label>
-                  <input type="password" class="form-control" id="currentPassword" required>
-                  <div class="invalid-feedback">Mevcut şifre yanlış.</div>
-                </div>
-                <div class="mb-3">
-                  <label for="newPassword" class="form-label">Yeni Şifre</label>
-                  <input type="password" class="form-control" id="newPassword" required minlength="6">
-                  <div class="invalid-feedback">Yeni şifre en az 6 karakter olmalı.</div>
-                </div>
-                <div class="mb-3">
-                  <label for="confirmNewPassword" class="form-label">Yeni Şifreyi Onayla</label>
-                  <input type="password" class="form-control" id="confirmNewPassword" required>
-                  <div class="invalid-feedback">Şifreler eşleşmiyor.</div>
-                </div>
+                <div class="mb-3"><label for="currentPassword" class="form-label">Mevcut Şifre</label><input type="password" class="form-control" id="currentPassword" required><div class="invalid-feedback">Mevcut şifre yanlış.</div></div>
+                <div class="mb-3"><label for="newPassword" class="form-label">Yeni Şifre</label><input type="password" class="form-control" id="newPassword" required minlength="6"><div class="invalid-feedback">Yeni şifre en az 6 karakter olmalı.</div></div>
+                <div class="mb-3"><label for="confirmNewPassword" class="form-label">Yeni Şifreyi Onayla</label><input type="password" class="form-control" id="confirmNewPassword" required><div class="invalid-feedback">Şifreler eşleşmiyor.</div></div>
                 <button type="submit" class="btn btn-primary w-100">Şifreyi Değiştir</button>
               </form>
             </div>
@@ -190,21 +190,9 @@ body {
         <div class="modal-body">
           <div id="savedAddresses" class="mb-3"></div>
           <form id="addressForm" novalidate>
-            <div class="mb-3">
-              <label for="fullName" class="form-label">Ad Soyad</label>
-              <input type="text" class="form-control" id="fullName" required>
-              <div class="invalid-feedback">Lütfen adınızı ve soyadınızı girin.</div>
-            </div>
-            <div class="mb-3">
-              <label for="address" class="form-label">Açık Adres</label>
-              <textarea class="form-control" id="address" rows="4" required></textarea>
-              <div class="invalid-feedback">Lütfen teslimat adresinizi girin.</div>
-            </div>
-            <div class="mb-3">
-              <label for="phone" class="form-label">Telefon Numarası</label>
-              <input type="tel" class="form-control" id="phone" required pattern="[0-9]{10}">
-              <div class="invalid-feedback">Lütfen geçerli bir 10 haneli telefon numarası girin (örn: 5551234567).</div>
-            </div>
+            <div class="mb-3"><label for="fullName" class="form-label">Ad Soyad</label><input type="text" class="form-control" id="fullName" required><div class="invalid-feedback">Lütfen adınızı ve soyadınızı girin.</div></div>
+            <div class="mb-3"><label for="address" class="form-label">Açık Adres</label><textarea class="form-control" id="address" rows="4" required></textarea><div class="invalid-feedback">Lütfen teslimat adresinizi girin.</div></div>
+            <div class="mb-3"><label for="phone" class="form-label">Telefon Numarası</label><input type="tel" class="form-control" id="phone" required pattern="[0-9]{10}"><div class="invalid-feedback">Lütfen geçerli bir 10 haneli telefon numarası girin (örn: 5551234567).</div></div>
             <button type="submit" class="btn btn-primary w-100">Adresi Kaydet</button>
           </form>
         </div>
@@ -222,10 +210,7 @@ body {
       </div>
     </div>
 
-
-
-    <!-- Markalar Bölümü -->
-    <section class="brands-sectionbg-white py-2"">
+    <section class="brands-section bg-white py-2">
       <div class="container">
         <h2 class="text-center mb-4">Markalar</h2>
         <div class="brands-scroll-container" id="brandsList"></div>
@@ -233,8 +218,8 @@ body {
     </section>
 
     <section class="product-carousel-section bg-white">
-  <div id="vitrinBloklari"></div>
-</section>
+      <div id="vitrinBloklari"></div>
+    </section>
 
     <div class="row row-cols-2 g-2 productList" id="productList"></div>
   </main>
@@ -308,6 +293,7 @@ body {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
   <script src="DejaVuSans.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 
   <script>
     // --- Yardımcı Fonksiyonlar ---
@@ -368,31 +354,28 @@ body {
       window.location.assign('login.html');
     }
 
-    // --- Sipariş Yönetimi (PDF Kısmı) ---
-    function printOrderAsPDF(orderId) {
-      try {
+     // --- Sipariş Yönetimi (PDF Kısmı) ---
+function printOrderAsPDF(orderId) {
+    try {
         let orders = safeParseJSON('orders', []);
         const order = orders.find(o => o.id === orderId);
 
         if (!order) {
-          bildirimGoster('Sipariş bulunamadı!', 'danger');
-          return;
+            bildirimGoster('Sipariş bulunamadı!', 'danger');
+            return;
         }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
 
+        // Yazı tipi ayarları
         doc.addFileToVFS("DejaVuSans.ttf", DejaVuSans);
         doc.addFont("DejaVuSans.ttf", "DejaVuSans", "normal");
-        doc.setFont("DejaVuSans", "normal");
-        
-        doc.addFileToVFS("DejaVuSansBold.ttf", DejaVuSans);
-        doc.addFont("DejaVuSansBold.ttf", "DejaVuSans-Bold", "bold");
-        doc.setFont("DejaVuSans-Bold", "bold");
+        doc.setFont("DejaVuSans");
 
         const primaryColor = '#007bff';
         const secondaryColor = '#6c757d';
-        const textColor = '#343a00';
+        const textColor = '#343a40';
         const lightBgColor = '#f8f9fa';
 
         let currentY = 20;
@@ -411,7 +394,6 @@ body {
         doc.setFillColor(lightBgColor);
         doc.rect(leftMargin, currentY - 5, availableWidth, 45, 'F');
 
-        doc.setFont("DejaVuSans", "normal");
         doc.setFontSize(12);
         doc.setTextColor(textColor);
         doc.text('Müşteri Bilgileri', leftMargin + 5, currentY);
@@ -442,9 +424,9 @@ body {
         orderInfoY += defaultLineHeight;
 
         const statusText = {
-          pending: 'Beklemede',
-          shipped: 'Kargoda',
-          delivered: 'Teslim Edildi'
+            pending: 'Beklemede',
+            shipped: 'Kargoda',
+            delivered: 'Teslim Edildi'
         }[order.status] || 'Bilinmeyen Durum';
         doc.text(`Durum: ${statusText}`, orderInfoRightEdgeX, orderInfoY, { align: 'right' });
         orderInfoY += 15;
@@ -453,102 +435,285 @@ body {
 
         const tableData = [];
         let totalOriginalPrice = 0;
-        let totalDiscountAmount = 0;
-        let totalNetPrice = 0;
+        let totalItemDiscountAmount = 0;
+        let netTotalBeforeManualDiscount = 0;
 
         const urunler = safeParseJSON('urunler', []);
         if (order.items && Array.isArray(order.items)) {
-          order.items.forEach(item => {
-            const urun = urunler.find(u => u.id === item.id);
-            const originalPrice = Number(urun?.fiyat || item.fiyat);
-            const indirimOrani = Number(item.indirim) || 0;
-            const netFiyat = Number(item.fiyat);
-            const adet = Number(item.adet) || 0;
-            const indirimTutari = (originalPrice - netFiyat) * adet;
-            totalOriginalPrice += originalPrice * adet;
-            totalDiscountAmount += indirimTutari;
-            totalNetPrice += netFiyat * adet;
+            order.items.forEach(item => {
+                const urun = urunler.find(u => u.id === item.id);
+                
+                const indirimOrani = Number(item.indirim) || 0;
+                const netFiyat = Number(item.fiyat);
+                const adet = Number(item.adet) || 0;
+                
+                let originalPrice;
+                if (urun && urun.fiyat) {
+                    originalPrice = Number(urun.fiyat);
+                } else if (indirimOrani > 0 && netFiyat > 0) {
+                    originalPrice = netFiyat / (1 - indirimOrani / 100);
+                } else {
+                    originalPrice = netFiyat;
+                }
 
-            const productName = escapeHTML(item.ad || '');
+                const urunItemDiscount = (originalPrice - netFiyat) * adet;
+                
+                totalOriginalPrice += originalPrice * adet;
+                totalItemDiscountAmount += urunItemDiscount;
+                netTotalBeforeManualDiscount += netFiyat * adet;
 
-            tableData.push([
-              productName,
-              `${adet}`,
-              `${originalPrice.toFixed(2)} `,
-              `%${indirimOrani}`,
-              `${netFiyat.toFixed(2)} `,
-              `${(netFiyat * adet).toFixed(2)} `
-            ]);
-          });
+                const productName = escapeHTML(item.ad || '');
+
+                tableData.push([
+                    productName,
+                    `${adet}`,
+                    "Adet",
+                    `${originalPrice.toFixed(2)} `,
+                    `%${indirimOrani}`,
+                    `${netFiyat.toFixed(2)} `,
+                    `${(netFiyat * adet).toFixed(2)} `
+                ]);
+            });
+        }
+        
+        // MANUEL İNDİRİM HESAPLAMASINI DÜZELTTİM
+        let manualDiscountPercent = 0;
+        let manualDiscountAmount = 0;
+        let finalTotal = Number(order.total) || netTotalBeforeManualDiscount;
+
+        // Eğer order objesinde manuel indirim bilgisi varsa onu kullan
+        if (order.manualDiscountPercent !== undefined) {
+            manualDiscountPercent = Number(order.manualDiscountPercent) || 0;
+            manualDiscountAmount = Number(order.manualDiscountAmount) || 
+                                  (manualDiscountPercent > 0 ? netTotalBeforeManualDiscount * (manualDiscountPercent / 100) : 0);
+        } else {
+            // Eski siparişler için geriye dönük hesaplama
+            // Eğer netTotalBeforeManualDiscount ile finalTotal arasında fark varsa bu manuel indirimdir
+            const calculatedManualDiscount = netTotalBeforeManualDiscount - finalTotal;
+            if (calculatedManualDiscount > 0) {
+                manualDiscountAmount = calculatedManualDiscount;
+                manualDiscountPercent = (manualDiscountAmount / netTotalBeforeManualDiscount) * 100;
+            }
         }
 
+        const totalDiscountAmount = totalItemDiscountAmount + manualDiscountAmount;
+
         doc.autoTable({
-          startY: currentY,
-          head: [['Ürün Adı', 'Adet', 'Fiyat', 'İndirim', 'Net Fiyat', 'Toplam']],
-          body: tableData,
-          theme: 'striped',
-          styles: {
-            font: 'DejaVuSans',
-            fontSize: 9,
-            cellPadding: 3,
-            lineColor: '#dee2e6',
-            fontStyle: 'bold',
-            lineWidth: 0.1,
-            textColor: textColor
-          },
-          headStyles: {
-            fillColor: primaryColor,
-            textColor: '#ffffff',
-            fontStyle: 'bold',
-            halign: 'center'
-          },
-          bodyStyles: {
-            halign: 'left'
-          },
-          columnStyles: {
-            0: { cellWidth: 95, overflow: 'linebreak' },
-            1: { cellWidth: 15, halign: 'center' },
-            2: { cellWidth: 23, halign: 'right' },
-            3: { cellWidth: 19, halign: 'center' },
-            4: { cellWidth: 23, halign: 'right' },
-            5: { cellWidth: 23, halign: 'right' }
-          },
-          margin: { left: leftMargin, right: rightMargin },
-          didDrawPage: function(data) {
-            doc.setFont('DejaVuSans', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(secondaryColor);
-            doc.text(`Sayfa ${doc.internal.getNumberOfPages()}`, pageWidth - rightMargin, doc.internal.pageSize.height - 10, {
-              align: 'right'
-            });
-          }
+            startY: currentY,
+            head: [['Ürün Adı', 'Adet', 'Birim', 'Fiyat', 'İndirim', 'Net Fiyat', 'Toplam']],
+            body: tableData,
+            theme: 'striped',
+            styles: {
+                font: 'DejaVuSans',
+                fontSize: 9,
+                cellPadding: 3,
+                lineColor: '#dee2e6',
+                lineWidth: 0.1,
+                textColor: textColor
+            },
+            headStyles: {
+                fillColor: primaryColor,
+                textColor: '#ffffff',
+                halign: 'center',
+                fontSize: 10
+            },
+            bodyStyles: {
+                halign: 'left'
+            },
+            columnStyles: {
+                0: { cellWidth: 95, overflow: 'linebreak' },
+                1: { cellWidth: 15, halign: 'center' },
+                2: { cellWidth: 15, halign: 'center' },
+                3: { cellWidth: 23, halign: 'right' },
+                4: { cellWidth: 19, halign: 'center' },
+                5: { cellWidth: 23, halign: 'right' },
+                6: { cellWidth: 23, halign: 'right' }
+            },
+            margin: { left: leftMargin, right: rightMargin },
+            didDrawPage: function(data) {
+                doc.setFontSize(8);
+                doc.setTextColor(secondaryColor);
+                doc.text(`Sayfa ${doc.internal.getNumberOfPages()}`, pageWidth - rightMargin, doc.internal.pageSize.height - 10, {
+                    align: 'right'
+                });
+            }
         });
 
         currentY = doc.autoTable.previous.finalY + 10;
 
-        doc.setFont('DejaVuSans-Bold', 'bold');
-        doc.setFontSize(12);
+        doc.setFontSize(10);
         doc.setTextColor(textColor);
 
         const summaryRightAlignX = pageWidth - rightMargin - 2;
-        const summaryLineHeight = 8;
-
-        const totalOriginalPriceText = `Genel Toplam: ${totalOriginalPrice.toFixed(2)} `;
-        const totalDiscountAmountText = `Toplam İndirim: ${totalDiscountAmount.toFixed(2)} `;
-        const totalNetPriceText = `Kalan Net Tutar: ${totalNetPrice.toFixed(2)} `;
-
-        doc.text(totalOriginalPriceText, summaryRightAlignX - doc.getTextWidth(totalOriginalPriceText), currentY);
+        const summaryLineHeight = 6;
+        
+        // Brüt Tutar
+        const totalOriginalPriceText = `Toplam Brüt Tutar: ${totalOriginalPrice.toFixed(2)} TL`;
+        doc.text(totalOriginalPriceText, summaryRightAlignX, currentY, { align: 'right' });
         currentY += summaryLineHeight;
-        doc.text(totalDiscountAmountText, summaryRightAlignX - doc.getTextWidth(totalDiscountAmountText), currentY);
+        
+        // Bireysel Ürün İndirimi
+        const itemDiscountText = `Ürün İndirimi: -${totalItemDiscountAmount.toFixed(2)} TL`;
+        doc.text(itemDiscountText, summaryRightAlignX, currentY, { align: 'right' });
         currentY += summaryLineHeight;
-        doc.text(totalNetPriceText, summaryRightAlignX - doc.getTextWidth(totalNetPriceText), currentY);
+        
+        // Ara Toplam:
+        const netBeforeManualText = `Ara Toplam: ${netTotalBeforeManualDiscount.toFixed(2)} TL`;
+        doc.text(netBeforeManualText, summaryRightAlignX, currentY, { align: 'right' });
+        currentY += summaryLineHeight;
+        
+        // ÖZEL İNDİRİM - HER ZAMAN GÖSTER (0 TL bile olsa)
+        doc.setTextColor('#dc3545');
+        const manualDiscountText = `Özel İndirimi (%${manualDiscountPercent.toFixed(0)}): -${manualDiscountAmount.toFixed(2)} TL`;
+        doc.text(manualDiscountText, summaryRightAlignX, currentY, { align: 'right' });
+        currentY += summaryLineHeight;
+
+        // Ayırıcı çizgi
+        doc.setLineWidth(0.5);
+        doc.setDrawColor('#343a40');
+        doc.line(pageWidth - rightMargin - 60, currentY - 2, summaryRightAlignX, currentY - 2); 
+        
+        // Ödenecek Net Tutar
+        doc.setFontSize(14);
+        doc.setTextColor(primaryColor);
+        const finalTotalText = `Ödenecek Net Tutar: ${finalTotal.toFixed(2)} TL`;
+        doc.text(finalTotalText, summaryRightAlignX, currentY + 4, { align: 'right' });
 
         doc.save(`siparis_${escapeHTML(orderId)}.pdf`);
-      } catch (err) {
+        
+        bildirimGoster('PDF başarıyla indirildi!', 'success');
+        
+    } catch (err) {
         console.error('PDF oluşturma hatası:', err);
-        bildirimGoster('PDF oluşturulamadı!', 'danger');
+        bildirimGoster('PDF oluşturulamadı! Hata: ' + err.message, 'danger');
+    }
+}
+
+// Siparişi Excel (.xlsx) olarak indir (PDF ile aynı formatta özet ve sütunlar)
+function exportOrderToExcel(orderId) {
+  try {
+    if (typeof XLSX === 'undefined') {
+      console.error('SheetJS (XLSX) kütüphanesi tanımsız.');
+      bildirimGoster('Excel kütüphanesi yüklenemedi. Lütfen internet bağlantınızı veya CDN yüklemesini kontrol edin.', 'danger');
+      return;
+    }
+    console.log('exportOrderToExcel çağrıldı, orderId=', orderId);
+    const orders = safeParseJSON('orders', []);
+    const order = orders.find(o => o.id === orderId || String(o.id) === String(orderId));
+    console.log('Bulunan order:', order);
+    if (!order) {
+      bildirimGoster('Sipariş bulunamadı!', 'danger');
+      return;
+    }
+
+    const urunler = safeParseJSON('urunler', []);
+
+    let totalOriginalPrice = 0;
+    let totalItemDiscountAmount = 0;
+    let netTotalBeforeManualDiscount = 0;
+
+    const rows = (order.items || []).map(item => {
+      const urun = urunler.find(u => u.id === item.id) || {};
+      const indirimOrani = Number(item.indirim) || 0;
+      const netFiyat = Number(item.fiyat) || 0;
+      const adet = Number(item.adet) || 0;
+      const stokKodu = item.stokKodu || urun.stokKodu || urun.id || '';
+
+      let originalPrice;
+      if (urun && urun.fiyat) {
+        originalPrice = Number(urun.fiyat);
+      } else if (indirimOrani > 0 && netFiyat > 0) {
+        originalPrice = netFiyat / (1 - indirimOrani / 100);
+      } else {
+        originalPrice = netFiyat;
+      }
+
+      const urunItemDiscount = (originalPrice - netFiyat) * adet;
+      totalOriginalPrice += originalPrice * adet;
+      totalItemDiscountAmount += urunItemDiscount;
+      netTotalBeforeManualDiscount += netFiyat * adet;
+
+      return {
+        'Ürün Kodu': stokKodu,
+        'Ürün Adı': item.ad || urun.ad || '',
+        'Adet': adet,
+        'Birim': 'Adet',
+        'Fiyat': Number(originalPrice.toFixed(2)),
+        'İndirim': `%${indirimOrani}`,
+        'Net Fiyat': Number(netFiyat.toFixed(2)),
+        'Toplam': Number((netFiyat * adet).toFixed(2))
+      };
+    });
+
+    // Manuel indirim hesaplama (PDF ile uyumlu)
+    let manualDiscountPercent = 0;
+    let manualDiscountAmount = 0;
+    let finalTotal = Number(order.total) || netTotalBeforeManualDiscount;
+
+    if (order.manualDiscountPercent !== undefined) {
+      manualDiscountPercent = Number(order.manualDiscountPercent) || 0;
+      manualDiscountAmount = Number(order.manualDiscountAmount) || (manualDiscountPercent > 0 ? netTotalBeforeManualDiscount * (manualDiscountPercent / 100) : 0);
+    } else {
+      const calculatedManualDiscount = netTotalBeforeManualDiscount - finalTotal;
+      if (calculatedManualDiscount > 0) {
+        manualDiscountAmount = calculatedManualDiscount;
+        manualDiscountPercent = (manualDiscountAmount / netTotalBeforeManualDiscount) * 100;
       }
     }
+
+    const totalDiscountAmount = totalItemDiscountAmount + manualDiscountAmount;
+
+    // Toplam satırlarını ekle
+    rows.push({}); // Boş satır
+    rows.push({
+      'Ürün Kodu': '',
+      'Ürün Adı': 'Toplam Brüt Tutar',
+      'Adet': '',
+      'Birim': '',
+      'Fiyat': '',
+      'İndirim': '',
+      'Net Fiyat': '',
+      'Toplam': Number(totalOriginalPrice.toFixed(2))
+    });
+    rows.push({
+      'Ürün Kodu': '',
+      'Ürün Adı': 'Toplam İndirim',
+      'Adet': '',
+      'Birim': '',
+      'Fiyat': '',
+      'İndirim': '',
+      'Net Fiyat': '',
+      'Toplam': Number(totalDiscountAmount.toFixed(2))
+    });
+    rows.push({
+      'Ürün Kodu': '',
+      'Ürün Adı': 'Net Tutar',
+      'Adet': '',
+      'Birim': '',
+      'Fiyat': '',
+      'İndirim': '',
+      'Net Fiyat': '',
+      'Toplam': Number(finalTotal.toFixed(2))
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows, { header: ['Ürün Kodu','Ürün Adı','Adet','Birim','Fiyat','İndirim','Net Fiyat','Toplam'] });
+    ws['!cols'] = [ { wch: 15 }, { wch: 40 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 14 } ];
+    XLSX.utils.book_append_sheet(wb, ws, 'Sipariş');
+
+    const filename = `siparis_${String(order.id).replace(/\s+/g, '_')}.xlsx`;
+    try {
+      XLSX.writeFile(wb, filename);
+      bildirimGoster('Excel dosyası indiriliyor...', 'success');
+    } catch (writeErr) {
+      console.error('XLSX.writeFile hatası:', writeErr);
+      bildirimGoster('Excel dosyası oluşturulurken hata oluştu. Konsolu kontrol edin.', 'danger');
+    }
+  } catch (err) {
+    console.error('Excel oluşturma hatası:', err);
+    bildirimGoster('Excel oluşturulamadı! Konsolu kontrol edin.', 'danger');
+  }
+}
 
     function displayOrders() {
       const ordersList = document.getElementById('ordersList');
@@ -576,12 +741,15 @@ body {
           delivered: { text: 'Teslim Edildi', class: 'bg-success' }
         }[order.status] || { text: 'Bilinmeyen Durum', class: 'bg-secondary' };
 
-        let totalNetPrice = 0;
+        let individualItemSum = 0;
         if (order.items && Array.isArray(order.items)) {
-          totalNetPrice = order.items.reduce((sum, item) => {
+          individualItemSum = order.items.reduce((sum, item) => {
             return sum + (Number(item.fiyat || 0) * Number(item.adet || 0));
           }, 0);
         }
+      
+        const finalOrderTotal = Number(order.total) || individualItemSum;
+        const manualDiscountAmount = individualItemSum - finalOrderTotal;
 
         const orderElement = document.createElement('div');
         orderElement.className = 'accordion-item';
@@ -613,16 +781,20 @@ body {
                           <small>Adet: ${item.adet || 1}</small><br>
                           <small>Fiyat: ₺${orijinalFiyat.toFixed(2)}</small>
                           ${indirim ? `<br><small>İndirim: %${indirim}</small>` : ''}
-                          ${indirim ? `<br><span class="text-warning">İndirimli: ₺${indirimliFiyat.toFixed(2)}</span>` : ''}
+                          ${indirim ? `<br><span class="text-warning">İndirimli: ₺${indirimliFiyat.toFixed(2)}</span></small>` : ''}
                         </p>
                       </div>
                     </li>`;
                 }).join('')}
               </ul>
-              <p><strong>Toplam:</strong> ₺${totalNetPrice.toFixed(2)}</p>
+              ${manualDiscountAmount > 0 ? `<p><strong>Ara Toplam (Özel):</strong> ₺${individualItemSum.toFixed(2)}</p><p><strong>Özel İndirimi:</strong> <span class="text-danger">- ₺${manualDiscountAmount.toFixed(2)}</span></p>` : ''}
+              <p><strong>ÖDENEN NET TUTAR:</strong> <span class="text-success fw-bold">₺${finalOrderTotal.toFixed(2)}</span></p>
               <div class="text-end">
                 <button class="btn btn-sm btn-info me-2 print-order" data-order-id="${safeOrderId}">
                   <i class="fas fa-file-pdf"></i> PDF İndir
+                </button>
+                <button class="btn btn-sm btn-success me-2 excel-order" data-order-id="${safeOrderId}">
+                  <i class="fas fa-file-excel"></i> Excel İndir
                 </button>
                 ${order.status === 'pending' ? `
                   <button class="btn btn-danger btn-sm cancel-order" data-order-id="${safeOrderId}">Siparişi İptal Et</button>
@@ -636,6 +808,10 @@ body {
 
       document.querySelectorAll('.print-order').forEach(button => {
         button.addEventListener('click', () => printOrderAsPDF(button.dataset.orderId));
+      });
+
+      document.querySelectorAll('.excel-order').forEach(button => {
+        button.addEventListener('click', () => exportOrderToExcel(button.dataset.orderId));
       });
 
       document.querySelectorAll('.cancel-order').forEach(button => {
@@ -1080,32 +1256,38 @@ body {
           etiketlerHtml += `</div>`;
 
           blockHtml += `
-            <div class="product-scroll-item">
-              <div class="product-card shadow-sm h-100 position-relative">
-                <img src="${escapeHTML(urun.resim)}" class="card-img-top product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/160'">
+            <div class="product-scroll-item" data-urun-id="${escapeHTML(urun.id)}">
+              <div class="card product-card h-100 border-0 shadow-sm position-relative">
                 ${etiketlerHtml}
-                <div class="card-body text-center d-flex flex-column">
+                <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/160'">
+                <div class="card-body d-flex flex-column text-center">
                   <h5 class="card-title">${escapeHTML(urun.ad)}</h5>
                   <p class="card-text text-muted small">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
                   <p class="card-text text-muted small">${stokDurumu}</p>
-                  ${urun.indirim > 0 ? `
-                    <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
-                    <p class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</p>
-                  ` : `
-                    <p class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
-                  `}
-                  <div class="d-flex justify-content-center gap-2 mt-auto">
-                    <a href="urun-detay.html?id=${escapeHTML(urun.id)}" class="btn btn-outline-primary btn-sm">Detaylar</a>
-                    <button class="btn btn-success btn-sm sepete-ekle-carousel"
-                            data-urun-id="${escapeHTML(urun.id)}"
-                            data-urun-ad="${escapeHTML(urun.ad)}"
-                            data-urun-fiyat="${indirimliFiyat}"
-                            data-urun-resim="${escapeHTML(urun.resim)}"
-                            data-urun-stok="${Number(urun.stok || 0)}"
-                            data-urun-indirim="${Number(urun.indirim || 0)}"
-                            ${disableButton}>
-                      <i class="fas fa-shopping-cart"></i> Ekle
-                    </button>
+                  <div class="text-center mt-auto">
+                    ${urun.indirim > 0 ? `
+                      <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
+                      <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</h4>
+                    ` : `
+                      <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
+                    `}
+                    <div class="d-flex flex-column align-items-center gap-0">
+                      <div class="input-group input-group-sm" style="width: 100px;">
+                        <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
+                        <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}">
+                        <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}">+</button>
+                      </div>
+                      <button class="btn btn-sm btn-outline-secondary sepete-ekle-carousel mt-2" style="background-color: #EB8220; color: #ffffff;"
+                        data-urun-id="${escapeHTML(urun.id)}"
+                        data-urun-ad="${escapeHTML(urun.ad)}"
+                        data-urun-fiyat="${indirimliFiyat}"
+                        data-urun-resim="${escapeHTML(urun.resim)}"
+                        data-urun-stok="${Number(urun.stok || 0)}"
+                        data-urun-indirim="${Number(urun.indirim || 0)}"
+                        ${disableButton}>
+                        <i class="bi bi-cart-plus"></i> Sepete Ekle
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1129,6 +1311,19 @@ body {
       vitrinBloklari.innerHTML = hasContent ?
         output :
         '<p class="text-muted text-center w-100"></p>';
+
+      // Vitrin kartlarına tıklama davranışı ekle (sepete ekle/adet kontrollerine tıklamayı hariç tut)
+      document.querySelectorAll('.product-scroll-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.sepete-ekle-carousel') || e.target.closest('.input-group') || e.target.classList.contains('azalt') || e.target.classList.contains('artir')) {
+            return; // kullanıcı sepete ekleme veya adet kontrolü ile etkileşime geçti
+          }
+          const id = item.dataset.urunId;
+          if (id) {
+            window.location.href = `urun-detay.html?id=${encodeURIComponent(id)}`;
+          }
+        });
+      });
 
       document.querySelectorAll('.sepete-ekle-carousel').forEach(button => {
         button.addEventListener('click', function() {
@@ -1392,6 +1587,9 @@ body {
           `;
         } else {
           navbarButtons.innerHTML = `
+            <a href="index.html" class="btn btn-outline-light btn-sm btn-icon-only" title="Geri Dön" aria-label="Geri Dön">
+              <i class="bi bi-arrow-left"></i>
+            </a>
             <a href="kayit.html" class="btn btn-outline-light btn-sm btn-icon-only" title="Kayıt Ol"><i class="bi bi-person-plus"></i></a>
             <a href="login.html" class="btn btn-outline-light btn-sm btn-icon-only" title="Giriş Yap"><i class="bi bi-box-arrow-in-right"></i></a>
             <button class="btn btn-light position-relative btn-sm btn-icon-only" onclick="window.location.href='cart.html';" title="Sepet">
@@ -1601,5 +1799,12 @@ body {
         setInterval(updateCountdown, 1000);
         updateCountdown(); // İlk çalıştırma
     </script>
+    
+      
 </body>
 </html>
+
+
+
+    
+
