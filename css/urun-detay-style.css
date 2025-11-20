@@ -103,6 +103,7 @@
     text-overflow: ellipsis; /* Uzun başlıklar için üç nokta */
     display: -webkit-box;
     -webkit-line-clamp: 2; /* Maksimum 2 satır */
+    line-clamp: 2; /* Standart özellik (uyumluluk için eklendi) */
     -webkit-box-orient: vertical;
 }
 
@@ -314,6 +315,87 @@
     border-radius: 2px;
   }
 }
+/* Yeni modern düzen için ek stiller */
+.product-view { --primary: #EB8220; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); }
+.product-title { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; }
+.product-meta { color: #6c757d; font-size: .95rem; }
+.gallery-main { background: #fff; border-radius: 8px; overflow: hidden; display:flex; align-items:center; justify-content:center; min-height:320px; }
+.gallery-main img { max-width:100%; max-height:100%; object-fit:contain; cursor: zoom-in; }
+.thumbnails .thumb { width:64px; height:64px; border-radius:6px; overflow:hidden; border:1px solid #f0f0f0; cursor:pointer; }
+.thumbnails .thumb img { width:100%; height:100%; object-fit:cover; }
+.rating i { color: #ffb400; margin-right:2px; }
+.share-buttons .btn { padding: 0.35rem 0.5rem; }
+.mobile-buy-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1050; border-top: 1px solid #eee; }
+.mobile-buy-bar .btn { padding: .5rem .6rem; }
+
+/* Daraltılmış Sepete Ekle / Hemen Al butonları */
+#sepeteEkleBtn,
+#hemenAlBtn {
+  width: auto !important;
+  max-width: 220px;
+  padding: 0.45rem 0.9rem !important;
+  font-size: 0.95rem;
+  align-self: flex-start; /* D-grid içinde tam genişlikten kaçınmak için */
+}
+
+/* D-grid container içindeki butonların otomatik genişlik alması */
+.d-grid.gap-2.flex-grow-1 .btn {
+  width: auto !important;
+  max-width: 220px;
+  align-self: flex-start;
+}
+
+/* Mobil alt çubukta butonların çok geniş olmaması için */
+.mobile-buy-bar .btn.w-100 {
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 0.35rem 0.6rem !important;
+}
+
+/* Mobilde biraz daha sıkıştır */
+@media (max-width: 768px) {
+  #sepeteEkleBtn,
+  #hemenAlBtn,
+  .d-grid.gap-2.flex-grow-1 .btn {
+    max-width: 180px;
+    padding: 0.4rem 0.8rem !important;
+  }
+  .mobile-buy-bar .d-flex { min-width: 140px !important; }
+}
+
+/* Sağ tarafa hizala: buton grubunu satırın sağına it */
+.d-grid.gap-2.flex-grow-1 {
+  display: grid !important; /* grid olduğunu garanti et */
+  justify-items: end; /* grid içindeki öğeleri sağa yasla */
+  justify-content: end; /* ekstra güvenlik */
+  align-items: center;
+}
+
+/* Mobil alt çubuk içindeki buton grubunu sağa yasla */
+.mobile-buy-bar .d-flex {
+  justify-content: flex-end !important;
+}
+
+/* Responsive ince ayarlar */
+@media (max-width: 768px) {
+  .gallery-main { min-height: 260px; }
+  .product-view { padding: 16px; }
+}
+
+@media (max-width: 576px) {
+  .thumbnails .thumb { width:48px; height:48px; }
+  .product-title { font-size: 1.15rem; }
+}
+
+/* Sağ taraftaki badge'lerin mobilde yer değiştirmesini önle */
+.badge-list .badge { margin-left: 4px; }
+
+/* Benzer ürünler kartlarında görsel tutarlılık */
+.benzer-urun-img { height: 120px; object-fit: contain; }
+
+/* Küçük ek: modal resim için işaretçi */
+.gallery-main:hover { cursor: zoom-in; }
+
 
    /* urun-detay-style.css veya içine */
 .benzer-urunler {
@@ -328,17 +410,14 @@
 
 .benzer-urunler-container {
   display: flex;
-  flex-wrap: nowrap; /* Ürünler yan yana sıralanır */
-  overflow-x: auto; /* Yatay kaydırma çubuğu */
-  scroll-behavior: smooth; /* Pürüzsüz kaydırma */
-  gap: 10px; /* Kartlar arasında boşluk */
-  padding-bottom: 10px; /* Kaydırma çubuğu için alan */
+  flex-wrap: wrap; /* Kartları sar, yan yana diz */
+  gap: 8px; /* Kartlar arası boşluğu azalt */
+  justify-content: flex-start; /* Kartları sola yasla */
 }
 
 .benzer-urun-kart {
   transition: transform 0.2s, box-shadow 0.2s;
-  width: 200px; /* Kart genişliği */
-  flex: 0 0 auto; /* Kartlar küçülmez, sabit genişlik */
+  /* width kaldırıldı - artık Bootstrap grid kolonlarına göre boyutlanacak */
 }
 
 .benzer-urun-kart:hover {
@@ -396,29 +475,65 @@
   border-radius: 3px 3px 2px 2px;
 }
 
-/* Kaydırma çubuğunu özelleştirme (opsiyonel) */
-.benzer-urunler-container::-webkit-scrollbar {
-  height: 8px;
-}
+/* Kaydırma çubuğu stilleri kaldırıldı - artık grid düzeni kullanılıyor */
 
-.benzer-urunler-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
+/* Mobil cihazlar için özel ayarlar - artık Bootstrap grid kolonlarına göre boyutlanıyor */
 
-.benzer-urunler-container::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.benzer-urunler-container::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* Mobil cihazlar için kart boyutu */
+/* Mobilde detay sekmelerini (Açıklama/Özellikler/Değerlendirmeler) yatay ve kaydırılabilir yap */
 @media (max-width: 576px) {
+  .product-view .nav-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 0; /* kenar çizgisini kaldırıp daha temiz görünüm */
+  }
+  .product-view .nav-tabs .nav-item {
+    flex: 0 0 auto;
+  }
+  .product-view .nav-tabs .nav-link {
+    white-space: nowrap;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.95rem;
+    border-radius: 0.6rem;
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #fff;
+    color: #333;
+  }
+  .product-view .nav-tabs .nav-link.active {
+    background: var(--primary, #EB8220);
+    color: #fff;
+    border-color: var(--primary, #EB8220);
+  }
+  .product-view .tab-content {
+    padding-top: 0.5rem;
+  }
+}
+/* Mobilde benzer ürünleri yatayda yan yana göstermek için */
+@media (max-width: 576px) {
+  .benzer-urunler-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .benzer-urunler-container > .col-6,
+  .benzer-urunler-container > [class*="col-"] {
+    flex: 0 0 auto !important;
+    width: 140px !important;
+    max-width: 140px !important;
+  }
   .benzer-urun-kart {
-    width: 130px;
+    width: 140px !important;
+  }
+  .benzer-urun-img {
+    height: 100px !important;
+    object-fit: contain;
   }
 }
   
