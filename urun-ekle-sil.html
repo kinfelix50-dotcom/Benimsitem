@@ -14,7 +14,7 @@
   <!-- DejaVuSans fontu (isteğe bağlı, yoksa Helvetica kullanılacak) -->
   <script src="js/DejaVuSans.js"></script>
   <!-- Ana script dosyanız -->
-  <script src="js/script.js"></script>
+  <script src="js/admin-script.js"></script>
  
  
   <style>
@@ -586,9 +586,15 @@
 <hr class="my-3">
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="m-0">Tüm Ürünler (<span id="urunListesiBaslik">Kategorilere Göre</span>)</h4>
-  <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" id="stoktaOlmayanlariGizle" checked>
-    <label class="form-check-label" for="stoktaOlmayanlariGizle">Stoğu Bitenleri Gizle</label>
+  <div class="d-flex align-items-center gap-3">
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" id="stoktaOlmayanlariGizle" checked>
+      <label class="form-check-label" for="stoktaOlmayanlariGizle">Stoğu Bitenleri Gizle</label>
+    </div>
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" id="fiyatlariGizle">
+      <label class="form-check-label" for="fiyatlariGizle">Fiyatları Gizle (Sadece Anasayfa)</label>
+    </div>
   </div>
 </div>
 <div id="urunlerListesi" class="table-responsive"></div>
@@ -2655,6 +2661,17 @@ function exportOrderToExcel(orderId) {
   document.getElementById('excelImportBtn')?.addEventListener('click', () => {
     document.getElementById('excelImportInput').click();
   });
+  // Fiyatları Gizle toggle için event listener
+  document.getElementById('fiyatlariGizle')?.addEventListener('change', function() {
+    const hide = this.checked ? '1' : '0';
+    localStorage.setItem('adminHidePrices', hide);
+    bildirimGoster(`Fiyatlar ${hide === '1' ? 'gizlendi' : 'gösterildi'} (Sadece anasayfa)`, 'info');
+  });
+  // Fiyatları Gizle toggle başlangıç durumu
+  const fiyatlariGizleCheckbox = document.getElementById('fiyatlariGizle');
+  if (fiyatlariGizleCheckbox) {
+    fiyatlariGizleCheckbox.checked = localStorage.getItem('adminHidePrices') === '1';
+  }
 });
  
   // Ürün resmi dosya yükleme önizlemesi

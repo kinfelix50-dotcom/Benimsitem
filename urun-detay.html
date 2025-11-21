@@ -932,7 +932,8 @@
           <div class="mobile-buy-bar d-lg-none d-flex align-items-center justify-content-between p-2 border-top bg-white">
             <div>
               <div class="small text-muted">Fiyat</div>
-              <div class="fw-bold">${indirimliFiyat.toFixed(2)} TL</div>
+              <div id="mobileUnitPrice" class="fw-bold" data-unit-price="${indirimliFiyat}">${indirimliFiyat.toFixed(2)} TL</div>
+              <div id="mobileTotalPrice" class="small text-muted">Toplam: ${indirimliFiyat.toFixed(2)} TL</div>
             </div>
             <div class="d-flex gap-2" style="min-width:220px">
               <button id="mobileSepeteEkle" class="btn btn-sm btn-primary w-100" ${sepeteEkleDisabled}><i class="bi bi-cart-plus me-1"></i> Sepete Ekle</button>
@@ -1019,6 +1020,12 @@
         const unit = parseFloat(priceEl.dataset.unitPrice) || parseFloat(priceEl.textContent) || 0;
         const total = (unit * qty).toFixed(2);
         totalEl.textContent = 'Toplam: ' + total + ' TL';
+        // update mobile buy-bar if present
+        const mobileUnitEl = document.getElementById('mobileUnitPrice');
+        const mobileTotalEl = document.getElementById('mobileTotalPrice');
+        if (mobileUnitEl) mobileUnitEl.textContent = unit.toFixed(2) + ' TL';
+        if (mobileUnitEl) mobileUnitEl.setAttribute('data-unit-price', unit);
+        if (mobileTotalEl) mobileTotalEl.textContent = 'Toplam: ' + total + ' TL';
       }
 
       // İlk yüklemede toplamı ayarla
@@ -1155,6 +1162,75 @@
     setInterval(updateCountdown, 1000);
     updateCountdown();
   </script>
+  <script>
+      // Fiyatları gizleme fonksiyonu
+      function fiyatlariGizle() {
+        const fiyatElementleri = document.querySelectorAll('.price-current, .price-old');
+        const gizliMesaj = '***';
+
+        if (localStorage.getItem('adminHidePrices') === '1') {
+          fiyatElementleri.forEach(el => {
+            if (!el.dataset.orijinalFiyat) {
+              el.dataset.orijinalFiyat = el.textContent.trim();
+            }
+            el.textContent = gizliMesaj;
+          });
+        } else {
+          fiyatElementleri.forEach(el => {
+            if (el.dataset.orijinalFiyat) {
+              el.textContent = el.dataset.orijinalFiyat;
+              delete el.dataset.orijinalFiyat;
+            }
+          });
+        }
+      }
+
+      // Sayfa yüklendiğinde fiyatları kontrol et
+      document.addEventListener('DOMContentLoaded', () => {
+        fiyatlariGizle();
+
+        // localStorage değişikliklerini dinle
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'adminHidePrices') {
+            fiyatlariGizle();
+          }
+        });
+      });
+    </script>
+    <script>
+      // Benzer ürünlerde fiyatları gizleme fonksiyonu
+      function benzerUrunFiyatlariGizle() {
+        const benzerFiyatElementleri = document.querySelectorAll('.benzer-urun-fiyat, .benzer-urun-orijinal-fiyat');
+        const gizliMesaj = '***';
+
+        if (localStorage.getItem('adminHidePrices') === '1') {
+          benzerFiyatElementleri.forEach(el => {
+            if (!el.dataset.orijinalFiyat) {
+              el.dataset.orijinalFiyat = el.textContent.trim();
+            }
+            el.textContent = gizliMesaj;
+          });
+        } else {
+          benzerFiyatElementleri.forEach(el => {
+            if (el.dataset.orijinalFiyat) {
+              el.textContent = el.dataset.orijinalFiyat;
+              delete el.dataset.orijinalFiyat;
+            }
+          });
+        }
+      }
+
+      // Sayfa yüklendiğinde ve localStorage değiştiğinde benzer ürün fiyatlarını kontrol et
+      document.addEventListener('DOMContentLoaded', () => {
+        benzerUrunFiyatlariGizle();
+
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'adminHidePrices') {
+            benzerUrunFiyatlariGizle();
+          }
+        });
+      });
+    </script>
   
 </body>
 </html>

@@ -93,6 +93,9 @@
       border-radius: 3px;
     }
 
+    /* Eğer admin panelde 'Fiyatları Gizle' seçili ise, yalnızca index.html üzerinde fiyatları gizle */
+    .admin-price-placeholder { color: #6c757d; font-style: italic; }
+
     /* Rozet animasyonu */
     @keyframes pulse {
       0% { transform: scale(1); }
@@ -107,6 +110,14 @@
 <body>
   <div id="sepetBildirim" class="alert alert-success text-center py-2 fixed-top w-100 d-none" style="z-index: 9999;">
     Sepete eklendi!
+  </div>
+
+  <!-- Debug Panel for Admin Price Hide -->
+  <div id="adminPriceDebugPanel" class="alert alert-info text-center py-2 fixed-bottom w-100" style="z-index: 9999; display: none;">
+    <strong>Admin Fiyat Gizleme Debug:</strong>
+    localStorage['adminHidePrices']: <span id="debugLocalStorageValue">null</span>
+    <button id="debugToggleBtn" class="btn btn-sm btn-warning ms-2">Toggle Gizle/Göster</button>
+    <button id="debugApplyBtn" class="btn btn-sm btn-success ms-2">Uygula</button>
   </div>
 
   <div class="ad-banner">
@@ -1113,9 +1124,10 @@ function exportOrderToExcel(orderId) {
             <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/130'">
             <div class="card-body d-flex flex-column">
               <h5 class="card-title text-center">${escapeHTML(urun.ad)}</h5>
-              <p class="card-text text-muted small text-center">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
+              <p class="card-text text-muted small text-center"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
+              <p class="card-text text-muted small text-center"><span class="text-dark">S.Kodu: ${escapeHTML(stokKodu)}</span></p>
               
-              <p class="card-text text-muted small text-center">${stokDurumu}</p>
+              <p class="card-text text-muted small text-center"><span class="text-success">${stokDurumu}</span></p>
               <div class="text-center mt-auto">
                 ${urun.indirim > 0 ? `
                   <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
@@ -1203,9 +1215,9 @@ function exportOrderToExcel(orderId) {
           inputEl.value = '1';
         });
       });
+      // Admin fiyat gizleme uygula
+      window.applyAdminPriceMask();
     }
-
-    // --- Vitrin Yönetimi ---
     function loadVitrins() {
       const vitrinBloklari = document.getElementById('vitrinBloklari');
       if (!vitrinBloklari) {
@@ -1262,8 +1274,9 @@ function exportOrderToExcel(orderId) {
                 <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/160'">
                 <div class="card-body d-flex flex-column text-center">
                   <h5 class="card-title">${escapeHTML(urun.ad)}</h5>
-                  <p class="card-text text-muted small">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
-                  <p class="card-text text-muted small">${stokDurumu}</p>
+                  <p class="card-text text-muted small"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
+                  <p class="card-text text-muted small"><span class="text-black">S.Kodu: ${escapeHTML(urun.stokKodu || 'Bilinmiyor')}</span></p>
+                  <p class="card-text text-muted small"><span class="text-success">${stokDurumu}</span></p>
                   <div class="text-center mt-auto">
                     ${urun.indirim > 0 ? `
                       <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
@@ -1349,9 +1362,9 @@ function exportOrderToExcel(orderId) {
           window.sepet.ekle(urun);
         });
       });
+      // Admin fiyat gizleme uygula
+      window.applyAdminPriceMask();
     }
-
-    // --- Adres Yönetimi ---
     function displayAddresses() {
       const addressList = document.getElementById('addressList');
       if (!addressList) return;
@@ -1623,6 +1636,109 @@ function exportOrderToExcel(orderId) {
       markalariGoster();
       loadVitrins();
 
+      // Eğer admin tarafından 'Fiyatları Gizle' tercihi ayarlandıysa, index sayfasında fiyatları 'Gizli' ile değiştir
+      (function(){
+        const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
+
+        function maskElement(el) {
+          try {
+            if (!el) return;
+            if (!el.dataset._orig) el.dataset._orig = el.innerHTML;
+            el.innerHTML = '<span class="admin-price-placeholder"></span>';
+            console.log('Masked element:', el);
+          } catch (e) {
+            console.error('Masking error:', e);
+          }
+        }
+
+        function restoreElement(el) {
+          try {
+            if (!el) return;
+            if (el.dataset._orig !== undefined) {
+              el.innerHTML = el.dataset._orig;
+              delete el.dataset._orig;
+              console.log('Restored element:', el);
+            }
+          } catch (e) {
+            console.error('Restoring error:', e);
+          }
+        }
+
+        window.applyAdminPriceMask = function(root = document) {
+          try {
+            const hide = localStorage.getItem('adminHidePrices') === '1';
+            console.log('applyAdminPriceMask called. Hide:', hide);
+            if (hide) {
+              selectors.forEach(sel => {
+                (root.querySelectorAll ? Array.from(root.querySelectorAll(sel)) : []).forEach(maskElement);
+              });
+              (root.querySelectorAll ? Array.from(root.querySelectorAll('*')) : []).forEach(el => {
+                if (el.children.length === 0 && el.textContent && el.textContent.indexOf('₺') !== -1) {
+                  if (!el.dataset._orig) el.dataset._orig = el.innerHTML;
+                  el.innerHTML = el.innerHTML.replace(/₺\s*[0-9.,]+/g, '<span class="admin-price-placeholder"></span>');
+                  console.log('Masked text node:', el);
+                }
+              });
+            } else {
+              selectors.forEach(sel => {
+                (root.querySelectorAll ? Array.from(root.querySelectorAll(sel)) : []).forEach(restoreElement);
+              });
+              (root.querySelectorAll ? Array.from(root.querySelectorAll('*')) : []).forEach(el => {
+                if (el.dataset && el.dataset._orig !== undefined) restoreElement(el);
+              });
+            }
+          } catch (err) {
+            console.error('Fiyat gizleme uygulanamadı:', err);
+          }
+        };
+
+        window.addEventListener('storage', (e) => {
+          console.log('Index storage event:', e.key, e.newValue, e.oldValue);
+          if (e.key === 'adminHidePrices') window.applyAdminPriceMask(document);
+        });
+
+        let lastAdminHidePrices = localStorage.getItem('adminHidePrices');
+        setInterval(() => {
+          const current = localStorage.getItem('adminHidePrices');
+          if (current !== lastAdminHidePrices) {
+            lastAdminHidePrices = current;
+            console.log('Index interval detected change:', current);
+            window.applyAdminPriceMask(document);
+          }
+        }, 500);
+      })();
+
+      // Debug Panel Setup
+      (function(){
+        const debugPanel = document.getElementById('adminPriceDebugPanel');
+        const debugValueSpan = document.getElementById('debugLocalStorageValue');
+        const debugToggleBtn = document.getElementById('debugToggleBtn');
+        const debugApplyBtn = document.getElementById('debugApplyBtn');
+
+        function updateDebugValue() {
+          const val = localStorage.getItem('adminHidePrices');
+          debugValueSpan.textContent = val || 'null';
+        }
+
+        // Show debug panel if URL has ?debug=1
+        if (window.location.search.includes('debug=1')) {
+          debugPanel.style.display = 'block';
+          updateDebugValue();
+        }
+
+        debugToggleBtn.addEventListener('click', () => {
+          const current = localStorage.getItem('adminHidePrices');
+          const newVal = current === '1' ? '0' : '1';
+          localStorage.setItem('adminHidePrices', newVal);
+          updateDebugValue();
+          window.applyAdminPriceMask();
+        });
+
+        debugApplyBtn.addEventListener('click', () => {
+          window.applyAdminPriceMask();
+        });
+      })();
+
       const changePasswordForm = document.getElementById('changePasswordForm');
       if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', function(e) {
@@ -1773,38 +1889,56 @@ function exportOrderToExcel(orderId) {
     });
   </script>
   <script>
-        // Geri sayım için hedef tarih (örneğin 2 gün sonrası)
-        const targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() + 3);
+  // --- Gelişmiş Hata Ayıklama ve Loglama ---
+  (function(){
+    const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
 
-        function updateCountdown() {
-            const now = new Date();
-            const timeLeft = targetDate - now;
+    function maskPrices() {
+      const hide = localStorage.getItem('adminHidePrices') === '1';
+      console.log('Fiyat gizleme durumu:', hide);
 
-            if (timeLeft <= 0) {
-                document.getElementById("countdown").innerHTML = '<i class="bi bi-clock clock-icon"></i>Fırsat sona erdi!';
-                return;
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        console.log(`Seçici: ${selector}, Bulunan Eleman Sayısı: ${elements.length}`);
+
+        elements.forEach(el => {
+          if (hide) {
+            if (!el.dataset.originalContent) {
+              el.dataset.originalContent = el.innerHTML;
+              el.innerHTML = '<span class="admin-price-placeholder"></span>';
+              console.log('Gizlenen eleman:', el);
             }
+          } else {
+            if (el.dataset.originalContent) {
+              el.innerHTML = el.dataset.originalContent;
+              delete el.dataset.originalContent;
+              console.log('Geri yüklenen eleman:', el);
+            }
+          }
+        });
+      });
+    }
 
-            const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    // Sayfa yüklendiğinde fiyatları kontrol et
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Sayfa yüklendi, fiyat gizleme kontrol ediliyor.');
+      maskPrices();
+    });
 
-            document.getElementById("hours").textContent = String(hours).padStart(2, "0");
-            document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
-            document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
-        }
-
-        // Her saniye güncelle
-        setInterval(updateCountdown, 1000);
-        updateCountdown(); // İlk çalıştırma
-    </script>
-    
-      
+    // localStorage değişikliklerini dinle
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'adminHidePrices') {
+        console.log('localStorage değişti, fiyat gizleme kontrol ediliyor.');
+        maskPrices();
+      }
+    });
+  })();
+  </script>
+  
 </body>
 </html>
 
 
 
-    
+
 
