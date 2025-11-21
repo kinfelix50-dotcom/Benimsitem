@@ -413,6 +413,40 @@
         }
     });
 </script>
+<script>
+    // Sepet sayfasında fiyatları gizleme fonksiyonu
+    function sepetFiyatlariGizle() {
+        const fiyatElementleri = document.querySelectorAll('.discounted-price, .original-price, #totalOriginalPrice, #totalDiscount, #totalPrice, #finalTotalPrice');
+        const gizliMesaj = '***';
+
+        if (localStorage.getItem('adminHidePrices') === '1') {
+            fiyatElementleri.forEach(el => {
+                if (!el.dataset.orijinalFiyat) {
+                    el.dataset.orijinalFiyat = el.textContent.trim();
+                }
+                el.textContent = gizliMesaj;
+            });
+        } else {
+            fiyatElementleri.forEach(el => {
+                if (el.dataset.orijinalFiyat) {
+                    el.textContent = el.dataset.orijinalFiyat;
+                    delete el.dataset.orijinalFiyat;
+                }
+            });
+        }
+    }
+
+    // Sayfa yüklendiğinde ve localStorage değiştiğinde fiyatları kontrol et
+    document.addEventListener('DOMContentLoaded', () => {
+        sepetFiyatlariGizle();
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'adminHidePrices') {
+                sepetFiyatlariGizle();
+            }
+        });
+    });
+</script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/cart-script.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
