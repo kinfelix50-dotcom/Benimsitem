@@ -1172,6 +1172,15 @@ function kategoriDuzenle() {
       formuTemizle(); // Ürün formu alanını başlangıçta temizle ve stok kodu oluştur
       document.getElementById('vitrinForm').reset(); // Vitrin formunu da başlangıçta temizle
 
+      // Fiyat gizleme toggle'ının başlangıç durumunu ayarla
+      const fiyatlariGizleToggle = document.getElementById('fiyatlariGizle');
+      console.log('Admin toggle element:', fiyatlariGizleToggle);
+      if (fiyatlariGizleToggle) {
+        const hide = localStorage.getItem('adminHidePrices') === '1';
+        fiyatlariGizleToggle.checked = hide;
+        console.log('Admin toggle initial checked:', hide);
+      }
+
       // Event Listener'lar
       document.getElementById('urunForm').addEventListener('submit', urunKaydet);
       document.getElementById('kategoriEkleBtn').addEventListener('click', kategoriEkle);
@@ -1189,5 +1198,15 @@ function kategoriDuzenle() {
         document.getElementById('geriYukleInput').click(); // Gizli input'u tetikle
       });
       document.getElementById('geriYukleInput').addEventListener('change', verileriGeriYukle);
+
+      // Fiyat gizleme toggle event listener
+      if (fiyatlariGizleToggle) {
+        fiyatlariGizleToggle.addEventListener('change', function() {
+          const hide = this.checked ? '1' : '0';
+          localStorage.setItem('adminHidePrices', hide);
+          console.log('Admin localStorage set adminHidePrices:', hide);
+          bildirimGoster('Fiyat gizleme ayarı güncellendi!', 'success');
+        });
+      }
     });
 </script>
