@@ -311,6 +311,9 @@ class Sepet {
     }
 
     this.addEventListeners();
+
+    // Sepet render edildikten sonra fiyatları gizle
+    sepetFiyatlariGizle();
   }
 
   // Manuel input ile fiyat güncelleme fonksiyonu
@@ -1001,7 +1004,7 @@ function exportCartToPDF() {
     bildirimiGoster('Sepet PDF\'ye aktarıldı!', 'success');
   } catch (err) {
     console.error('PDF oluşturma hatası:', err);
-    bildirimiGoster('PDF oluşturulamadı! Konsolu kontrol edin.', 'danger');
+    bildirimiGoster('PDF oluşturulamadan! Konsolu kontrol edin.', 'danger');
   }
 }
 
@@ -1277,3 +1280,56 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Ürün kartlarındaki fiyatları gizlemek için fonksiyon
+function sepetFiyatlariGizle() {
+  const adminHidePrices = localStorage.getItem('adminHidePrices');
+
+  const fiyatDetaylari = document.querySelectorAll('#cartItems .price-details');
+  fiyatDetaylari.forEach(detay => {
+    const spans = detay.querySelectorAll('span');
+    spans.forEach(span => {
+      if (adminHidePrices === '1') {
+        span.dataset.orijinalFiyat = span.textContent.trim();
+        span.textContent = '***';
+      } else {
+        if (span.dataset.orijinalFiyat) {
+          span.textContent = span.dataset.orijinalFiyat;
+          delete span.dataset.orijinalFiyat;
+        }
+      }
+    });
+  });
+
+  // Ürün kartlarındaki fiyatları da gizlemek için seçiciler eklendi
+  const urunKartFiyatlari = document.querySelectorAll('.cart-item .price-details span');
+  urunKartFiyatlari.forEach(el => {
+      if (localStorage.getItem('adminHidePrices') === '1') {
+          if (!el.dataset.orijinalFiyat) {
+              el.dataset.orijinalFiyat = el.textContent.trim();
+          }
+          el.textContent = '***';
+      } else {
+          if (el.dataset.orijinalFiyat) {
+              el.textContent = el.dataset.orijinalFiyat;
+              delete el.dataset.orijinalFiyat;
+          }
+      }
+  });
+
+  // Sepet sayfasındaki tüm fiyat elemanlarını gizleyecek şekilde seçiciler genişletildi
+  const tumFiyatElementleri = document.querySelectorAll('.discounted-price, .original-price, #totalOriginalPrice, #totalDiscount, #totalPrice, #finalTotalPrice, .cart-item .price-details span, .cart-summary .list-group-item span');
+  tumFiyatElementleri.forEach(el => {
+      if (localStorage.getItem('adminHidePrices') === '1') {
+          if (!el.dataset.orijinalFiyat) {
+              el.dataset.orijinalFiyat = el.textContent.trim();
+          }
+          el.textContent = '***';
+      } else {
+          if (el.dataset.orijinalFiyat) {
+              el.textContent = el.dataset.orijinalFiyat;
+              delete el.dataset.orijinalFiyat;
+          }
+      }
+  });
+}
