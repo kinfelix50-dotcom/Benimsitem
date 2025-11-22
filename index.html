@@ -105,7 +105,114 @@
     .cart-badge.pulse {
       animation: pulse 0.5s ease-out;
     }
+    
+    /* Marka stilleri */
+.brands-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px 0;
+  gap: 20px;
+  scrollbar-width: thin;
+}
+
+.brand-item {
+  flex: 0 0 auto;
+  text-align: center;
+  width: 100px;
+}
+
+.brand-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  padding: 5px;
+  background: white;
+}
+
+.brand-name {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.brand-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.2s;
+}
+
+.brand-link:hover {
+  transform: translateY(-2px);
+}
+
+/* Vitrin kaydırma konteyneri */
+.product-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  padding: 10px 0;
+  gap: 12px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch; /* iOS için smooth scroll */
+}
+
+.product-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.product-scroll-container::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 3px;
+}
+
+/* Vitrin öğeleri */
+.product-scroll-item {
+  flex: 0 0 auto;
+  width: 200px; /* Sabit genişlik */
+  cursor: pointer;
+}
+
+/* Vitrin bölümü stilleri */
+.vitrin-bolumu {
+  margin-bottom: 30px;
+  padding: 20px 0;
+}
+
+.vitrin-bolumu h2 {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+/* Vitrin kartları */
+.product-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
   </style>
+  <style>
+  .product-scroll-container {
+    scrollbar-width: thin;
+    -ms-overflow-style: none;
+  }
+  .product-scroll-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari'de scrollbar'ı tamamen gizle */
+  }
+  /* Mobil için daha iyi kaydırma */
+  .product-scroll-container {
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+  
 </head>
 <body>
   <div id="sepetBildirim" class="alert alert-success text-center py-2 fixed-top w-100 d-none" style="z-index: 9999;">
@@ -227,7 +334,11 @@
         <div class="brands-scroll-container" id="brandsList"></div>
       </div>
     </section>
-
+<section class="product-carousel-section bg-white" style="display:block;">
+  <div class="container">
+    <div id="vitrinBloklari"></div>
+  </div>
+</section>
     <section class="product-carousel-section bg-white">
       <div id="vitrinBloklari"></div>
     </section>
@@ -305,7 +416,34 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
   <script src="DejaVuSans.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script>
+// EN ÜSTE TAŞI (DOMContentLoaded’den önce!)
+window.applyAdminPriceMask = function(root = document) {
+  try {
+    const hide = localStorage.getItem('adminHidePrices') === '1';
+    
+    const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
 
+    function mask(el) {
+      if (!el || el.dataset._orig !== undefined) return;
+      el.dataset._orig = el.innerHTML;
+      el.innerHTML = '<span class="admin-price-placeholder"></span>';
+    }
+
+    function restore(el) {
+      if (!el || el.dataset._orig === undefined) return;
+      el.innerHTML = el.dataset._orig;
+      delete el.dataset._orig;
+    }
+
+    selectors.forEach(sel => {
+      (root.querySelectorAll(sel) || []).forEach(hide ? mask : restore);
+    });
+  } catch (err) {
+    console.error('Fiyat maskeleme hatası:', err);
+  }
+};
+</script>
   <script>
     // --- Yardımcı Fonksiyonlar ---
     function escapeHTML(str) {
@@ -1007,63 +1145,70 @@ function exportOrderToExcel(orderId) {
 
     // --- Marka Yönetimi ---
     function getBenzersizMarkalar() {
-      const urunler = safeParseJSON('urunler', []);
-      return [...new Set(urunler.map(urun => urun.marka).filter(marka => marka && marka !== 'Belirtilmemiş'))].map(marka => {
-        const urun = urunler.find(u => u.marka === marka);
-        return {
-          ad: marka,
-          logo: urun?.markaLogo || 'https://via.placeholder.com/60' // Varsayılan logo
-        };
-      });
-    }
+  const urunler = safeParseJSON('urunler', []);
+  const markalar = [...new Set(urunler.map(urun => urun.marka).filter(marka => marka && marka !== 'Belirtilmemiş'))];
+  
+  return markalar.map(marka => {
+    // Bu markaya ait bir ürün bul
+    const urun = urunler.find(u => u.marka === marka);
+    return {
+      ad: marka,
+      logo: urun?.markaLogo || 'https://via.placeholder.com/60'
+    };
+  });
+}
 
     function markalariGoster() {
-      const brandsList = document.getElementById('brandsList');
-      if (!brandsList) {
-        console.error('brandsList elementi bulunamadı!');
-        return;
-      }
+  const brandsList = document.getElementById('brandsList');
+  if (!brandsList) {
+    console.error('brandsList elementi bulunamadı!');
+    return;
+  }
 
-      const markalar = getBenzersizMarkalar();
-      brandsList.innerHTML = '';
+  const markalar = getBenzersizMarkalar();
+  brandsList.innerHTML = '';
 
-      if (markalar.length === 0) {
-        brandsList.innerHTML = '<p class="text-muted text-center">Marka bulunamadı.</p>';
-        return;
-      }
+  if (markalar.length === 0) {
+    brandsList.innerHTML = '<p class="text-muted text-center">Marka bulunamadı.</p>';
+    return;
+  }
 
-      markalar.forEach(marka => {
-        const brandItem = document.createElement('div');
-        brandItem.className = 'brand-item';
-        brandItem.innerHTML = `
-          <a href="#" class="brand-link" data-marka="${escapeHTML(marka.ad)}">
-            <img src="${escapeHTML(marka.logo)}" alt="${escapeHTML(marka.ad)}" class="brand-logo" onerror="this.src='https://via.placeholder.com/60'">
-            <p class="brand-name">${escapeHTML(marka.ad)}</p>
-          </a>
-        `;
-        brandsList.appendChild(brandItem);
-      });
+  markalar.forEach(marka => {
+    const brandItem = document.createElement('div');
+    brandItem.className = 'brand-item';
+    brandItem.innerHTML = `
+      <a href="#" class="brand-link" data-marka="${escapeHTML(marka.ad)}">
+        <img src="${escapeHTML(marka.logo)}" alt="${escapeHTML(marka.ad)}" class="brand-logo" onerror="this.src='https://via.placeholder.com/60'">
+        <p class="brand-name">${escapeHTML(marka.ad)}</p>
+      </a>
+    `;
+    brandsList.appendChild(brandItem);
+  });
 
-      document.querySelectorAll('.brand-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-          e.preventDefault();
-          const marka = this.dataset.marka;
-          urunleriGoster(null, null, marka);
-        });
-      });
-    }
+  // Marka tıklama olaylarını ekle
+  document.querySelectorAll('.brand-link').forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const marka = this.dataset.marka;
+      urunleriGoster(null, null, marka);
+    });
+  });
+}
 
     // --- Ürün Listeleme ---
     function urunleriGoster(filtreKategori = null, aramaKelimesi = null, filtreMarka = null) {
-      const urunListesi = document.getElementById('productList');
-      const productCarouselSection = document.querySelector('.product-carousel-section');
-      if (!urunListesi) return;
+  const urunListesi = document.getElementById('productList');
+  const productCarouselSection = document.querySelector('.product-carousel-section');
+  
+  if (!urunListesi) return;
 
-      if (filtreKategori || aramaKelimesi || filtreMarka) {
-        if (productCarouselSection) productCarouselSection.style.display = 'none';
-      } else {
-        if (productCarouselSection) productCarouselSection.style.display = 'block';
-      }
+  // DÜZELTME: Sadece arama/filtre varsa vitrinleri gizle, yoksa göster
+  // urunleriGoster içinde bu kısmı bul ve değiştir:
+if (filtreKategori || aramaKelimesi || filtreMarka) {
+  if (productCarouselSection) productCarouselSection.style.display = 'none';
+} else {
+  if (productCarouselSection) productCarouselSection.style.display = 'block';
+}
 
       urunListesi.innerHTML = '';
       const urunler = safeParseJSON('urunler', []);
@@ -1103,6 +1248,7 @@ function exportOrderToExcel(orderId) {
         const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger fw-bold">Stok Tükendi</span>';
         const stokKodu = urun.stokKodu || 'Bilinmiyor';
         const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
+        const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
 
         let etiketlerHtml = `<div class="product-badges">`;
         if (urun.yeniUrun) {
@@ -1126,15 +1272,16 @@ function exportOrderToExcel(orderId) {
               <h5 class="card-title text-center">${escapeHTML(urun.ad)}</h5>
               <p class="card-text text-muted small text-center"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
               <p class="card-text text-muted small text-center"><span class="text-dark">S.Kodu: ${escapeHTML(stokKodu)}</span></p>
-              
               <p class="card-text text-muted small text-center"><span class="text-success">${stokDurumu}</span></p>
               <div class="text-center mt-auto">
-                ${urun.indirim > 0 ? `
-                  <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
-                  <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</h4>
-                ` : `
-                  <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
-                `}
+                ${!fiyatGizle ? (
+                  urun.indirim > 0 ? `
+                    <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
+                    <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</h4>
+                  ` : `
+                    <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
+                  `
+                ) : ''}
                 <div class="d-flex flex-column align-items-center gap-0">
                   <div class="input-group input-group-sm" style="width: 100px;">
                     <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
@@ -1144,7 +1291,7 @@ function exportOrderToExcel(orderId) {
                  <button class="btn btn-sm btn-outline-secondary sepete-ekle mt-2" style="background-color: #EB8220; color: #ffffff;"Sepete Ekle
                     data-urun-id="${escapeHTML(urun.id)}"
                     data-urun-ad="${escapeHTML(urun.ad)}"
-                    data-urun-fiyat="${indirimliFiyat}"
+                    data-urun-fiyat="${!fiyatGizle ? indirimliFiyat : ''}"
                     data-urun-resim="${escapeHTML(urun.resim)}"
                     data-urun-stok="${urun.stok}"
                     data-urun-indirim="${urun.indirim || 0}"
@@ -1219,149 +1366,190 @@ function exportOrderToExcel(orderId) {
       window.applyAdminPriceMask();
     }
     function loadVitrins() {
-      const vitrinBloklari = document.getElementById('vitrinBloklari');
-      if (!vitrinBloklari) {
-        console.error('Hata: vitrinBloklari elementi bulunamadı!');
+  const vitrinBloklari = document.getElementById('vitrinBloklari');
+  console.log('🔍 Vitrin blokları elementi:', vitrinBloklari);
+  
+  if (!vitrinBloklari) {
+    console.error('❌ Hata: vitrinBloklari elementi bulunamadı!');
+    return;
+  }
+
+  vitrinBloklari.innerHTML = '';
+  const urunler = safeParseJSON('urunler', []);
+  const vitrinler = safeParseJSON('vitrinler', []);
+
+  console.log('📦 Ürünler:', urunler.length);
+  console.log('🎯 Vitrinler:', vitrinler);
+
+  if (!Array.isArray(urunler) || !Array.isArray(vitrinler)) {
+    console.error('❌ Geçersiz veri formatı: urunler veya vitrinler dizi değil.');
+    vitrinBloklari.innerHTML = '<p class="text-muted text-center w-100">Vitrin yüklenemedi, veri geçersiz.</p>';
+    return;
+  }
+
+  if (vitrinler.length === 0) {
+    console.warn('⚠️ Hiç vitrin tanımlanmamış');
+    vitrinBloklari.innerHTML = '<p class="text-muted text-center w-100">Henüz vitrin oluşturulmamış.</p>';
+    return;
+  }
+
+  let hasContent = false;
+  
+  // Mevcut loadVitrins() fonksiyonunun en sonuna ekle:
+  
+  // Vitrinler yüklendikten sonra mutlaka görünür olsun (ana sayfada)
+  const productCarouselSection = document.querySelector('.product-carousel-section');
+  if (productCarouselSection && !productCarouselSection.querySelector('.vitrin-bolumu')) {
+    // Hiç vitrin yoksa bile boşluk bırakmamak için
+    productCarouselSection.style.display = 'block';
+  }
+  
+  // Eğer şu an filtre/arama yoksa vitrinleri göster
+  const hasFilter = window.location.search || 
+                    document.getElementById('productSearch')?.value.trim();
+  if (!hasFilter && productCarouselSection) {
+    productCarouselSection.style.display = 'block';
+  }
+
+  function renderVitrin(title, productList) {
+    if (!Array.isArray(productList) || productList.length === 0) {
+      console.warn(`⚠️ "${title}" vitrini için ürün bulunamadı`);
+      return '';
+    }
+    
+    hasContent = true;
+    console.log(`🎨 "${title}" vitrini render ediliyor:`, productList.length, 'ürün');
+    
+    let blockHtml = `
+      <div class="vitrin-bolumu">
+        <h2 class="text-center mb-4">${escapeHTML(title)}</h2>
+        <div class="product-scroll-container">
+    `;
+    
+    productList.forEach(urun => {
+      if (!urun || !urun.id) {
+        console.warn('⚠️ Geçersiz ürün verisi:', urun);
         return;
       }
 
-      vitrinBloklari.innerHTML = '';
-      const urunler = safeParseJSON('urunler', []);
-      const vitrinler = safeParseJSON('vitrinler', []);
+      const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
+      const disableButton = urun.stok === 0 ? 'disabled' : '';
+      const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger">Stok Tükendi</span>';
 
-      if (!Array.isArray(urunler) || !Array.isArray(vitrinler)) {
-        console.error('Geçersiz veri formatı: urunler veya vitrinler dizi değil.');
-        vitrinBloklari.innerHTML = '<p class="text-muted text-center w-100">Vitrin yüklenemedi, veri geçersiz.</p>';
-        return;
+      let etiketlerHtml = `<div class="product-badges">`;
+      if (urun.yeniUrun) {
+        etiketlerHtml += `<span class="badge bg-info">Yeni Ürün</span>`;
       }
+      if (urun.ucretsizKargo) {
+        etiketlerHtml += `<span class="badge bg-success">Ücretsiz Kargo</span>`;
+      }
+      if (urun.indirim > 0) {
+        etiketlerHtml += `<span class="badge bg-danger text-white">%${urun.indirim} İNDİRİM</span>`;
+      }
+      etiketlerHtml += `</div>`;
 
-      let hasContent = false;
-
-      function renderVitrin(title, productList) {
-        if (!Array.isArray(productList) || productList.length === 0) return '';
-        hasContent = true;
-        let blockHtml = `
-          <div class="vitrin-bolumu">
-            <h2 class="text-center mb-4">${escapeHTML(title)}</h2>
-            <div class="product-scroll-container">
-        `;
-        productList.forEach(urun => {
-          if (!urun || !urun.id || !urun.ad || !urun.fiyat || !urun.resim) {
-            console.warn('Geçersiz ürün verisi:', urun);
-            return;
-          }
-
-          const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
-          const disableButton = urun.stok === 0 ? 'disabled' : '';
-          const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger">Stok Tükendi</span>';
-
-          let etiketlerHtml = `<div class="product-badges">`;
-          if (urun.yeniUrun) {
-            etiketlerHtml += `<span class="badge bg-info">Yeni Ürün</span>`;
-          }
-          if (urun.ucretsizKargo) {
-            etiketlerHtml += `<span class="badge bg-success">Ücretsiz Kargo</span>`;
-          }
-          if (urun.indirim > 0) {
-            etiketlerHtml += `<span class="badge bg-danger text-white">%${urun.indirim} İNDİRİM</span>`;
-          }
-          etiketlerHtml += `</div>`;
-
-          blockHtml += `
-            <div class="product-scroll-item" data-urun-id="${escapeHTML(urun.id)}">
-              <div class="card product-card h-100 border-0 shadow-sm position-relative">
-                ${etiketlerHtml}
-                <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/160'">
-                <div class="card-body d-flex flex-column text-center">
-                  <h5 class="card-title">${escapeHTML(urun.ad)}</h5>
-                  <p class="card-text text-muted small"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
-                  <p class="card-text text-muted small"><span class="text-black">S.Kodu: ${escapeHTML(urun.stokKodu || 'Bilinmiyor')}</span></p>
-                  <p class="card-text text-muted small"><span class="text-success">${stokDurumu}</span></p>
-                  <div class="text-center mt-auto">
-                    ${urun.indirim > 0 ? `
-                      <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
-                      <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</h4>
-                    ` : `
-                      <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
-                    `}
-                    <div class="d-flex flex-column align-items-center gap-0">
-                      <div class="input-group input-group-sm" style="width: 100px;">
-                        <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
-                        <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}">
-                        <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}">+</button>
-                      </div>
-                      <button class="btn btn-sm btn-outline-secondary sepete-ekle-carousel mt-2" style="background-color: #EB8220; color: #ffffff;"
-                        data-urun-id="${escapeHTML(urun.id)}"
-                        data-urun-ad="${escapeHTML(urun.ad)}"
-                        data-urun-fiyat="${indirimliFiyat}"
-                        data-urun-resim="${escapeHTML(urun.resim)}"
-                        data-urun-stok="${Number(urun.stok || 0)}"
-                        data-urun-indirim="${Number(urun.indirim || 0)}"
-                        ${disableButton}>
-                        <i class="bi bi-cart-plus"></i> Sepete Ekle
-                      </button>
-                    </div>
-                  </div>
+      blockHtml += `
+        <div class="product-scroll-item" data-urun-id="${escapeHTML(urun.id)}">
+          <div class="card product-card h-100 border-0 shadow-sm position-relative">
+            ${etiketlerHtml}
+            <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/160'">
+            <div class="card-body d-flex flex-column text-center">
+              <h5 class="card-title">${escapeHTML(urun.ad)}</h5>
+              <p class="card-text text-muted small"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
+              <p class="card-text text-muted small"><span class="text-black">S.Kodu: ${escapeHTML(urun.stokKodu || 'Bilinmiyor')}</span></p>
+              <p class="card-text text-muted small"><span class="text-success">${stokDurumu}</span></p>
+              <div class="text-center mt-auto">
+                ${urun.indirim > 0 ? `
+                  <p class="card-text original-price"><del>${Number(urun.fiyat).toFixed(2)} ₺</del></p>
+                  <h4 class="card-price discount-price text-danger">${indirimliFiyat.toFixed(2)} ₺</h4>
+                ` : `
+                  <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
+                `}
+                <div class="d-flex flex-column align-items-center gap-0">
+                  <button class="btn btn-sm btn-outline-secondary sepete-ekle-carousel mt-2" style="background-color: #EB8220; color: #ffffff;"
+                    data-urun-id="${escapeHTML(urun.id)}"
+                    data-urun-ad="${escapeHTML(urun.ad)}"
+                    data-urun-fiyat="${indirimliFiyat}"
+                    data-urun-resim="${escapeHTML(urun.resim)}"
+                    data-urun-stok="${Number(urun.stok || 0)}"
+                    data-urun-indirim="${Number(urun.indirim || 0)}"
+                    ${disableButton}>
+                    <i class="bi bi-cart-plus"></i> Sepete Ekle
+                  </button>
                 </div>
               </div>
             </div>
-          `;
-        });
-        blockHtml += '</div></div>';
-        return blockHtml;
+          </div>
+        </div>
+      `;
+    });
+    
+    blockHtml += '</div></div>';
+    return blockHtml;
+  }
+
+  let output = '';
+  vitrinler.forEach((vitrin, index) => {
+    if (!vitrin || !vitrin.ad || !Array.isArray(vitrin.urunIds)) {
+      console.warn(`⚠️ Geçersiz vitrin verisi [${index}]:`, vitrin);
+      return;
+    }
+    
+    const vitrinUrunleri = urunler.filter(urun => vitrin.urunIds.includes(urun.id));
+    console.log(`📋 Vitrin "${vitrin.ad}":`, vitrinUrunleri.length, 'ürün bulundu');
+    
+    output += renderVitrin(vitrin.ad, vitrinUrunleri);
+  });
+
+  vitrinBloklari.innerHTML = hasContent ? 
+    output : 
+    '<p class="text-muted text-center w-100">Vitrinlerde gösterilecek ürün bulunamadı.</p>';
+
+  console.log('✅ Vitrin render tamamlandı');
+
+  // Vitrin kartlarına tıklama davranışı ekle
+  document.querySelectorAll('.product-scroll-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      // Sepete ekle butonuna tıklanırsa işlemi durdurma
+      if (e.target.closest('.sepete-ekle-carousel')) {
+        return;
+      }
+      
+      const id = item.dataset.urunId;
+      if (id) {
+        window.location.href = `urun-detay.html?id=${encodeURIComponent(id)}`;
+      }
+    });
+  });
+
+  // Sepete ekle butonlarına event listener ekle
+  document.querySelectorAll('.sepete-ekle-carousel').forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.stopPropagation(); // Üst elementin click event'ini durdur
+      
+      const urunBilgisi = urunler.find(p => p.id === this.dataset.urunId);
+      const eklenecekAdet = 1;
+
+      if (!urunBilgisi || urunBilgisi.stok < eklenecekAdet) {
+        bildirimGoster(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`, 'danger');
+        return;
       }
 
-      let output = '';
-      vitrinler.forEach(vitrin => {
-        if (!vitrin || !vitrin.ad || !Array.isArray(vitrin.urunIds)) {
-          console.warn('Geçersiz vitrin verisi:', vitrin);
-          return;
-        }
-        const vitrinUrunleri = urunler.filter(urun => vitrin.urunIds.includes(urun.id));
-        output += renderVitrin(vitrin.ad, vitrinUrunleri);
-      });
+      const urun = {
+        id: this.dataset.urunId,
+        ad: this.dataset.urunAd,
+        fiyat: parseFloat(this.dataset.urunFiyat),
+        adet: eklenecekAdet,
+        resim: this.dataset.urunResim,
+        stok: parseInt(this.dataset.urunStok),
+        indirim: parseFloat(this.dataset.urunIndirim),
+        stokKodu: urunBilgisi.stokKodu || 'N/A',
+        marka: urunBilgisi.marka || 'Belirtilmemiş'
+      };
+      window.sepet.ekle(urun);
+    });
+  });
 
-      vitrinBloklari.innerHTML = hasContent ?
-        output :
-        '<p class="text-muted text-center w-100"></p>';
-
-      // Vitrin kartlarına tıklama davranışı ekle (sepete ekle/adet kontrollerine tıklamayı hariç tut)
-      document.querySelectorAll('.product-scroll-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-          if (e.target.closest('.sepete-ekle-carousel') || e.target.closest('.input-group') || e.target.classList.contains('azalt') || e.target.classList.contains('artir')) {
-            return; // kullanıcı sepete ekleme veya adet kontrolü ile etkileşime geçti
-          }
-          const id = item.dataset.urunId;
-          if (id) {
-            window.location.href = `urun-detay.html?id=${encodeURIComponent(id)}`;
-          }
-        });
-      });
-
-      document.querySelectorAll('.sepete-ekle-carousel').forEach(button => {
-        button.addEventListener('click', function() {
-          const urunBilgisi = urunler.find(p => p.id === this.dataset.urunId);
-          const eklenecekAdet = 1;
-
-          if (!urunBilgisi || urunBilgisi.stok < eklenecekAdet) {
-            bildirimGoster(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`, 'danger');
-            return;
-          }
-
-          const urun = {
-            id: this.dataset.urunId,
-            ad: this.dataset.urunAd,
-            fiyat: parseFloat(this.dataset.urunFiyat),
-            adet: eklenecekAdet,
-            resim: this.dataset.urunResim,
-            stok: parseInt(this.dataset.urunStok),
-            indirim: parseFloat(this.dataset.urunIndirim),
-            stokKodu: urunBilgisi.stokKodu || 'N/A',
-            marka: urunBilgisi.marka || 'Belirtilmemiş'
-          };
-          window.sepet.ekle(urun);
-        });
-      });
       // Admin fiyat gizleme uygula
       window.applyAdminPriceMask();
     }
@@ -1573,6 +1761,8 @@ function exportOrderToExcel(orderId) {
 
     // --- Sayfa Yüklendiğinde ---
     document.addEventListener('DOMContentLoaded', function() {
+        // Sayfa yüklendiğinde markalar tabını doldur
+        markalariGoster();
       const isLoggedIn = localStorage.getItem('isLoggedIn');
       const navbarButtons = document.getElementById('navbarButtons');
       const currentLoggedInUser = safeParseJSON('currentUser');
@@ -1640,16 +1830,7 @@ function exportOrderToExcel(orderId) {
       (function(){
         const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
 
-        function maskElement(el) {
-          try {
-            if (!el) return;
-            if (!el.dataset._orig) el.dataset._orig = el.innerHTML;
-            el.innerHTML = '<span class="admin-price-placeholder"></span>';
-            console.log('Masked element:', el);
-          } catch (e) {
-            console.error('Masking error:', e);
-          }
-        }
+        
 
         function restoreElement(el) {
           try {
@@ -1664,33 +1845,51 @@ function exportOrderToExcel(orderId) {
           }
         }
 
-        window.applyAdminPriceMask = function(root = document) {
-          try {
-            const hide = localStorage.getItem('adminHidePrices') === '1';
-            console.log('applyAdminPriceMask called. Hide:', hide);
-            if (hide) {
-              selectors.forEach(sel => {
-                (root.querySelectorAll ? Array.from(root.querySelectorAll(sel)) : []).forEach(maskElement);
-              });
-              (root.querySelectorAll ? Array.from(root.querySelectorAll('*')) : []).forEach(el => {
-                if (el.children.length === 0 && el.textContent && el.textContent.indexOf('₺') !== -1) {
-                  if (!el.dataset._orig) el.dataset._orig = el.innerHTML;
-                  el.innerHTML = el.innerHTML.replace(/₺\s*[0-9.,]+/g, '<span class="admin-price-placeholder"></span>');
-                  console.log('Masked text node:', el);
-                }
-              });
-            } else {
-              selectors.forEach(sel => {
-                (root.querySelectorAll ? Array.from(root.querySelectorAll(sel)) : []).forEach(restoreElement);
-              });
-              (root.querySelectorAll ? Array.from(root.querySelectorAll('*')) : []).forEach(el => {
-                if (el.dataset && el.dataset._orig !== undefined) restoreElement(el);
-              });
-            }
-          } catch (err) {
-            console.error('Fiyat gizleme uygulanamadı:', err);
-          }
-        };
+        // applyAdminPriceMask fonksiyonunu global olarak tanımla
+window.applyAdminPriceMask = function(root = document) {
+  try {
+    const hide = localStorage.getItem('adminHidePrices') === '1';
+    console.log('applyAdminPriceMask called. Hide:', hide);
+    
+    const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
+
+    function maskElement(el) {
+      try {
+        if (!el) return;
+        if (!el.dataset._orig) el.dataset._orig = el.innerHTML;
+        el.innerHTML = '<span class="admin-price-placeholder">Fiyat Gizli</span>';
+      } catch (e) {
+        console.error('Masking error:', e);
+      }
+    }
+
+    function restoreElement(el) {
+      try {
+        if (!el) return;
+        if (el.dataset._orig !== undefined) {
+          el.innerHTML = el.dataset._orig;
+          delete el.dataset._orig;
+        }
+      } catch (e) {
+        console.error('Restoring error:', e);
+      }
+    }
+
+    if (hide) {
+      selectors.forEach(sel => {
+        const elements = root.querySelectorAll(sel);
+        elements.forEach(maskElement);
+      });
+    } else {
+      selectors.forEach(sel => {
+        const elements = root.querySelectorAll(sel);
+        elements.forEach(restoreElement);
+      });
+    }
+  } catch (err) {
+    console.error('Fiyat gizleme uygulanamadı:', err);
+  }
+};
 
         window.addEventListener('storage', (e) => {
           console.log('Index storage event:', e.key, e.newValue, e.oldValue);
@@ -1887,53 +2086,23 @@ function exportOrderToExcel(orderId) {
         });
       }
     });
-  </script>
-  <script>
-  // --- Gelişmiş Hata Ayıklama ve Loglama ---
-  (function(){
-    const selectors = ['.card-price', '.original-price', '.discount-price', '.text-success.fw-bold'];
 
-    function maskPrices() {
-      const hide = localStorage.getItem('adminHidePrices') === '1';
-      console.log('Fiyat gizleme durumu:', hide);
-
-      selectors.forEach(selector => {
-        const elements = document.querySelectorAll(selector);
-        console.log(`Seçici: ${selector}, Bulunan Eleman Sayısı: ${elements.length}`);
-
-        elements.forEach(el => {
-          if (hide) {
-            if (!el.dataset.originalContent) {
-              el.dataset.originalContent = el.innerHTML;
-              el.innerHTML = '<span class="admin-price-placeholder"></span>';
-              console.log('Gizlenen eleman:', el);
-            }
-          } else {
-            if (el.dataset.originalContent) {
-              el.innerHTML = el.dataset.originalContent;
-              delete el.dataset.originalContent;
-              console.log('Geri yüklenen eleman:', el);
-            }
+    // --- Profil Modal Tab Event Listener ---
+    document.addEventListener('DOMContentLoaded', function() {
+      const profileModal = document.getElementById('profileModal');
+      if (profileModal) {
+        profileModal.addEventListener('shown.bs.tab', function(e) {
+          const href = e.target.getAttribute('href');
+          if (href === '#ordersTab') {
+            displayOrders();
+          } else if (href === '#addressesTab') {
+            displayAddresses();
           }
         });
-      });
-    }
-
-    // Sayfa yüklendiğinde fiyatları kontrol et
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('Sayfa yüklendi, fiyat gizleme kontrol ediliyor.');
-      maskPrices();
-    });
-
-    // localStorage değişikliklerini dinle
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'adminHidePrices') {
-        console.log('localStorage değişti, fiyat gizleme kontrol ediliyor.');
-        maskPrices();
       }
     });
-  })();
   </script>
+ 
   
 </body>
 </html>
