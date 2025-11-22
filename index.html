@@ -111,22 +111,22 @@
   display: flex;
   overflow-x: auto;
   padding: 10px 0;
-  gap: 20px;
+  gap: 5px;
   scrollbar-width: thin;
 }
 
 .brand-item {
   flex: 0 0 auto;
   text-align: center;
-  width: 100px;
+  width: 75px;
 }
 
 .brand-logo {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   object-fit: contain;
   border-radius: 8px;
-  border: 1px solid #eee;
+  border: 1px solid #ddd;
   padding: 5px;
   background: white;
 }
@@ -134,7 +134,7 @@
 .brand-name {
   margin-top: 8px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
 }
 
@@ -153,10 +153,11 @@
 .product-scroll-container {
   display: flex;
   overflow-x: auto;
-  padding: 10px 0;
-  gap: 12px;
+  padding: 0px 0;
+  gap: 5px;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch; /* iOS için smooth scroll */
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15) !important;
 }
 
 .product-scroll-container::-webkit-scrollbar {
@@ -171,14 +172,14 @@
 /* Vitrin öğeleri */
 .product-scroll-item {
   flex: 0 0 auto;
-  width: 200px; /* Sabit genişlik */
+  width: 165px; /* Sabit genişlik */
   cursor: pointer;
 }
 
 /* Vitrin bölümü stilleri */
 .vitrin-bolumu {
-  margin-bottom: 30px;
-  padding: 20px 0;
+  margin-bottom: 15px;
+  padding: 10px 0;
 }
 
 .vitrin-bolumu h2 {
