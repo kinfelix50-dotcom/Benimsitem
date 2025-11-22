@@ -268,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
+          // Fiyat gizleme kontrolü
+          const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
 
         blockHtml += `
           <div class="product-scroll-item">
@@ -279,17 +281,19 @@ document.addEventListener('DOMContentLoaded', function () {
               </div>
               <div class="card-body text-center">
                 <h5 class="card-title">${escapeHTML(urun.ad)}</h5>
-                ${urun.indirim > 0 ? `
-                  <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} TL</p>
-                  <p class="card-price discount-price">${indirimliFiyat.toFixed(2)} TL</p>
-                ` : `
-                  <p class="card-price">${Number(urun.fiyat).toFixed(2)} TL</p>
-                `}
+                  ${!fiyatGizle ? (
+                    urun.indirim > 0 ? `
+                      <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} TL</p>
+                      <p class="card-price discount-price">${indirimliFiyat.toFixed(2)} TL</p>
+                    ` : `
+                      <p class="card-price">${Number(urun.fiyat).toFixed(2)} TL</p>
+                    `
+                  ) : ''}
                 <a href="urun-detay.html?id=${escapeHTML(urun.id)}" class="btn btn-outline-primary btn-sm">Detaylar</a>
                 <button class="btn btn-success btn-sm sepete-ekle-carousel"
                         data-urun-id="${escapeHTML(urun.id)}"
                         data-urun-ad="${escapeHTML(urun.ad)}"
-                        data-urun-fiyat="${indirimliFiyat}"
+                          data-urun-fiyat="${!fiyatGizle ? indirimliFiyat : ''}"
                         data-urun-resim="${escapeHTML(urun.resim)}"
                         data-urun-stok="${Number(urun.stok || 0)}"
                         data-urun-indirim="${Number(urun.indirim || 0)}"
@@ -475,17 +479,29 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      // Fiyat gizli ise sepete fiyat ekleme
+      const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
+      let sepeteEklenecekUrun = {
+        ...urun,
+        stok: guncelUrunBilgisi.stok,
+        indirim: guncelUrunBilgisi.indirim || 0
+      };
+      if (!fiyatGizle) {
+        sepeteEklenecekUrun.fiyat = calculateDiscountedPrice(guncelUrunBilgisi.fiyat, guncelUrunBilgisi.indirim);
+      } else {
+        sepeteEklenecekUrun.fiyat = null;
+      }
+
       if (mevcut) {
         mevcut.adet += eklenecekAdet;
-        mevcut.fiyat = calculateDiscountedPrice(guncelUrunBilgisi.fiyat, guncelUrunBilgisi.indirim);
+        if (!fiyatGizle) {
+          mevcut.fiyat = calculateDiscountedPrice(guncelUrunBilgisi.fiyat, guncelUrunBilgisi.indirim);
+        } else {
+          mevcut.fiyat = null;
+        }
         mevcut.indirim = guncelUrunBilgisi.indirim || 0;
       } else {
-        this.sepet.push({
-          ...urun,
-          fiyat: calculateDiscountedPrice(guncelUrunBilgisi.fiyat, guncelUrunBilgisi.indirim),
-          stok: guncelUrunBilgisi.stok,
-          indirim: guncelUrunBilgisi.indirim || 0
-        });
+        this.sepet.push(sepeteEklenecekUrun);
       }
 
       guncelUrunBilgisi.stok -= eklenecekAdet;
@@ -979,6 +995,52 @@ document.addEventListener('DOMContentLoaded', function () {
   urunleriGoster();
   kategoriMenusuGuncelle();
   loadVitrins();
+
+  // --- Markalar Tabı ---
+  function getBenzersizMarkalar() {
+    const urunler = safeParseJSON('urunler', []);
+    return [...new Set(urunler.map(urun => urun.marka).filter(marka => marka && marka !== 'Belirtilmemiş'))].map(marka => {
+      const urun = urunler.find(u => u.marka === marka);
+      return {
+        ad: marka,
+        logo: urun?.markaLogo || 'https://via.placeholder.com/60'
+      };
+    });
+  }
+
+  function markalariGoster() {
+    const brandsList = document.getElementById('brandsList');
+    if (!brandsList) {
+      console.error('brandsList elementi bulunamadı!');
+      return;
+    }
+    const markalar = getBenzersizMarkalar();
+    brandsList.innerHTML = '';
+    if (markalar.length === 0) {
+      brandsList.innerHTML = '<p class="text-muted text-center">Marka bulunamadı.</p>';
+      return;
+    }
+    markalar.forEach(marka => {
+      const brandItem = document.createElement('div');
+      brandItem.className = 'brand-item';
+      brandItem.innerHTML = `
+        <a href="#" class="brand-link" data-marka="${escapeHTML(marka.ad)}">
+          <img src="${escapeHTML(marka.logo)}" alt="${escapeHTML(marka.ad)}" class="brand-logo" onerror="this.src='https://via.placeholder.com/60'">
+          <p class="brand-name">${escapeHTML(marka.ad)}</p>
+        </a>
+      `;
+      brandsList.appendChild(brandItem);
+    });
+    document.querySelectorAll('.brand-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const marka = this.dataset.marka;
+        urunleriGoster(null, null, marka);
+      });
+    });
+  }
+
+  markalariGoster();
 
   const changePasswordForm = document.getElementById('changePasswordForm');
   if (changePasswordForm) {
