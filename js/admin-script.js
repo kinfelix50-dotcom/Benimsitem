@@ -388,8 +388,20 @@
       }
 
       filtrelenmisUrunler.forEach(u => {
-        const kat = u.kategori && kategoriMap.has(u.kategori) ? u.kategori : 'Diğer';
-        kategoriMap.get(kat).push(u);
+        // Eğer ürünün kategorileri dizisi varsa tüm uygun kategorilere ekle
+        if (Array.isArray(u.kategoriler) && u.kategoriler.length) {
+          let atandi = false;
+          u.kategoriler.forEach(cat => {
+            if (kategoriMap.has(cat)) {
+              kategoriMap.get(cat).push(u);
+              atandi = true;
+            }
+          });
+          if (!atandi) kategoriMap.get('Diğer').push(u);
+        } else {
+          const kat = u.kategori && kategoriMap.has(u.kategori) ? u.kategori : 'Diğer';
+          kategoriMap.get(kat).push(u);
+        }
       });
 
       // Kategori başlıklarını alfabetik sıraya göre sırala
@@ -489,14 +501,14 @@
           vitrinUrunleri.forEach(u => {
             const indirimliFiyat = calculateDiscountedPrice(u.fiyat, u.indirim);
             urunListHtml += `
-              <li class="list-group-item d-flex align-items-center p-2">
+                    <li class="list-group-item d-flex align-items-center p-2">
                 <img src="${escapeHTML(u.resim)}" class="vitrin-urun-img me-3" alt="${escapeHTML(u.ad)}" onerror="this.src='https://via.placeholder.com/45'">
                 <div class="flex-grow-1">
                   <h6 class="mb-0">${escapeHTML(u.ad)}</h6>
                   <p class="mb-0 text-muted small">
                     ${u.indirim > 0 ? `<span class="text-decoration-line-through me-1">₺${u.fiyat.toFixed(2)}</span>` : ''}
                     <span class="fw-bold text-success">₺${indirimliFiyat.toFixed(2)}</span>
-                    <span class="badge bg-secondary ms-2">${escapeHTML(u.kategori)}</span>
+                    <span class="badge bg-secondary ms-2">${escapeHTML(Array.isArray(u.kategoriler) ? u.kategoriler.join(', ') : (u.kategori || ''))}</span>
                     ${u.stok > 0 ? `<span class="badge bg-primary ms-2">Stok: ${u.stok}</span>` : `<span class="badge bg-danger ms-2">Stok Yok</span>`}
                   </p>
                 </div>
@@ -828,7 +840,13 @@
         document.getElementById('urunFiyat').value = u.fiyat;
         document.getElementById('urunIndirim').value = u.indirim || 0;
         document.getElementById('urunResim').value = u.resim;
-        document.getElementById('urunKategori').value = u.kategori;
+        // Urun kategori alanı çoklu seçim olabilir -> mevcut kategorileri seçili yap
+        const sel = document.getElementById('urunKategori');
+        if (sel) {
+          Array.from(sel.options).forEach(opt => {
+            opt.selected = Array.isArray(u.kategoriler) ? u.kategoriler.includes(opt.value) : (u.kategori === opt.value);
+          });
+        }
         document.getElementById('urunStok').value = u.stok;
         document.getElementById('stokKodu').value = u.stokKodu || ''; // Yeni eklenen stokKodu için varsayılan değer
         document.getElementById('anasayfadaGoster').checked = u.anasayfadaGoster;
@@ -894,6 +912,13 @@
             <button type="button" class="btn btn-danger btn-sm kategori-sil-btn" data-kategori="${escapeHTML(k)}"><i class="fas fa-trash"></i></button>
           </div>`;
         kategoriListesi.appendChild(li);
+        // Kategori tıklanınca o kategoriyi göster ve vurgula
+        li.addEventListener('click', (e) => {
+          if (e.target.closest('.kategori-duzenle-btn') || e.target.closest('.kategori-sil-btn')) return;
+          document.querySelectorAll('#kategoriListesi .kategori-list-item').forEach(x => x.classList.remove('active'));
+          li.classList.add('active');
+          urunleriGoster('', k);
+        });
       });
 
       document.querySelectorAll('.kategori-duzenle-btn').forEach(btn => {
@@ -907,7 +932,7 @@
       document.querySelectorAll('.kategori-sil-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const kategori = btn.dataset.kategori;
-          if (urunler.some(u => u.kategori === kategori)) {
+          if (urunler.some(u => (Array.isArray(u.kategoriler) ? u.kategoriler.includes(kategori) : u.kategori === kategori))) {
             bildirimGoster('Bu kategoriye ait ürünler var, önce onları silin veya kategoriyi değiştirin!', 'danger');
             return;
           }
@@ -958,7 +983,12 @@ function kategoriDuzenle() {
   if (index !== -1) {
     kategoriler[index] = yeniKategori;
     urunler.forEach(u => {
-      if (u.kategori === eskiKategori) u.kategori = yeniKategori;
+      if (Array.isArray(u.kategoriler)) {
+        u.kategoriler = u.kategoriler.map(k => k === eskiKategori ? yeniKategori : k);
+      } else if (u.kategori === eskiKategori) {
+        u.kategoriler = [yeniKategori];
+        delete u.kategori;
+      }
     });
     localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
     localStorage.setItem('urunler', JSON.stringify(urunler));

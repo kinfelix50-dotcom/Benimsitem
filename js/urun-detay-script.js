@@ -317,7 +317,7 @@ class Sepet {
 
 function kategoriYukle() {
   const urunler = safeParseJSON('urunler', []);
-  const kategoriler = [...new Set(urunler.map(u => u.kategori).filter(k => k))].sort();
+  const kategoriler = [...new Set(urunler.flatMap(u => Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : [])).filter(k => k))].sort();
   const liste = document.getElementById('kategoriListesi');
   if (!liste) {
     console.error('Kategori listesi bulunamadı!');
