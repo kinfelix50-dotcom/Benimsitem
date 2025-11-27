@@ -406,6 +406,57 @@
   <script src="DejaVuSans.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
 <script>
+// Sayfa okları için global fonksiyonlar - GÜNCELLENMİŞ HALİ
+function homeNextPageClick() {
+  const urunler = safeParseJSON('urunler', []);
+  
+  // 1. Temel filtreleme (Anasayfa ürünleri)
+  let anasayfaUrunler = urunler.filter(u => u.anasayfadaGoster === true);
+
+  // 2. Admin filtrelerini BURADA DA uyguluyoruz ki sayfa sayısı doğru hesaplansın
+  const shouldHideOutOfStock = localStorage.getItem('adminHideOutOfStock') === '1';
+  const hideNoImage = localStorage.getItem('adminHideNoImage') === '1';
+
+  if (shouldHideOutOfStock) {
+    anasayfaUrunler = anasayfaUrunler.filter(urun => (urun.stok || 0) > 0);
+  }
+  
+  // hasValidImage fonksiyonu sayfa yüklendiğinde hazır olacağı için burada güvenle çağırabiliriz
+  if (hideNoImage && typeof hasValidImage === 'function') {
+    anasayfaUrunler = anasayfaUrunler.filter(urun => hasValidImage(urun.resim));
+  }
+
+  const maxCount = parseInt(localStorage.getItem('adminHomeProductCount')) || 10; // Varsayılan 10
+  const totalPages = Math.max(1, Math.ceil(anasayfaUrunler.length / maxCount));
+  
+  // Mevcut sayfayı artır ama toplam sayfayı geçmesine izin verme
+  const newPage = Math.min((window._homeProductPage || 1) + 1, totalPages);
+  
+  window._homeProductPage = newPage;
+  urunleriGoster();
+}
+
+function homePrevPageClick() {
+  // Geri giderken sadece 1'in altına düşmemesini sağlamak yeterli
+  const newPage = Math.max((window._homeProductPage || 1) - 1, 1);
+  window._homeProductPage = newPage;
+  urunleriGoster();
+}
+
+function homeShowAllClick() {
+  window._showAllHomeProducts = true;
+  urunleriGoster();
+}
+
+function homePagingResetClick() {
+  window._showAllHomeProducts = false;
+  window._homeProductPage = 1;
+  urunleriGoster();
+}
+</script>
+
+
+<script>
 // EN ÜSTE TAŞI (DOMContentLoaded’den önce!)
 window.applyAdminPriceMask = function(root = document) {
   try {
@@ -463,6 +514,33 @@ window.applyAdminPriceMask = function(root = document) {
         return defaultValue;
       }
     }
+    
+    // --- GitHub'dan Ürün Yükleme ---
+async function loadProductsFromGitHub() {
+    try {
+        const response = await fetch('https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/data/urunler.json');
+        if (response.ok) {
+            const urunler = await response.json();
+            console.log('GitHub\'dan', urunler.length, 'ürün yüklendi');
+            localStorage.setItem('urunler', JSON.stringify(urunler));
+            return urunler;
+        }
+    } catch (error) {
+        console.error('GitHub veri yükleme hatası:', error);
+    }
+    return JSON.parse(localStorage.getItem('urunler') || '[]');
+}
+
+async function initializeProducts() {
+    const urunler = await loadProductsFromGitHub();
+    urunleriGoster();
+    kategoriMenusuGuncelle();
+    markalariGoster();
+    loadVitrins();
+}
+
+
+
 
     function calculateDiscountedPrice(originalPrice, discountPercentage) {
       originalPrice = Number(originalPrice) || 0;
@@ -471,6 +549,25 @@ window.applyAdminPriceMask = function(root = document) {
         return originalPrice * (1 - discountPercentage / 100);
       }
       return originalPrice;
+    }
+
+    // --- Resim geçerliliği kontrolü (admin 'resimsizleri gizle' için) ---
+    function hasValidImage(img) {
+      if (!img) return false;
+      try {
+        const s = String(img).trim();
+        if (!s || s === 'null' || s === 'undefined') return false;
+        // Data URI kabul et
+        if (/^data:image\//i.test(s)) return true;
+        // Yaygın placeholder ve boş resim URL'leri
+        if (/placeholder|no[-_ ]?image|resim[-_ ]?yok|default[-_ ]?image|via\.placeholder\.com|\.svg$/i.test(s)) return false;
+        // Sadece uzantısı olmayan veya çok kısa olanlar
+        if (!/\.(jpg|jpeg|png|webp|gif)$/i.test(s) && !/^data:image\//i.test(s)) return false;
+        return true;
+      } catch (e) {
+        console.error('hasValidImage hata:', e, img);
+        return false;
+      }
     }
 
     function bildirimGoster(mesaj, tip = 'success') {
@@ -1100,7 +1197,16 @@ function exportOrderToExcel(orderId) {
     // --- Kategori Yönetimi ---
     function getBenzersizKategoriler() {
       const urunler = safeParseJSON('urunler', []);
-      return [...new Set(urunler.map(urun => urun.kategori).filter(kategori => kategori))];
+      const allKategoriler = urunler.flatMap(urun => {
+        if (Array.isArray(urun.kategoriler)) {
+          return urun.kategoriler;
+        } else if (urun.kategori) {
+          // Eski veri için geri uyumluluk
+          return [urun.kategori];
+        }
+        return [];
+      });
+      return [...new Set(allKategoriler.filter(k => k && k.trim()))];
     }
 
     function kategoriMenusuGuncelle() {
@@ -1167,7 +1273,7 @@ function exportOrderToExcel(orderId) {
     brandItem.className = 'brand-item';
     brandItem.innerHTML = `
       <a href="#" class="brand-link" data-marka="${escapeHTML(marka.ad)}">
-        <img src="${escapeHTML(marka.logo)}" alt="${escapeHTML(marka.ad)}" class="brand-logo" onerror="this.src='https://via.placeholder.com/60'">
+        <img src="${escapeHTML(marka.logo)}" alt="${escapeHTML(marka.ad)}" class="brand-logo" onerror="console.log('Logo yüklenemedi:', this.src); this.src='https://via.placeholder.com/60'">
         <p class="brand-name">${escapeHTML(marka.ad)}</p>
       </a>
     `;
@@ -1184,176 +1290,301 @@ function exportOrderToExcel(orderId) {
   });
 }
 
-    // --- Ürün Listeleme ---
-    function urunleriGoster(filtreKategori = null, aramaKelimesi = null, filtreMarka = null) {
+   // --- Ürün Listeleme ---
+function urunleriGoster(filtreKategori = null, aramaKelimesi = null, filtreMarka = null) {
   const urunListesi = document.getElementById('productList');
   const productCarouselSection = document.querySelector('.product-carousel-section');
   
   if (!urunListesi) return;
 
-  // DÜZELTME: Sadece arama/filtre varsa vitrinleri gizle, yoksa göster
-  // urunleriGoster içinde bu kısmı bul ve değiştir:
-if (filtreKategori || aramaKelimesi || filtreMarka) {
-  if (productCarouselSection) productCarouselSection.style.display = 'none';
-} else {
-  if (productCarouselSection) productCarouselSection.style.display = 'block';
-}
+  // Vitrin görünüm kontrolü
+  if (filtreKategori || aramaKelimesi || filtreMarka) {
+    if (productCarouselSection) productCarouselSection.style.display = 'none';
+  } else {
+    if (productCarouselSection) productCarouselSection.style.display = 'block';
+  }
 
-      urunListesi.innerHTML = '';
-      const urunler = safeParseJSON('urunler', []);
+  urunListesi.innerHTML = '';
+  const urunler = safeParseJSON('urunler', []);
 
-      urunler.forEach(urun => {
-        urun.yeniUrun = urun.yeniUrun === true;
-        urun.ucretsizKargo = urun.ucretsizKargo === true;
-        urun.indirim = urun.indirim !== undefined ? Number(urun.indirim) : 0;
+  // Ürün verilerini hazırla
+  urunler.forEach(urun => {
+    urun.yeniUrun = urun.yeniUrun === true;
+    urun.ucretsizKargo = urun.ucretsizKargo === true;
+    urun.indirim = urun.indirim !== undefined ? Number(urun.indirim) : 0;
+    urun.stok = urun.stok !== undefined ? Number(urun.stok) : 0;
+  });
+
+  let filtrelenmisUrunler = [];
+  let showAll = window._showAllHomeProducts === true;
+  let currentPage = window._homeProductPage || 1;
+
+  // Admin ayarlarını oku
+  const shouldHideOutOfStock = localStorage.getItem('adminHideOutOfStock') === '1';
+  const hideNoImage = localStorage.getItem('adminHideNoImage') === '1';
+  const maxCount = parseInt(localStorage.getItem('adminHomeProductCount')) || 10;
+
+  // Filtreleme durumuna göre ürünleri hazırla
+  if (!filtreKategori && !aramaKelimesi && !filtreMarka) {
+    // Ana sayfa görünümü - sadece anasayfada gösterilen ürünler
+    filtrelenmisUrunler = urunler.filter(urun => urun.anasayfadaGoster === true);
+    
+    // Admin filtrelerini uygula
+    if (shouldHideOutOfStock) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.stok > 0);
+    }
+    if (hideNoImage) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => hasValidImage(urun.resim));
+    }
+    
+    // Sayfalama uygula
+    if (!showAll && maxCount > 0) {
+      const totalProducts = filtrelenmisUrunler.length;
+      const totalPages = Math.max(1, Math.ceil(totalProducts / maxCount));
+      
+      if (totalProducts === 0) {
+        currentPage = 1;
+      } else {
+        currentPage = Math.max(1, Math.min(currentPage, totalPages));
+      }
+      
+      window._homeProductPage = currentPage;
+      const startIdx = (currentPage - 1) * maxCount;
+      const endIdx = startIdx + maxCount;
+      filtrelenmisUrunler = filtrelenmisUrunler.slice(startIdx, endIdx);
+    }
+  } else {
+    // Filtreli görünüm - tüm ürünlerden filtrele
+    filtrelenmisUrunler = [...urunler];
+
+    // Kategori filtreleme
+    if (filtreKategori && filtreKategori !== 'hepsi') {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => {
+        if (Array.isArray(urun.kategoriler)) {
+          return urun.kategoriler.includes(filtreKategori);
+        }
+        return urun.kategori === filtreKategori;
       });
+    }
 
-      let filtrelenmisUrunler = urunler;
+    // Marka filtreleme
+    if (filtreMarka) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.marka === filtreMarka);
+    }
 
-      if (!filtreKategori && !aramaKelimesi && !filtreMarka) {
-        filtrelenmisUrunler = urunler.filter(urun => urun.anasayfadaGoster === true);
+    // Arama filtreleme
+    if (aramaKelimesi) {
+      const lowerCaseArama = aramaKelimesi.toLowerCase();
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => 
+        urun.ad.toLowerCase().includes(lowerCaseArama) || 
+        (urun.stokKodu && urun.stokKodu.toLowerCase().includes(lowerCaseArama))
+      );
+    }
+
+    // Admin filtrelerini uygula (filtreli görünümde de)
+    if (shouldHideOutOfStock) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.stok > 0);
+    }
+    if (hideNoImage) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => hasValidImage(urun.resim));
+    }
+  }
+
+  // Sayfalama bilgilerini hazırla
+  const totalHomeProducts = urunler.filter(u => u.anasayfadaGoster === true).length;
+  let pagingHtml = '';
+
+  if (!filtreKategori && !aramaKelimesi && !filtreMarka) {
+    if (!showAll && maxCount > 0 && totalHomeProducts > maxCount) {
+      const totalPages = Math.ceil(totalHomeProducts / maxCount);
+      pagingHtml += '<div class="col-12 mb-3 d-flex justify-content-center align-items-center gap-2">';
+      pagingHtml += `<span class="badge bg-info me-2">Gösterilen: ${filtrelenmisUrunler.length}</span>`;
+      if (currentPage > 1) {
+        pagingHtml += `<a href="#" onclick="homePrevPageClick(); return false;" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>`;
       }
-
-      if (filtreKategori) {
-        filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => filtreKategori === 'hepsi' ? true : urun.kategori === filtreKategori);
+      pagingHtml += `<span class="badge bg-light text-dark">Sayfa ${currentPage} / ${totalPages}</span>`;
+      if (currentPage < totalPages) {
+        pagingHtml += `<a href="#" onclick="homeNextPageClick(); return false;" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-right"></i></a>`;
       }
+      pagingHtml += `<a href="#" onclick="homeShowAllClick(); return false;" class="btn btn-sm btn-outline-primary ms-2">Tümünü Göster</a>`;
+      pagingHtml += '</div>';
+    } else if (showAll) {
+      pagingHtml += '<div class="col-12 mb-3 d-flex justify-content-center align-items-center gap-2">';
+      pagingHtml += `<span class="badge bg-info me-2">Tüm Ürünler: ${filtrelenmisUrunler.length}</span>`;
+      pagingHtml += `<a href="#" onclick="homePagingResetClick(); return false;" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i> Sayfalı Görünüm</a>`;
+      pagingHtml += '</div>';
+    }
+  }
 
-      if (aramaKelimesi) {
-        const lowerCaseArama = aramaKelimesi.toLowerCase();
-        filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.ad.toLowerCase().includes(lowerCaseArama) || (urun.stokKodu && urun.stokKodu.toLowerCase().includes(lowerCaseArama)));
-      }
+  // Ürünleri göster
+  if (filtrelenmisUrunler.length === 0) {
+    urunListesi.innerHTML = '<div class="col-12"><p class="text-muted text-center">Ürün bulunamadı.</p></div>';
+    return;
+  }
 
-      if (filtreMarka) {
-        filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.marka === filtreMarka);
-      }
+  const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
 
-      if (filtrelenmisUrunler.length === 0) {
-        urunListesi.innerHTML = '<div class="col-12"><p class="text-muted text-center">Ürün bulunamadı.</p></div>';
-        return;
-      }
+  filtrelenmisUrunler.forEach(urun => {
+    const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger fw-bold">Stok Tükendi</span>';
+    const stokKodu = urun.stokKodu || 'Bilinmiyor';
+    const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
 
-      filtrelenmisUrunler.forEach(urun => {
-        urun.stok = urun.stok !== undefined ? urun.stok : 0;
-        const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger fw-bold">Stok Tükendi</span>';
-        const stokKodu = urun.stokKodu || 'Bilinmiyor';
-        const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
-        const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
+    let etiketlerHtml = `<div class="product-badges">`;
+    if (urun.yeniUrun) {
+      etiketlerHtml += `<span class="badge bg-success">YENİ</span>`;
+    }
+    if (urun.ucretsizKargo) {
+      etiketlerHtml += `<span class="badge bg-info">ÜCRETSİZ KARGO</span>`;
+    }
+    if (urun.indirim > 0) {
+      etiketlerHtml += `<span class="badge bg-danger">%${urun.indirim} İNDİRİM</span>`;
+    }
+    etiketlerHtml += `</div>`;
 
-        let etiketlerHtml = `<div class="product-badges">`;
-        if (urun.yeniUrun) {
-          etiketlerHtml += `<span class="badge new-product-badge">YENİ ÜRÜN</span>`;
-        }
-        if (urun.ucretsizKargo) {
-          etiketlerHtml += `<span class="badge free-shipping-badge">ÜCRETSİZ KARGO</span>`;
-        }
-        if (urun.indirim > 0) {
-          etiketlerHtml += `<span class="badge bg-danger text-white">%${urun.indirim} İNDİRİM</span>`;
-        }
-        etiketlerHtml += `</div>`;
-
-        const urunCard = document.createElement('div');
-        urunCard.classList.add('col-6', 'col-md-4', 'col-lg-3');
-        urunCard.innerHTML = `
-          <div class="card product-card h-100 border-0 shadow-sm position-relative">
-            ${etiketlerHtml}
-            <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/130'">
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title text-center">${escapeHTML(urun.ad)}</h5>
-              <p class="card-text text-muted small text-center"><span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span></p>
-              <p class="card-text text-muted small text-center"><span class="text-dark">S.Kodu: ${escapeHTML(stokKodu)}</span></p>
-              <p class="card-text text-muted small text-center"><span class="text-success">${stokDurumu}</span></p>
-              <div class="text-center mt-auto">
-                ${!fiyatGizle ? (
-                  urun.indirim > 0 ? `
-                    <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} ₺</p>
-                    <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} ₺</h4>
-                  ` : `
-                    <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
-                  `
-                ) : ''}
-                <div class="d-flex flex-column align-items-center gap-0">
-                  <div class="input-group input-group-sm" style="width: 100px;">
-                    <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
-                    <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}">
-                    <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}">+</button>
-                  </div>
-                 <button class="btn btn-sm btn-outline-secondary sepete-ekle mt-2" style="background-color: #EB8220; color: #ffffff;"Sepete Ekle
-                    data-urun-id="${escapeHTML(urun.id)}"
-                    data-urun-ad="${escapeHTML(urun.ad)}"
-                    data-urun-fiyat="${!fiyatGizle ? indirimliFiyat : ''}"
-                    data-urun-resim="${escapeHTML(urun.resim)}"
-                    data-urun-stok="${urun.stok}"
-                    data-urun-indirim="${urun.indirim || 0}"
-                    ${urun.stok === 0 ? 'disabled' : ''}>
-                    <i class="bi bi-cart-plus"></i> Sepete Ekle
-                  </button>
-                </div>
+    const urunCard = document.createElement('div');
+    urunCard.classList.add('col-6', 'col-md-4', 'col-lg-3', 'mb-3');
+    urunCard.innerHTML = `
+      <div class="card product-card h-100 border-0 shadow-sm position-relative">
+        ${etiketlerHtml}
+        <img src="${escapeHTML(urun.resim)}" class="product-image" alt="${escapeHTML(urun.ad)}" 
+             onerror="this.src='https://via.placeholder.com/150?text=Resim+Yok'">
+        <div class="card-body d-flex flex-column">
+          <h6 class="card-title text-center">${escapeHTML(urun.ad)}</h6>
+          <p class="card-text text-muted small text-center mb-1">
+            <span class="text-info">Marka: ${escapeHTML(urun.marka || 'Belirtilmemiş')}</span>
+          </p>
+          <p class="card-text text-muted small text-center mb-1">
+            <span class="text-dark">Kod: ${escapeHTML(stokKodu)}</span>
+          </p>
+          <p class="card-text text-muted small text-center mb-2">
+            <span class="text-success">${stokDurumu}</span>
+          </p>
+          <div class="text-center mt-auto">
+            ${urun.indirim > 0 ? `
+              <p class="card-text original-price mb-1">
+                ${!fiyatGizle ? '<del>' + Number(urun.fiyat).toFixed(2) + ' ₺</del>' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}
+              </p>
+              <h6 class="card-price discount-price text-danger mb-2">
+                ${!fiyatGizle ? indirimliFiyat.toFixed(2) + ' ₺' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}
+              </h6>
+            ` : `
+              <h6 class="card-price mb-2">
+                ${!fiyatGizle ? Number(urun.fiyat).toFixed(2) + ' ₺' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}
+              </h6>
+            `}
+            <div class="d-flex flex-column align-items-center gap-1">
+              <div class="input-group input-group-sm" style="width: 120px;">
+                <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
+                <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}" 
+                       ${urun.stok === 0 ? 'disabled' : ''}>
+                <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}"
+                        ${urun.stok === 0 ? 'disabled' : ''}>+</button>
               </div>
+              <button class="btn btn-sm sepete-ekle mt-1" 
+                      style="background-color: #EB8220; color: #ffffff; border: none;"
+                      data-urun-id="${escapeHTML(urun.id)}"
+                      data-urun-ad="${escapeHTML(urun.ad)}"
+                      data-urun-fiyat="${!fiyatGizle ? indirimliFiyat : ''}"
+                      data-urun-resim="${escapeHTML(urun.resim)}"
+                      data-urun-stok="${urun.stok}"
+                      data-urun-indirim="${urun.indirim || 0}"
+                      ${urun.stok === 0 ? 'disabled' : ''}>
+                <i class="bi bi-cart-plus"></i> Sepete Ekle
+              </button>
             </div>
           </div>
-        `;
-        urunListesi.appendChild(urunCard);
+        </div>
+      </div>
+    `;
+    urunListesi.appendChild(urunCard);
 
-        urunCard.addEventListener('click', function(e) {
-          if (!e.target.closest('.sepete-ekle') && !e.target.closest('.input-group') &&
-              !e.target.classList.contains('azalt') && !e.target.classList.contains('artir')) {
-            window.location.href = `urun-detay.html?id=${escapeHTML(urun.id)}`;
-          }
-        });
+    // Ürün kartı tıklama event'i
+    urunCard.addEventListener('click', function(e) {
+      if (!e.target.closest('.sepete-ekle') && 
+          !e.target.closest('.input-group') &&
+          !e.target.classList.contains('azalt') && 
+          !e.target.classList.contains('artir')) {
+        window.location.href = `urun-detay.html?id=${escapeHTML(urun.id)}`;
+      }
+    });
 
-        const azaltBtn = urunCard.querySelector('.azalt');
-        const artirBtn = urunCard.querySelector('.artir');
-        const inputEl = urunCard.querySelector('.adet-input');
-        const sepeteEkleBtn = urunCard.querySelector('.sepete-ekle');
+    // Miktar buton event'leri
+    const azaltBtn = urunCard.querySelector('.azalt');
+    const artirBtn = urunCard.querySelector('.artir');
+    const inputEl = urunCard.querySelector('.adet-input');
+    const sepeteEkleBtn = urunCard.querySelector('.sepete-ekle');
 
-        azaltBtn.addEventListener('click', () => {
-          let val = parseInt(inputEl.value);
-          if (val > 1) inputEl.value = val - 1;
-        });
-
-        artirBtn.addEventListener('click', () => {
-          let val = parseInt(inputEl.value);
-          if (val < urun.stok) {
-            inputEl.value = val + 1;
-          }
-        });
-
-        inputEl.addEventListener('change', () => {
-          let val = parseInt(inputEl.value);
-          if (isNaN(val) || val < 1) {
-            inputEl.value = 1;
-          } else if (val > urun.stok) {
-            inputEl.value = urun.stok;
-          }
-        });
-
-        sepeteEkleBtn.addEventListener('click', function() {
-          const urunBilgisi = safeParseJSON('urunler', []).find(p => p.id === this.dataset.urunId);
-          const eklenecekAdet = parseInt(inputEl.value);
-          if (!urunBilgisi || urunBilgisi.stok < eklenecekAdet) {
-            bildirimGoster(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`, 'danger');
-            inputEl.value = urunBilgisi ? urunBilgisi.stok : 1;
-            return;
-          }
-
-          const urun = {
-            id: this.dataset.urunId,
-            ad: this.dataset.urunAd,
-            fiyat: parseFloat(this.dataset.urunFiyat),
-            adet: eklenecekAdet,
-            resim: this.dataset.urunResim,
-            stok: parseInt(this.dataset.urunStok),
-            indirim: parseFloat(this.dataset.urunIndirim),
-            stokKodu: urunBilgisi.stokKodu || 'N/A',
-            marka: urunBilgisi.marka || 'Belirtilmemiş'
-          };
-          window.sepet.ekle(urun);
-          inputEl.value = '1';
-        });
+    if (azaltBtn && inputEl) {
+      azaltBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        let val = parseInt(inputEl.value);
+        if (val > 1) inputEl.value = val - 1;
       });
-      // Admin fiyat gizleme uygula
-      window.applyAdminPriceMask();
     }
+
+    if (artirBtn && inputEl) {
+      artirBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        let val = parseInt(inputEl.value);
+        if (val < urun.stok) inputEl.value = val + 1;
+      });
+    }
+
+    if (inputEl) {
+      inputEl.addEventListener('change', (e) => {
+        e.stopPropagation();
+        let val = parseInt(inputEl.value);
+        if (isNaN(val) || val < 1) {
+          inputEl.value = 1;
+        } else if (val > urun.stok) {
+          inputEl.value = urun.stok;
+        }
+      });
+    }
+
+    if (sepeteEkleBtn) {
+      sepeteEkleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const urunBilgisi = safeParseJSON('urunler', []).find(p => p.id === this.dataset.urunId);
+        const eklenecekAdet = parseInt(inputEl.value);
+        
+        if (!urunBilgisi || urunBilgisi.stok < eklenecekAdet) {
+          bildirimGoster(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`, 'danger');
+          if (inputEl) inputEl.value = urunBilgisi ? urunBilgisi.stok : 1;
+          return;
+        }
+
+        const urun = {
+          id: this.dataset.urunId,
+          ad: this.dataset.urunAd,
+          fiyat: parseFloat(this.dataset.urunFiyat),
+          adet: eklenecekAdet,
+          resim: this.dataset.urunResim,
+          stok: parseInt(this.dataset.urunStok),
+          indirim: parseFloat(this.dataset.urunIndirim),
+          stokKodu: urunBilgisi.stokKodu || 'N/A',
+          marka: urunBilgisi.marka || 'Belirtilmemiş'
+        };
+        
+        if (window.sepet) {
+          window.sepet.ekle(urun);
+          if (inputEl) inputEl.value = '1';
+        }
+      });
+    }
+  });
+
+  // Sayfalama HTML'ini ekle
+  if (pagingHtml) {
+    urunListesi.insertAdjacentHTML('beforeend', pagingHtml);
+  }
+
+  // Admin fiyat gizleme uygula
+  if (typeof window.applyAdminPriceMask === 'function') {
+    window.applyAdminPriceMask();
+  }
+}
+    
     function loadVitrins() {
   const vitrinBloklari = document.getElementById('vitrinBloklari');
   console.log('🔍 Vitrin blokları elementi:', vitrinBloklari);
@@ -1366,6 +1597,7 @@ if (filtreKategori || aramaKelimesi || filtreMarka) {
   vitrinBloklari.innerHTML = '';
   const urunler = safeParseJSON('urunler', []);
   const vitrinler = safeParseJSON('vitrinler', []);
+  const fiyatGizle = localStorage.getItem('adminHidePrices') === '1';
 
   console.log('📦 Ürünler:', urunler.length);
   console.log('🎯 Vitrinler:', vitrinler);
@@ -1449,10 +1681,10 @@ if (filtreKategori || aramaKelimesi || filtreMarka) {
               <p class="card-text text-muted small"><span class="text-success">${stokDurumu}</span></p>
               <div class="text-center mt-auto">
                 ${urun.indirim > 0 ? `
-                  <p class="card-text original-price"><del>${Number(urun.fiyat).toFixed(2)} ₺</del></p>
-                  <h4 class="card-price discount-price text-danger">${indirimliFiyat.toFixed(2)} ₺</h4>
+                  <p class="card-text original-price">${!fiyatGizle ? '<del>' + Number(urun.fiyat).toFixed(2) + ' ₺</del>' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}</p>
+                  <h4 class="card-price discount-price text-danger">${!fiyatGizle ? indirimliFiyat.toFixed(2) + ' ₺' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}</h4>
                 ` : `
-                  <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} ₺</h4>
+                  <h4 class="card-price">${!fiyatGizle ? Number(urun.fiyat).toFixed(2) + ' ₺' : '<span class="admin-price-placeholder">Fiyat Gizli</span>'}</h4>
                 `}
                 <div class="d-flex flex-column align-items-center gap-0">
                   <button class="btn btn-sm btn-outline-secondary sepete-ekle-carousel mt-2" style="background-color: #EB8220; color: #ffffff;"
@@ -1463,7 +1695,7 @@ if (filtreKategori || aramaKelimesi || filtreMarka) {
                     data-urun-stok="${Number(urun.stok || 0)}"
                     data-urun-indirim="${Number(urun.indirim || 0)}"
                     ${disableButton}>
-                    <i class="bi bi-cart-plus"></i> Sepete Ekle
+                    <i class="bi bi-cart-plus"></i> Toptan Al
                   </button>
                 </div>
               </div>
@@ -1483,10 +1715,20 @@ if (filtreKategori || aramaKelimesi || filtreMarka) {
       console.warn(`⚠️ Geçersiz vitrin verisi [${index}]:`, vitrin);
       return;
     }
-    
-    const vitrinUrunleri = urunler.filter(urun => vitrin.urunIds.includes(urun.id));
+    const shouldHideOutOfStock = localStorage.getItem('adminHideOutOfStock') === '1';
+    const hideNoImage = localStorage.getItem('adminHideNoImage') === '1';
+    let vitrinUrunleri = shouldHideOutOfStock 
+      ? urunler.filter(urun => vitrin.urunIds.includes(urun.id) && (urun.stok || 0) > 0)
+      : urunler.filter(urun => vitrin.urunIds.includes(urun.id));
+    if (hideNoImage) {
+      vitrinUrunleri = vitrinUrunleri.filter(urun => hasValidImage(urun.resim));
+    }
+    // Admin belirlediği kadar ürün göster
+    const maxCount = parseInt(localStorage.getItem('adminHomeProductCount'));
+    if (!isNaN(maxCount) && maxCount > 0) {
+      vitrinUrunleri = vitrinUrunleri.slice(0, maxCount);
+    }
     console.log(`📋 Vitrin "${vitrin.ad}":`, vitrinUrunleri.length, 'ürün bulundu');
-    
     output += renderVitrin(vitrin.ad, vitrinUrunleri);
   });
 
@@ -1883,15 +2125,27 @@ window.applyAdminPriceMask = function(root = document) {
         window.addEventListener('storage', (e) => {
           console.log('Index storage event:', e.key, e.newValue, e.oldValue);
           if (e.key === 'adminHidePrices') window.applyAdminPriceMask(document);
+          if (e.key === 'adminHideNoImage') {
+            urunleriGoster();
+            loadVitrins();
+          }
         });
 
         let lastAdminHidePrices = localStorage.getItem('adminHidePrices');
+        let lastAdminHideNoImage = localStorage.getItem('adminHideNoImage');
         setInterval(() => {
-          const current = localStorage.getItem('adminHidePrices');
-          if (current !== lastAdminHidePrices) {
-            lastAdminHidePrices = current;
-            console.log('Index interval detected change:', current);
+          const currentPrices = localStorage.getItem('adminHidePrices');
+          if (currentPrices !== lastAdminHidePrices) {
+            lastAdminHidePrices = currentPrices;
+            console.log('Index interval detected price change:', currentPrices);
             window.applyAdminPriceMask(document);
+          }
+          const currentNoImage = localStorage.getItem('adminHideNoImage');
+          if (currentNoImage !== lastAdminHideNoImage) {
+            lastAdminHideNoImage = currentNoImage;
+            console.log('Index interval detected no-image change:', currentNoImage);
+            urunleriGoster();
+            loadVitrins();
           }
         }, 500);
       })();

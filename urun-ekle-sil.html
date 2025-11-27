@@ -456,6 +456,9 @@
             <li class="nav-item me-2 mb-2 mb-lg-0">
               <button type="button" class="btn btn-warning btn-sm w-100" id="excelExportBtn"><i class="fas fa-file-excel me-2"></i>Excel'e Aktar</button>
             </li>
+            <li class="nav-item me-2 mb-2 mb-lg-0">
+              <button type="button" class="btn btn-info btn-sm w-100" id="csvExportBtn"><i class="fas fa-file-csv me-2"></i>CSV'ye Aktar</button>
+            </li>
             <li class="nav-item mb-2 mb-lg-0">
               <button type="button" class="btn btn-info btn-sm w-100" id="excelImportBtn"><i class="fas fa-file-import me-2"></i>Excel'den Yükle</button>
               <input type="file" id="excelImportInput" class="d-none" accept=".xlsx,.xls" onchange="urunleriExceldenYukle(event)">
@@ -532,11 +535,11 @@
                   <small class="text-muted mt-2">Ya da URL ile eklemek için:</small>
                   <input type="url" id="urunResim" class="form-control mt-2" placeholder="https://example.com/resim.jpg">
                 </div>
-                <div class="col-md-2">
-                  <label for="urunKategori" class="form-label">Kategori</label>
-                  <select id="urunKategori" class="form-select" required>
-                    <option value="" disabled selected>Kategori Seç</option>
+                <div class="col-md-3">
+                  <label for="urunKategori" class="form-label">Kategori (Çoklu seçim)</label>
+                  <select id="urunKategori" class="form-select" multiple size="4" required>
                   </select>
+                  <div class="form-text">Ctrl/Cmd ile birden fazla kategori seçebilirsiniz.</div>
                 </div>
                 <div class="col-md-2">
   <label for="urunMarka" class="form-label">Marka</label>
@@ -586,16 +589,48 @@
 <hr class="my-3">
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h4 class="m-0">Tüm Ürünler (<span id="urunListesiBaslik">Kategorilere Göre</span>)</h4>
-  <div class="d-flex align-items-center gap-3">
-    <div class="form-check form-switch m-0">
-      <input class="form-check-input" type="checkbox" id="stoktaOlmayanlariGizle" checked>
-      <label class="form-check-label" for="stoktaOlmayanlariGizle">Stoğu Bitenleri Gizle</label>
-    </div>
-    <div class="form-check form-switch m-0">
-      <input class="form-check-input" type="checkbox" id="fiyatlariGizle">
-      <label class="form-check-label" for="fiyatlariGizle">Fiyatları Gizle (Sadece Anasayfa)</label>
+  <div class="admin-filters-container w-100">
+    <div class="row g-2 flex-wrap">
+      <div class="col-12 col-sm-auto">
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="stoktaOlmayanlariGizle" checked>
+          <label class="form-check-label" for="stoktaOlmayanlariGizle">Stoğu Bitenleri Gizle</label>
+        </div>
+      </div>
+      <div class="col-12 col-sm-auto">
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="resimsizleriGizle">
+          <label class="form-check-label" for="resimsizleriGizle">Resimsiz Ürünleri Gizle</label>
+        </div>
+      </div>
+      <div class="col-12 col-sm-auto">
+        <div class="d-flex align-items-center flex-wrap">
+          <label for="anasayfaUrunSayisi" class="form-label mb-0 me-2">Anasayfa Ürün Sayısı</label>
+          <input type="number" min="1" max="100" id="anasayfaUrunSayisi" class="form-control" style="width:100px;display:inline-block;">
+          <button id="anasayfaUrunSayisiKaydet" class="btn btn-sm btn-primary ms-2">Kaydet</button>
+        </div>
+      </div>
+      <div class="col-12 col-sm-auto">
+        <div class="form-check form-switch m-0">
+          <input class="form-check-input" type="checkbox" id="fiyatlariGizle">
+          <label class="form-check-label" for="fiyatlariGizle">Fiyatları Gizle (Sadece Anasayfa)</label>
+        </div>
+      </div>
     </div>
   </div>
+</div>
+<!-- Toplu kategori işlemleri: kategori seçici + butonlar -->
+<div class="mb-3 d-flex gap-2 align-items-center">
+  <div>
+    <select id="bulkKategoriSelect" class="form-select">
+      <option value="" disabled selected>Kategori seç (Toplu işlem)</option>
+    </select>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-success" id="bulkEkleBtn" type="button"><i class="fas fa-plus me-2"></i>Seçili Ürünleri Kategoriye Ekle</button>
+    <button class="btn btn-danger" id="bulkCikarBtn" type="button"><i class="fas fa-minus me-2"></i>Seçili Ürünleri Kategoriden Çıkar</button>
+  </div>
+  <div class="ms-auto text-muted small"></div>
 </div>
 <div id="urunlerListesi" class="table-responsive"></div>
 </div>
@@ -1189,13 +1224,22 @@ function exportOrderToExcel(orderId) {
     // Verileri yükle
     function loadData() {
       try {
-        urunler = safeParseJSON('urunler', []);
-        urunler.forEach(urun => {
-          delete urun.isNew;
-          urun.anasayfadaGoster = !!urun.anasayfadaGoster;
-          urun.yeniUrun = !!urun.yeniUrun;
-          urun.ucretsizKargo = !!urun.ucretsizKargo;
-        });
+          urunler = safeParseJSON('urunler', []);
+          urunler.forEach(urun => {
+            delete urun.isNew;
+            urun.anasayfadaGoster = !!urun.anasayfadaGoster;
+            urun.yeniUrun = !!urun.yeniUrun;
+            urun.ucretsizKargo = !!urun.ucretsizKargo;
+            // Çoklu kategori desteği: eski tekli 'kategori' varsa diziye çevir, yoksa mevcut 'kategoriler' dizisini kullan
+            if (Array.isArray(urun.kategoriler)) {
+              urun.kategoriler = urun.kategoriler.map(k => k && k.toString().trim()).filter(Boolean);
+            } else if (urun.kategori) {
+              urun.kategoriler = [urun.kategori.toString().trim()];
+              delete urun.kategori;
+            } else {
+              urun.kategoriler = [];
+            }
+          });
         localStorage.setItem('urunler', JSON.stringify(urunler));
         kategoriler = safeParseJSON('kategoriler', []);
         vitrinler = safeParseJSON('vitrinler', []);
@@ -1214,6 +1258,42 @@ function exportOrderToExcel(orderId) {
         adresler = [];
       }
     }
+    // ESKİ: 
+function loadData() {
+    urunler = safeParseJSON('urunler', []);
+    // ... diğer kodlar
+}
+
+// YENİ:
+async function loadData() {
+    try {
+        // ÖNCE GitHub'dan yükle
+        urunler = await loadProductsFromGitHub();
+        
+        // Eğer GitHub'dan ürün geldiyse
+        if (urunler && urunler.length > 0) {
+            console.log('GitHub\'dan', urunler.length, 'ürün yüklendi');
+        } else {
+            // GitHub'dan ürün gelmezse LocalStorage'den devam et
+            urunler = safeParseJSON('urunler', []);
+            console.log('LocalStorage\'den', urunler.length, 'ürün yüklendi');
+        }
+        
+        // Diğer veriler aynı
+        kategoriler = safeParseJSON('kategoriler', []);
+        vitrinler = safeParseJSON('vitrinler', []);
+        siparisler = safeParseJSON('orders', []);
+        
+    } catch (error) {
+        console.error('Yükleme hatası:', error);
+        // Hata olursa LocalStorage'den devam et
+        urunler = safeParseJSON('urunler', []);
+        kategoriler = safeParseJSON('kategoriler', []);
+        vitrinler = safeParseJSON('vitrinler', []);
+        siparisler = safeParseJSON('orders', []);
+    }
+}
+    
     // Bildirim göster
     function bildirimGoster(mesaj, tip = 'success') {
       const bildirimAlani = document.getElementById('bildirimAlani');
@@ -1234,13 +1314,16 @@ function exportOrderToExcel(orderId) {
     function kategorileriYukle() {
       const select = document.getElementById('urunKategori');
       if (!select) return;
-      select.innerHTML = '<option value="" disabled selected>Kategori Seç</option>';
+      // Çoklu seçim için option'ları temizle ve yeniden ekle
+      select.innerHTML = '';
       kategoriler.forEach(k => {
         const option = document.createElement('option');
         option.value = k;
         option.textContent = k;
         select.appendChild(option);
       });
+      // Bulk select'i de güncelle
+      populateBulkKategoriSelect();
       const kategoriListesi = document.getElementById('kategoriListesi');
       if (!kategoriListesi) return;
       kategoriListesi.innerHTML = '';
@@ -1258,6 +1341,15 @@ function exportOrderToExcel(orderId) {
             <button type="button" class="btn btn-danger btn-sm kategori-sil-btn" data-kategori="${escapeHTML(k)}"><i class="fas fa-trash"></i></button>
           </div>`;
         kategoriListesi.appendChild(li);
+        // Kategori adına tıklanınca o kategoriye ait ürünleri göster ve vurgula
+        li.addEventListener('click', (e) => {
+          // Eğer tıklama düzenle/sil butonlarında olduysa filtre tetiklenmesin
+          if (e.target.closest('.kategori-duzenle-btn') || e.target.closest('.kategori-sil-btn')) return;
+          // Diğer aktif sınıflarını kaldır
+          document.querySelectorAll('#kategoriListesi .kategori-list-item').forEach(x => x.classList.remove('active'));
+          li.classList.add('active');
+          urunleriGoster('', k);
+        });
       });
       document.querySelectorAll('.kategori-duzenle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1270,18 +1362,23 @@ function exportOrderToExcel(orderId) {
       document.querySelectorAll('.kategori-sil-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const kategori = btn.dataset.kategori;
-          if (urunler.some(u => u.kategori === kategori)) {
-            bildirimGoster('Bu kategoriye ait ürünler var, önce onları silin veya kategoriyi değiştirin!', 'danger');
-            return;
-          }
-          if (confirm(`"${kategori}" kategorisi silinsin mi?`)) {
-            kategoriler = kategoriler.filter(k => k !== kategori);
-            localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
-            kategorileriYukle();
-            bildirimGoster('Kategori silindi!', 'success');
-          }
+          if (!confirm(`"${kategori}" kategorisi silinsin mi? Bu işlem ürünlerden kategori bilgisini kaldırır.`)) return;
+          // Kategoriyi kaldır ve tüm ürünlerden çıkar
+          kategoriler = kategoriler.filter(k => k !== kategori);
+          urunler.forEach(u => {
+            if (Array.isArray(u.kategoriler)) {
+              u.kategoriler = u.kategoriler.filter(k => k !== kategori);
+            }
+          });
+          localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+          localStorage.setItem('urunler', JSON.stringify(urunler));
+          kategorileriYukle();
+          urunleriGoster();
+          bildirimGoster('Kategori silindi ve ürünlerden kaldırıldı!', 'success');
         });
       });
+      // Kategori listesi güncellendiğinde bulk select'i de güncelle
+      populateBulkKategoriSelect();
     }
     // Kategori ekle
     function kategoriEkle() {
@@ -1316,7 +1413,12 @@ function exportOrderToExcel(orderId) {
       if (index !== -1) {
         kategoriler[index] = yeniKategori;
         urunler.forEach(u => {
-          if (u.kategori === eskiKategori) u.kategori = yeniKategori;
+          if (Array.isArray(u.kategoriler)) {
+            u.kategoriler = u.kategoriler.map(k => k === eskiKategori ? yeniKategori : k);
+          } else if (u.kategori === eskiKategori) {
+            u.kategoriler = [yeniKategori];
+            delete u.kategori;
+          }
         });
         localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
         localStorage.setItem('urunler', JSON.stringify(urunler));
@@ -1347,14 +1449,16 @@ function exportOrderToExcel(orderId) {
         etiketlerHtml += `<span class="badge bg-primary me-1">Anasayfada</span>`;
       }
       return `
-        <tr>
-          <td><img src="${escapeHTML(urun.resim)}" class="urun-row-img" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/45'"></td>
+          <tr>
+            <td class="text-center"><input type="checkbox" class="urun-secim-checkbox" data-id="${escapeHTML(urun.id)}"></td>
+            <td><img src="${escapeHTML(urun.resim)}" class="urun-row-img" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/45'"></td>
           <td>
             ${escapeHTML(urun.ad)}
-            <div class="mt-1">${etiketlerHtml}</div>
+              <div class="mt-1">${etiketlerHtml}</div>
+              <div class="small text-muted mt-1">${(urun.kategoriler && urun.kategoriler.length) ? escapeHTML(urun.kategoriler.join(', ')) : 'Kategorisiz'}</div>
           </td>
           <td class="marka-logo-column">
-            <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/35')}" class="marka-logo-img" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/35''">
+            <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/35')}" class="marka-logo-img" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="console.log('Admin tablo logo yüklenemedi:', this.src); this.src='https://via.placeholder.com/35'">
           </td>
           <td>${escapeHTML(urun.marka || 'Belirtilmemiş')}</td>
           <td>
@@ -1383,7 +1487,7 @@ function exportOrderToExcel(orderId) {
         const modal = new bootstrap.Modal(document.getElementById('detayModal'));
         document.getElementById('detayModalIcerik').innerHTML = `
           <img src="${escapeHTML(urun.resim)}" class="urun-resmi" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/150'">
-          <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/60')}" class="detay-marka-logo" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/60'">
+          <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/60')}" class="detay-marka-logo" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="console.log('Admin detay logo yüklenemedi:', this.src); this.src='https://via.placeholder.com/60'">
           <p><strong>Marka:</strong> ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
           ${formatDescriptionToParagraphs(urun.detay)}
         `;
@@ -1392,14 +1496,28 @@ function exportOrderToExcel(orderId) {
     }
     
     // Ürünleri Kategorilere Göre Listele ve Göster
-function urunleriGoster(aramaKelimesi = '') {
+function urunleriGoster(aramaKelimesi = '', kategoriFiltre = null) {
   const urunlerListesiDiv = document.getElementById('urunlerListesi');
   if (!urunlerListesiDiv) return;
   
-  // YENİ KISIM: Stokta Olmayanları Gizle kontrolü
+  // YENİ KISIM: Stokta Olmayanları Gizle kontrolü (localStorage'dan oku)
   const gizleCheckbox = document.getElementById('stoktaOlmayanlariGizle');
-  // Checkbox'ın varlığını kontrol et ve varsayılan olarak gizleme aktif olsun
-  const stoktaOlmayanlariGizle = gizleCheckbox ? gizleCheckbox.checked : true; 
+  // localStorage'dan oku, varsayılan olarak gizle (true)
+  const stoktaOlmayanlariGizle = localStorage.getItem('adminHideOutOfStock') === '1'; 
+
+  // Resimsiz ürünleri gizle kontrolü
+  const resimsizCheckbox = document.getElementById('resimsizleriGizle');
+  const resimsizleriGizle = localStorage.getItem('adminHideNoImage') === '1';
+  
+  // helper: geçerli resim var mı?
+  function hasValidImage(img) {
+    if (!img) return false;
+    img = String(img).trim();
+    if (!img) return false;
+    if (img.startsWith('data:image')) return true; // base64 görseller geçerli
+    if (/placeholder/i.test(img)) return false; // placeholder URL'leri resimsiz say
+    return true;
+  }
 
   urunlerListesiDiv.innerHTML = '';
 
@@ -1410,16 +1528,27 @@ function urunleriGoster(aramaKelimesi = '') {
     if (stoktaOlmayanlariGizle && (u.stok == null || u.stok <= 0)) {
         return false;
     }
+
+    // Resimsizleri gizle aktifse ve ürün geçerli resme sahip değilse hariç tut
+    if (resimsizleriGizle && !hasValidImage(u.resim)) {
+      return false;
+    }
     
-    // Mevcut Arama Filtresi
+    // Mevcut Arama Filtresi (ad, stok kodu veya kategori içinde ara)
     if (aramaKelimesi) {
       const arama = aramaKelimesi.toLowerCase();
       const adMatch = u.ad && u.ad.toLowerCase().includes(arama);
       const stokKoduMatch = u.stokKodu && u.stokKodu.toLowerCase().includes(arama);
-      return adMatch || stokKoduMatch;
+      const kategoriMatch = (Array.isArray(u.kategoriler) && u.kategoriler.some(k => k && k.toLowerCase().includes(arama))) || (u.kategori && u.kategori.toLowerCase().includes(arama));
+      if (!(adMatch || stokKoduMatch || kategoriMatch)) return false;
     }
-    
-    return true; // Stok uygun ve arama filtresi yoksa göster
+
+    // Kategori filtresi varsa, ürünün kategorilerinde bu kategori olmalı
+    if (kategoriFiltre) {
+      if (!Array.isArray(u.kategoriler) || !u.kategoriler.includes(kategoriFiltre)) return false;
+    }
+
+    return true; // Tüm filtreleri geçtiyse göster
   });
   
   // Kategorilere göre grupla ve göster (Bu kısım mevcut kodunuzun devamıdır)
@@ -1429,8 +1558,18 @@ function urunleriGoster(aramaKelimesi = '') {
   urunlerMap['Diğer/Kategorisiz'] = [];
 
   filtrelenmisUrunler.forEach(u => {
-    if (u.kategori && urunlerMap[u.kategori]) {
-      urunlerMap[u.kategori].push(u);
+    // Çoklu kategori desteği: her bir kategoriye ekle
+    if (Array.isArray(u.kategoriler) && u.kategoriler.length) {
+      let atandi = false;
+      u.kategoriler.forEach(cat => {
+        if (urunlerMap[cat]) {
+          urunlerMap[cat].push(u);
+          atandi = true;
+        }
+      });
+      if (!atandi) {
+        urunlerMap['Diğer/Kategorisiz'].push(u);
+      }
     } else {
       urunlerMap['Diğer/Kategorisiz'].push(u);
     }
@@ -1441,7 +1580,12 @@ function urunleriGoster(aramaKelimesi = '') {
     urunler: urunlerMap[kategori]
   })).filter(item => item.urunler.length > 0 || item.kategori === 'Diğer/Kategorisiz').sort((a, b) => a.kategori.localeCompare(b.kategori));
 
-  document.getElementById('urunListesiBaslik').textContent = `Tüm Ürünler (${filtrelenmisUrunler.length} Adet)`;
+  const baslikEl = document.getElementById('urunListesiBaslik');
+  if (kategoriFiltre) {
+    baslikEl.textContent = `${kategoriFiltre} (${filtrelenmisUrunler.length} Adet)`;
+  } else {
+    baslikEl.textContent = `Tüm Ürünler (${filtrelenmisUrunler.length} Adet)`;
+  }
 
   // Tablo HTML'ini oluştur
   if (filtrelenmisUrunler.length === 0) {
@@ -1476,6 +1620,7 @@ function urunleriGoster(aramaKelimesi = '') {
             <table class="table table-hover urun-table mb-0">
               <thead>
                 <tr>
+                  <th style="width:40px;"><input type="checkbox" class="select-all-checkbox"></th>
                   <th>Resim</th>
                   <th>Ürün Adı</th>
                   <th class="marka-logo-column">Marka Logosu</th>
@@ -1518,7 +1663,124 @@ function urunleriGoster(aramaKelimesi = '') {
       urunSil(btn.dataset.id);
     });
   });
+
+  // SELECT ALL checkbox davranışı: her tablonun başındaki select-all ile tabloda seçim yap
+  document.querySelectorAll('.select-all-checkbox').forEach(ch => {
+    ch.addEventListener('change', () => {
+      const table = ch.closest('table');
+      if (!table) return;
+      table.querySelectorAll('.urun-secim-checkbox').forEach(cb => cb.checked = ch.checked);
+    });
+  });
+
+  // Tekil checkbox değiştiğinde header checkbox'ı güncelle
+  document.querySelectorAll('.urun-secim-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const table = cb.closest('table');
+      if (!table) return;
+      const all = Array.from(table.querySelectorAll('.urun-secim-checkbox'));
+      const header = table.querySelector('.select-all-checkbox');
+      if (header) header.checked = all.length > 0 && all.every(x => x.checked);
+    });
+  });
+
 }
+
+// Bulk kategori select doldurma
+function populateBulkKategoriSelect() {
+  console.log('populateBulkKategoriSelect çağrıldı, kategoriler:', kategoriler);
+  const sel = document.getElementById('bulkKategoriSelect');
+  if (!sel) {
+    console.log('bulkKategoriSelect elementi bulunamadı');
+    return;
+  }
+  sel.innerHTML = '<option value="" disabled selected>Kategori seç (Toplu işlem)</option>';
+  kategoriler.forEach(k => {
+    console.log('Kategori ekleniyor:', k);
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = k;
+    sel.appendChild(opt);
+  });
+  console.log('populateBulkKategoriSelect tamamlandı');
+}
+
+// Seçili ürün ID'lerini al
+function getSelectedProductIds() {
+  const checkboxes = document.querySelectorAll('.urun-secim-checkbox:checked');
+  console.log('Checked checkboxes:', checkboxes);
+  const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+  console.log('Seçili ürün IDleri:', ids);
+  return ids;
+}
+
+// Seçili ürünlere kategori ekle (mevcut kategori üzerine yazılır)
+function topluKategoriEkle() {
+  console.log('topluKategoriEkle çağrıldı');
+  const sel = document.getElementById('bulkKategoriSelect');
+  if (!sel || !sel.value) { 
+    console.log('Kategori seçilmedi');
+    bildirimGoster('Önce hedef kategori seçin!', 'danger'); 
+    return; 
+  }
+  const hedef = sel.value;
+  console.log('Hedef kategori:', hedef);
+  const ids = getSelectedProductIds();
+  console.log('Seçili ürün IDleri:', ids);
+  if (!ids.length) { 
+    console.log('Ürün seçilmedi');
+    bildirimGoster('Lütfen en az bir ürün seçin!', 'warning'); 
+    return; 
+  }
+  urunler.forEach(u => {
+    if (ids.includes(u.id)) {
+      if (!Array.isArray(u.kategoriler)) u.kategoriler = [];
+      if (!u.kategoriler.includes(hedef)) u.kategoriler.push(hedef);
+      console.log('Ürün güncellendi:', u.id, u.kategoriler);
+    }
+  });
+  localStorage.setItem('urunler', JSON.stringify(urunler));
+  bildirimGoster(`${ids.length} ürünün kategorisi güncellendi.`, 'success');
+  urunleriGoster(); urunSecenekleriniYukle(); vitrinBloklariGoster();
+}
+
+// Seçili ürünlerden hedef kategoriyi kaldır
+function topluKategoriCikar() {
+  console.log('topluKategoriCikar çağrıldı');
+  const sel = document.getElementById('bulkKategoriSelect');
+  if (!sel || !sel.value) { 
+    console.log('Kategori seçilmedi');
+    bildirimGoster('Önce hedef kategori seçin!', 'danger'); 
+    return; 
+  }
+  const hedef = sel.value;
+  console.log('Hedef kategori:', hedef);
+  const ids = getSelectedProductIds();
+  console.log('Seçili ürün IDleri:', ids);
+  if (!ids.length) { 
+    console.log('Ürün seçilmedi');
+    bildirimGoster('Lütfen en az bir ürün seçin!', 'warning'); 
+    return; 
+  }
+  let changed = 0;
+  urunler.forEach(u => {
+    if (ids.includes(u.id) && Array.isArray(u.kategoriler) && u.kategoriler.includes(hedef)) {
+      u.kategoriler = u.kategoriler.filter(k => k !== hedef);
+      changed++;
+      console.log('Ürün güncellendi:', u.id, u.kategoriler);
+    }
+  });
+  localStorage.setItem('urunler', JSON.stringify(urunler));
+  bildirimGoster(`${changed} ürünün kategorisi kaldırıldı.`, 'success');
+  urunleriGoster(); urunSecenekleriniYukle(); vitrinBloklariGoster();
+}
+
+// DOMContentLoaded içinde bulk butonlarına event ata ve başlangıçta select doldur
+document.addEventListener('DOMContentLoaded', function() {
+  populateBulkKategoriSelect();
+  document.getElementById('bulkEkleBtn')?.addEventListener('click', topluKategoriEkle);
+  document.getElementById('bulkCikarBtn')?.addEventListener('click', topluKategoriCikar);
+});
 
     async function urunKaydet(e) {
       e.preventDefault();
@@ -1527,7 +1789,7 @@ function urunleriGoster(aramaKelimesi = '') {
       const indirim = parseInt(document.getElementById('urunIndirim').value) || 0;
       const urunResimFile = document.getElementById('urunResimFile').files[0];
       const urunResimUrl = document.getElementById('urunResim').value.trim();
-      const kategori = document.getElementById('urunKategori').value;
+      const seciliKategoriler = Array.from(document.getElementById('urunKategori').selectedOptions).map(o => o.value);
       const marka = document.getElementById('urunMarka').value.trim();
       const markaLogoFile = document.getElementById('markaLogoFile').files[0];
       const markaLogoUrl = document.getElementById('markaLogo').value.trim();
@@ -1570,7 +1832,7 @@ function urunleriGoster(aramaKelimesi = '') {
       } else {
         document.getElementById('urunResim').classList.remove('is-invalid');
       }
-      if (!kategori) {
+      if (!seciliKategoriler || seciliKategoriler.length === 0) {
         document.getElementById('urunKategori').classList.add('is-invalid');
         isValid = false;
       } else {
@@ -1657,7 +1919,7 @@ function urunleriGoster(aramaKelimesi = '') {
         fiyat,
         indirim,
         resim,
-        kategori,
+        kategoriler: seciliKategoriler,
         marka,
         markaLogo,
         stok,
@@ -1697,6 +1959,8 @@ function urunleriGoster(aramaKelimesi = '') {
   document.getElementById('ekleDuzenleBtn').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Ekle';
   document.getElementById('urunFormBaslik').textContent = 'Yeni Ürün Ekle';
   document.getElementById('urunMarka').value = 'Belirtilmemiş'; // Varsayılan olarak "Belirtilmemiş" ayarla
+  const kategoriSelect = document.getElementById('urunKategori');
+  if (kategoriSelect) Array.from(kategoriSelect.options).forEach(o => o.selected = false);
   duzenlenenUrunId = null;
   document.querySelectorAll('.form-control, .form-select, #markaLogoFile, #urunResimFile').forEach(input => {
     input.classList.remove('is-invalid');
@@ -1709,7 +1973,12 @@ function urunDuzenle(id) {
     document.getElementById('urunAd').value = u.ad;
     document.getElementById('urunFiyat').value = u.fiyat;
     document.getElementById('urunIndirim').value = u.indirim || 0;
-    document.getElementById('urunKategori').value = u.kategori;
+    const kategoriSelect = document.getElementById('urunKategori');
+    if (kategoriSelect) {
+      Array.from(kategoriSelect.options).forEach(opt => {
+        opt.selected = Array.isArray(u.kategoriler) && u.kategoriler.includes(opt.value);
+      });
+    }
     document.getElementById('urunMarka').value = u.marka || 'Belirtilmemiş'; // Marka yoksa "Belirtilmemiş" ayarla
     document.getElementById('urunStok').value = u.stok;
     document.getElementById('stokKodu').value = u.stokKodu || '';
@@ -1747,6 +2016,8 @@ function urunDuzenle(id) {
     }
     if (urunTabButton) urunTabButton.classList.add('active');
   }
+  // Sayfa en üstüne kaydır
+  window.scrollTo(0, 0);
 }
 async function urunKaydet(e) {
   e.preventDefault();
@@ -2419,12 +2690,25 @@ function exportOrderToExcel(orderId) {
     // Verileri geri yükle
     function verileriGeriYukle(event) {
       const file = event.target.files[0];
-      if (!file) return;
+      console.log('Geri yükleme başladı, dosya:', file);
+      if (!file) {
+        console.warn('Dosya seçilmedi');
+        bildirimGoster('Dosya seçilmedi!', 'warning');
+        return;
+      }
+      if (!file.name.endsWith('.json')) {
+        console.warn('Geçersiz dosya türü:', file.name);
+        bildirimGoster('Lütfen geçerli bir JSON dosyası seçin!', 'danger');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
+          console.log('Dosya okundu, parse ediliyor...');
           const yedek = JSON.parse(e.target.result);
-          if (yedek.urunler) {
+          console.log('JSON parse edildi:', yedek);
+          let yuklenenVeriSayisi = 0;
+          if (yedek.urunler && Array.isArray(yedek.urunler)) {
             urunler = yedek.urunler.map(u => ({
               ...u,
               id: u.id || generateUniqueId('u-'),
@@ -2433,101 +2717,218 @@ function exportOrderToExcel(orderId) {
               ucretsizKargo: !!u.ucretsizKargo
             }));
             localStorage.setItem('urunler', JSON.stringify(urunler));
+            yuklenenVeriSayisi++;
+            console.log('Ürünler yüklendi:', urunler.length);
           }
-          if (yedek.kategoriler) {
+          if (yedek.kategoriler && Array.isArray(yedek.kategoriler)) {
             kategoriler = yedek.kategoriler.filter(k => typeof k === 'string');
             localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
+            yuklenenVeriSayisi++;
+            console.log('Kategoriler yüklendi:', kategoriler.length);
           }
-          if (yedek.vitrinler) {
+          if (yedek.vitrinler && Array.isArray(yedek.vitrinler)) {
             vitrinler = yedek.vitrinler.map(v => ({
               ...v,
               id: v.id || generateUniqueId('v-'),
               urunIds: v.urunIds.filter(id => urunler.some(u => u.id === id))
             }));
             localStorage.setItem('vitrinler', JSON.stringify(vitrinler));
+            yuklenenVeriSayisi++;
+            console.log('Vitrinler yüklendi:', vitrinler.length);
           }
-          if (yedek.siparisler) {
+          if (yedek.siparisler && Array.isArray(yedek.siparisler)) {
             siparisler = yedek.siparisler.map(s => ({
               ...s,
               id: s.id || generateUniqueId('s-'),
               items: Array.isArray(s.items) ? s.items : []
             }));
             localStorage.setItem('orders', JSON.stringify(siparisler));
+            yuklenenVeriSayisi++;
+            console.log('Siparişler yüklendi:', siparisler.length);
           }
-          if (yedek.adresler) {
+          if (yedek.adresler && Array.isArray(yedek.adresler)) {
             adresler = yedek.adresler.map(a => ({
               ...a,
               id: a.id || generateUniqueId('a-')
             }));
             localStorage.setItem('adresler', JSON.stringify(adresler));
+            yuklenenVeriSayisi++;
+            console.log('Adresler yüklendi:', adresler.length);
           }
-          bildirimGoster('Veriler geri yüklendi!', 'success');
-          kategorileriYukle();
-          urunleriGoster();
-          vitrinBloklariGoster();
-          siparisleriGoster();
-          urunSecenekleriniYukle();
+          if (yuklenenVeriSayisi > 0) {
+            console.log('Veriler yüklendi, sayfalar güncelleniyor...');
+            kategorileriYukle();
+            urunleriGoster();
+            vitrinBloklariGoster();
+            siparisleriGoster();
+            urunSecenekleriniYukle();
+            bildirimGoster(`Veriler geri yüklendi! (${yuklenenVeriSayisi} veri türü)`, 'success');
+          } else {
+            console.warn('Yüklenecek geçerli veri bulunamadı');
+            bildirimGoster('Yüklenecek geçerli veri bulunamadı!', 'warning');
+          }
         } catch (err) {
           console.error('Geri yükleme hatası:', err);
-          bildirimGoster('Veriler geri yüklenemedi!', 'danger');
+          bildirimGoster('Veriler geri yüklenemedi! Dosya bozuk olabilir.', 'danger');
         }
       };
+      reader.onerror = function() {
+        console.error('Dosya okuma hatası');
+        bildirimGoster('Dosya okunamadı!', 'danger');
+      };
       reader.readAsText(file);
+      // Input'u temizle
+      event.target.value = '';
     }
     // Excel'e aktar
     function urunleriExceleAktar() {
+  if (typeof XLSX === 'undefined') {
+    bildirimGoster('Excel kütüphanesi (XLSX) yüklenemedi. Lütfen internet bağlantınızı veya CDN yüklemesini kontrol edin.', 'danger');
+    console.error('XLSX kütüphanesi tanımsız!');
+    return;
+  }
+  if (typeof saveAs === 'undefined') {
+    bildirimGoster('FileSaver kütüphanesi yüklenemedi. Lütfen internet bağlantınızı veya CDN yüklemesini kontrol edin.', 'danger');
+    console.error('saveAs fonksiyonu tanımsız!');
+    return;
+  }
   try {
+    console.log('Excel aktarım fonksiyonu başladı.');
     // Excel'e aktarılacak verileri hazırla
     const wsData = [
-      ['Ürün Kodu', 'Ürün Adı', 'Stok', 'Fiyat', 'İndirim', 'Net Fiyat', 'Brüt Fiyat']
+      ['Stok Kodu', 'Ad', 'Stok', 'Fiyat', 'İndirim (%)', 'Kategori', 'Marka', 'Marka Logo', 'Resim URL', 'Anasayfada Göster', 'Yeni Ürün', 'Ücretsiz Kargo', 'Detay']
     ];
     urunler.forEach(u => {
-      const indirimliFiyat = calculateDiscountedPrice(u.fiyat, u.indirim);
-      wsData.push([
-        u.stokKodu || u.id,
-        u.ad,
-        u.stok,
-        u.fiyat,
-        u.indirim || 0,
-        indirimliFiyat.toFixed(2),
-        u.fiyat.toFixed(2)
-      ]);
+      // Her hücre için karakter limiti kontrolü
+      function limitCell(val, fieldName, urunAd) {
+        let str = '';
+        if (val === undefined || val === null) return '';
+        if (typeof val === 'string') str = val;
+        else if (typeof val === 'number' || typeof val === 'boolean') str = val.toString();
+        else if (typeof val === 'object') str = JSON.stringify(val);
+        else str = String(val);
+        if (str.length > 30000) {
+          console.warn('Excel hücre limiti aşılacak, veri kısaltılıyor:', { urunAd, fieldName, originalLength: str.length });
+          return str.substring(0, 30000) + '... (çok uzun, kısaltıldı)';
+        }
+        return str;
+      }
+      try {
+        wsData.push([
+          limitCell(u.stokKodu || u.id, 'Stok Kodu', u.ad),
+          limitCell(u.ad, 'Ad', u.ad),
+          limitCell(u.stok, 'Stok', u.ad),
+          limitCell(u.fiyat, 'Fiyat', u.ad),
+          limitCell(u.indirim || 0, 'İndirim (%)', u.ad),
+          limitCell((Array.isArray(u.kategoriler) ? u.kategoriler.join(', ') : (u.kategori || '')), 'Kategori', u.ad),
+          limitCell(u.marka, 'Marka', u.ad),
+          limitCell(u.markaLogo, 'Marka Logo', u.ad),
+          limitCell(u.resim, 'Resim URL', u.ad),
+          limitCell(u.anasayfadaGoster ? 'Evet' : 'Hayır', 'Anasayfada Göster', u.ad),
+          limitCell(u.yeniUrun ? 'Evet' : 'Hayır', 'Yeni Ürün', u.ad),
+          limitCell(u.ucretsizKargo ? 'Evet' : 'Hayır', 'Ücretsiz Kargo', u.ad),
+          limitCell(u.detay || '', 'Detay', u.ad)
+        ]);
+      } catch (rowErr) {
+        console.error('Ürün satırı eklenirken hata:', { urunAd: u.ad, error: rowErr });
+        // Hatalı ürünü atla
+      }
     });
-    // Toplamları hesapla
-    const totalProducts = urunler.length;
-    const totalStock = urunler.reduce((sum, u) => sum + (u.stok || 0), 0);
-    const totalGrossPrice = urunler.reduce((sum, u) => sum + u.fiyat, 0);
-    const totalNetPrice = urunler.reduce((sum, u) => sum + calculateDiscountedPrice(u.fiyat, u.indirim), 0);
-    const totalDiscount = totalGrossPrice - totalNetPrice;
-    // Boş satır ekle
-    wsData.push(['', '', '', '', '', '', '']);
-    // Toplam satırlarını ekle
-    wsData.push(['', 'Toplam Brüt Tutar', '', '', '', '', totalGrossPrice.toFixed(2)]);
-    wsData.push(['', 'Toplam İndirim', '', '', '', '', totalDiscount.toFixed(2)]);
-    wsData.push(['', 'Net Tutar', '', '', '', '', totalNetPrice.toFixed(2)]);
+    console.log('Excel veri dizisi hazırlandı:', wsData);
     // Çalışma sayfası oluştur
     const ws = XLSX.utils.aoa_to_sheet(wsData);
-    // Sütun genişliklerini ayarla
     ws['!cols'] = [
-      { wch: 15 }, // Ürün Kodu
-      { wch: 40 }, // Ürün Adı
+      { wch: 15 }, // Stok Kodu
+      { wch: 40 }, // Ad
       { wch: 8 }, // Stok
       { wch: 12 }, // Fiyat
-      { wch: 12 }, // İndirim
-      { wch: 12 }, // Net Fiyat
-      { wch: 14 } // Brüt Fiyat
+      { wch: 12 }, // İndirim (%)
+      { wch: 20 }, // Kategori
+      { wch: 20 }, // Marka
+      { wch: 20 }, // Marka Logo
+      { wch: 30 }, // Resim URL
+      { wch: 18 }, // Anasayfada Göster
+      { wch: 12 }, // Yeni Ürün
+      { wch: 16 }, // Ücretsiz Kargo
+      { wch: 30 }  // Detay
     ];
-    // Çalışma kitabı oluştur
+    console.log('Çalışma sayfası oluşturuldu.');
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Ürünler');
-    // Excel dosyasını oluştur ve indir
+    console.log('Çalışma kitabı oluşturuldu ve sayfa eklendi.');
     const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    console.log('Excel buffer oluşturuldu.');
     const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    console.log('Blob oluşturuldu.');
     saveAs(data, 'mehtapstore_urunler.xlsx');
+    console.log('saveAs çağrıldı, dosya indirme başlatıldı.');
     bildirimGoster('Ürünler Excel\'e aktarıldı!', 'success');
   } catch (err) {
+    bildirimGoster('Excel aktarımı sırasında beklenmeyen bir hata oluştu: ' + (err && err.message ? err.message : err), 'danger');
     console.error('Excel aktarma hatası:', err);
-    bildirimGoster('Excel aktarımı başarısız! Konsolu kontrol edin.', 'danger');
+  }
+}
+    // Ürünleri CSV'ye aktar
+    function urunleriCSVyeAktar() {
+  try {
+    if (typeof saveAs === 'undefined') {
+      bildirimGoster('FileSaver kütüphanesi yüklenemedi. Lütfen internet bağlantınızı veya CDN yüklemesini kontrol edin.', 'danger');
+      console.error('saveAs fonksiyonu tanımsız!');
+      return;
+    }
+    console.log('CSV aktarım fonksiyonu başladı.');
+    // CSV verilerini hazırla
+    const csvHeaders = ['Stok Kodu', 'Ad', 'Stok', 'Fiyat', 'İndirim (%)', 'Kategori', 'Marka', 'Marka Logo', 'Resim URL', 'Anasayfada Göster', 'Yeni Ürün', 'Ücretsiz Kargo', 'Detay'];
+    const csvRows = [csvHeaders];
+    urunler.forEach(u => {
+      // Her hücre için karakter limiti kontrolü (CSV'de limit yok ama kısaltma yapalım)
+      function limitCell(val, fieldName, urunAd) {
+        let str = '';
+        if (val === undefined || val === null) return '';
+        if (typeof val === 'string') str = val;
+        else if (typeof val === 'number' || typeof val === 'boolean') str = val.toString();
+        else if (typeof val === 'object') str = JSON.stringify(val);
+        else str = String(val);
+        // CSV'de limit yok ama çok uzun olanları kısaltalım
+        if (str.length > 10000) {
+          console.warn('CSV hücre veri çok uzun, kısaltılıyor:', { urunAd, fieldName, originalLength: str.length });
+          return str.substring(0, 10000) + '... (çok uzun, kısaltıldı)';
+        }
+        return str;
+      }
+      try {
+        csvRows.push([
+          limitCell(u.stokKodu || u.id, 'Stok Kodu', u.ad),
+          limitCell(u.ad, 'Ad', u.ad),
+          limitCell(u.stok, 'Stok', u.ad),
+          limitCell(u.fiyat, 'Fiyat', u.ad),
+          limitCell(u.indirim || 0, 'İndirim (%)', u.ad),
+          limitCell((Array.isArray(u.kategoriler) ? u.kategoriler.join(', ') : (u.kategori || '')), 'Kategori', u.ad),
+          limitCell(u.marka, 'Marka', u.ad),
+          limitCell(u.markaLogo, 'Marka Logo', u.ad),
+          limitCell(u.resim, 'Resim URL', u.ad),
+          limitCell(u.anasayfadaGoster ? 'Evet' : 'Hayır', 'Anasayfada Göster', u.ad),
+          limitCell(u.yeniUrun ? 'Evet' : 'Hayır', 'Yeni Ürün', u.ad),
+          limitCell(u.ucretsizKargo ? 'Evet' : 'Hayır', 'Ücretsiz Kargo', u.ad),
+          limitCell(u.detay || '', 'Detay', u.ad)
+        ]);
+      } catch (rowErr) {
+        console.error('Ürün satırı eklenirken hata:', { urunAd: u.ad, error: rowErr });
+        // Hatalı ürünü atla
+      }
+    });
+    console.log('CSV veri dizisi hazırlandı:', csvRows.length, 'satır');
+    // CSV metnini oluştur
+    const csvContent = csvRows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
+    console.log('CSV metni oluşturuldu, uzunluk:', csvContent.length);
+    const data = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    console.log('Blob oluşturuldu.');
+    saveAs(data, 'mehtapstore_urunler.csv');
+    console.log('saveAs çağrıldı, dosya indirme başlatıldı.');
+    bildirimGoster('Ürünler CSV\'ye aktarıldı!', 'success');
+  } catch (err) {
+    bildirimGoster('CSV aktarımı sırasında beklenmeyen bir hata oluştu: ' + (err && err.message ? err.message : err), 'danger');
+    console.error('CSV aktarma hatası:', err);
   }
 }
     // Excel'den ürünleri yükle
@@ -2543,15 +2944,14 @@ function exportOrderToExcel(orderId) {
       const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 });
       const headers = jsonData[0];
       const rows = jsonData.slice(1).filter(row => row.length > 0);
-      const idIndex = headers.indexOf('ID');
+      const stokKoduIndex = headers.indexOf('Stok Kodu');
       const adIndex = headers.indexOf('Ad');
+      const stokIndex = headers.indexOf('Stok');
       const fiyatIndex = headers.indexOf('Fiyat');
       const indirimIndex = headers.indexOf('İndirim (%)');
       const kategoriIndex = headers.indexOf('Kategori');
       const markaIndex = headers.indexOf('Marka');
       const markaLogoIndex = headers.indexOf('Marka Logo');
-      const stokIndex = headers.indexOf('Stok');
-      const stokKoduIndex = headers.indexOf('Stok Kodu');
       const resimIndex = headers.indexOf('Resim URL');
       const anasayfadaIndex = headers.indexOf('Anasayfada Göster');
       const yeniUrunIndex = headers.indexOf('Yeni Ürün');
@@ -2560,27 +2960,27 @@ function exportOrderToExcel(orderId) {
       const yeniUrunler = [];
       const hataliSatirlar = [];
       rows.forEach((row, index) => {
-        const id = row[idIndex]?.toString().trim() || generateUniqueId('u-');
+        const stokKodu = row[stokKoduIndex]?.toString().trim() || generateUniqueId('u-');
         const ad = row[adIndex]?.toString().trim();
-        const fiyat = parseFloat(row[fiyatIndex]);
-        const indirim = parseInt(row[indirimIndex]) || 0;
-        const kategori = row[kategoriIndex]?.toString().trim();
+        const stok = parseInt(row[stokIndex]?.toString().replace(',', '.') || '0');
+        const fiyat = parseFloat(row[fiyatIndex]?.toString().replace(',', '.') || '0');
+        const indirim = parseInt(row[indirimIndex]?.toString().replace('%', '') || '0');
+        const kategoriRaw = row[kategoriIndex]?.toString().trim() || '';
+        const kategori = kategoriRaw ? kategoriRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
         const marka = row[markaIndex]?.toString().trim() || 'Belirtilmemiş';
         const markaLogo = row[markaLogoIndex]?.toString().trim() || '';
-        const stok = parseInt(row[stokIndex]);
-        const stokKodu = row[stokKoduIndex]?.toString().trim() || stokKoduOlustur();
-        const resim = row[resimIndex]?.toString().trim();
+        const resim = row[resimIndex]?.toString().trim() || 'https://via.placeholder.com/150';
         const anasayfadaGoster = row[anasayfadaIndex]?.toString().trim().toLowerCase() === 'evet';
         const yeniUrun = row[yeniUrunIndex]?.toString().trim().toLowerCase() === 'evet';
         const ucretsizKargo = row[ucretsizKargoIndex]?.toString().trim().toLowerCase() === 'evet';
         const detay = row[detayIndex]?.toString().trim() || '';
         // Doğrulama
-        if (!ad || isNaN(fiyat) || fiyat <= 0 || !kategori || !kategoriler.includes(kategori) || isNaN(stok) || stok < 0 || !resim || indirim < 0 || indirim > 100) {
+        if (!ad || isNaN(fiyat) || fiyat <= 0 || isNaN(stok) || stok < 0 || indirim < 0 || indirim > 100) {
           hataliSatirlar.push(index + 2);
           return;
         }
         // Stok kodu kontrolü
-        if (yeniUrunler.some(u => u.stokKodu === stokKodu) || urunler.some(u => u.stokKodu === stokKodu && u.id !== id)) {
+        if (yeniUrunler.some(u => u.stokKodu === stokKodu) || urunler.some(u => u.stokKodu === stokKodu)) {
           hataliSatirlar.push(index + 2);
           return;
         }
@@ -2590,11 +2990,11 @@ function exportOrderToExcel(orderId) {
           return;
         }
         yeniUrunler.push({
-          id,
+          id: stokKodu,
           ad,
           fiyat,
           indirim,
-          kategori,
+          kategoriler: kategori,
           marka,
           markaLogo,
           stok,
@@ -2610,6 +3010,10 @@ function exportOrderToExcel(orderId) {
         bildirimGoster(`Hatalı satırlar tespit edildi: ${hataliSatirlar.join(', ')}. Bu satırlar atlandı.`, 'warning');
       }
       if (yeniUrunler.length > 0) {
+        // Yeni kategorileri ekle (yeniUrunler içindeki kategoriler dizilerini topla)
+        const yeniKategoriler = [...new Set(yeniUrunler.flatMap(u => Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : [])) )].filter(k => !kategoriler.includes(k));
+        kategoriler.push(...yeniKategoriler);
+        localStorage.setItem('kategoriler', JSON.stringify(kategoriler));
         urunler = [...urunler.filter(u => !yeniUrunler.some(nu => nu.id === u.id)), ...yeniUrunler];
         localStorage.setItem('urunler', JSON.stringify(urunler));
         kategorileriYukle();
@@ -2658,6 +3062,7 @@ function exportOrderToExcel(orderId) {
     document.getElementById('geriYukleInput').click();
   });
   document.getElementById('excelExportBtn')?.addEventListener('click', urunleriExceleAktar);
+  document.getElementById('csvExportBtn')?.addEventListener('click', urunleriCSVyeAktar);
   document.getElementById('excelImportBtn')?.addEventListener('click', () => {
     document.getElementById('excelImportInput').click();
   });
@@ -2672,6 +3077,38 @@ function exportOrderToExcel(orderId) {
   if (fiyatlariGizleCheckbox) {
     fiyatlariGizleCheckbox.checked = localStorage.getItem('adminHidePrices') === '1';
   }
+  // Stok Gizle toggle başlangıç durumu
+  const stokGizleCheckbox = document.getElementById('stoktaOlmayanlariGizle');
+  if (stokGizleCheckbox) {
+    stokGizleCheckbox.checked = localStorage.getItem('adminHideOutOfStock') !== '0'; // Varsayılan true
+  }
+  // Resimsizleri Gizle toggle başlangıç durumu ve event
+  const resimsizGizleCheckbox = document.getElementById('resimsizleriGizle');
+  if (resimsizGizleCheckbox) {
+    resimsizGizleCheckbox.checked = localStorage.getItem('adminHideNoImage') === '1';
+    resimsizGizleCheckbox.addEventListener('change', function() {
+      const hide = this.checked ? '1' : '0';
+      localStorage.setItem('adminHideNoImage', hide);
+      bildirimGoster(`Resimsiz ürünler ${hide === '1' ? 'gizlendi' : 'gösterildi'}`, 'info');
+      urunleriGoster(document.getElementById('urunArama').value);
+    });
+  }
+
+    // Anasayfa ürün sayısı inputu başlangıç durumu ve event
+    const anasayfaUrunSayisiInput = document.getElementById('anasayfaUrunSayisi');
+    const anasayfaUrunSayisiKaydetBtn = document.getElementById('anasayfaUrunSayisiKaydet');
+    if (anasayfaUrunSayisiInput && anasayfaUrunSayisiKaydetBtn) {
+      anasayfaUrunSayisiInput.value = localStorage.getItem('adminHomeProductCount') || '';
+      anasayfaUrunSayisiKaydetBtn.addEventListener('click', function() {
+        let val = parseInt(anasayfaUrunSayisiInput.value);
+        if (isNaN(val) || val < 1) {
+          bildirimGoster('Geçerli bir sayı giriniz!', 'danger');
+          return;
+        }
+        localStorage.setItem('adminHomeProductCount', String(val));
+        bildirimGoster('Anasayfa ürün sayısı kaydedildi!', 'success');
+      });
+    }
 });
  
   // Ürün resmi dosya yükleme önizlemesi
@@ -3028,18 +3465,52 @@ function exportOrderToExcel(orderId) {
 // YENİ KISIM: Stoğu Bitenleri Gizle özelliği için olay dinleyicisi
 const stokGizleCheckbox = document.getElementById('stoktaOlmayanlariGizle');
 if (stokGizleCheckbox) {
-  // Checkbox'ın durumu değiştiğinde, listeyi mevcut arama kelimesiyle yeniden yükle
-  stokGizleCheckbox.addEventListener('change', () => urunleriGoster(document.getElementById('urunArama').value));
+  // Checkbox'ın durumu değiştiğinde, localStorage'a kaydet ve listeyi yeniden yükle
+  stokGizleCheckbox.addEventListener('change', () => {
+    const hide = stokGizleCheckbox.checked ? '1' : '0';
+    localStorage.setItem('adminHideOutOfStock', hide);
+    bildirimGoster(`Stoğu tükenen ürünler ${hide === '1' ? 'gizlendi' : 'gösterildi'}`, 'info');
+    urunleriGoster(document.getElementById('urunArama').value);
+  });
 }
 
 // document.addEventListener('DOMContentLoaded', init); // init() fonksiyonunuzu burada çağırıyorsanız
 
+// GitHub'dan ürün verilerini çek
+async function loadProductsFromGitHub() {
+    try {
+        // GitHub'daki JSON dosyasından verileri çek
+        const response = await fetch('https://raw.githubusercontent.com/Benimsitem/main/main/data/urunler.json');
+        
+        if (response.ok) {
+            const urunler = await response.json();
+            console.log('GitHub\'dan ürünler yüklendi:', urunler.length);
+            
+            // Hem LocalStorage'e kaydet (hız için)
+            localStorage.setItem('urunler', JSON.stringify(urunler));
+            
+            return urunler;
+        }
+    } catch (error) {
+        console.log('GitHub yüklenemedi, LocalStorage kullanılıyor:', error);
+    }
+    
+    // GitHub'dan yüklenemezse LocalStorage'den devam et
+    return JSON.parse(localStorage.getItem('urunler') || '[]');
+}
 
+// Ürünleri GitHub'a kaydet
+async function saveProductsToGitHub(urunler) {
+    // Bu kısmı şimdilik atlayalım - önce test edelim
+    console.log('GitHub\'a kaydedilecek ürünler:', urunler);
+    return true;
+}
   </script>
-   <script src="js/jspdf.umd.min.js"></script>
-<script src="js/DejaVuSans.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous">
-      </script>
-     
+  <script src="js/jspdf.umd.min.js"></script>
+  <script src="js/DejaVuSans.js"></script>
+  <!-- Kütüphaneleri en sona ekliyoruz -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
