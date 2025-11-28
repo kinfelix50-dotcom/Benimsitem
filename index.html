@@ -514,33 +514,6 @@ window.applyAdminPriceMask = function(root = document) {
         return defaultValue;
       }
     }
-    
-    // --- GitHub'dan Ürün Yükleme ---
-async function loadProductsFromGitHub() {
-    try {
-        const response = await fetch('https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/data/urunler.json');
-        if (response.ok) {
-            const urunler = await response.json();
-            console.log('GitHub\'dan', urunler.length, 'ürün yüklendi');
-            localStorage.setItem('urunler', JSON.stringify(urunler));
-            return urunler;
-        }
-    } catch (error) {
-        console.error('GitHub veri yükleme hatası:', error);
-    }
-    return JSON.parse(localStorage.getItem('urunler') || '[]');
-}
-
-async function initializeProducts() {
-    const urunler = await loadProductsFromGitHub();
-    urunleriGoster();
-    kategoriMenusuGuncelle();
-    markalariGoster();
-    loadVitrins();
-}
-
-
-
 
     function calculateDiscountedPrice(originalPrice, discountPercentage) {
       originalPrice = Number(originalPrice) || 0;

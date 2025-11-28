@@ -616,6 +616,11 @@
           <label class="form-check-label" for="fiyatlariGizle">Fiyatları Gizle (Sadece Anasayfa)</label>
         </div>
       </div>
+        <div class="col-12 col-sm-auto">
+          <button id="githubYedekleBtn" class="btn btn-secondary" type="button">
+            <i class="fab fa-github me-2"></i>GitHub'a Yedekle
+          </button>
+        </div>
     </div>
   </div>
 </div>
@@ -1258,42 +1263,6 @@ function exportOrderToExcel(orderId) {
         adresler = [];
       }
     }
-    // ESKİ: 
-function loadData() {
-    urunler = safeParseJSON('urunler', []);
-    // ... diğer kodlar
-}
-
-// YENİ:
-async function loadData() {
-    try {
-        // ÖNCE GitHub'dan yükle
-        urunler = await loadProductsFromGitHub();
-        
-        // Eğer GitHub'dan ürün geldiyse
-        if (urunler && urunler.length > 0) {
-            console.log('GitHub\'dan', urunler.length, 'ürün yüklendi');
-        } else {
-            // GitHub'dan ürün gelmezse LocalStorage'den devam et
-            urunler = safeParseJSON('urunler', []);
-            console.log('LocalStorage\'den', urunler.length, 'ürün yüklendi');
-        }
-        
-        // Diğer veriler aynı
-        kategoriler = safeParseJSON('kategoriler', []);
-        vitrinler = safeParseJSON('vitrinler', []);
-        siparisler = safeParseJSON('orders', []);
-        
-    } catch (error) {
-        console.error('Yükleme hatası:', error);
-        // Hata olursa LocalStorage'den devam et
-        urunler = safeParseJSON('urunler', []);
-        kategoriler = safeParseJSON('kategoriler', []);
-        vitrinler = safeParseJSON('vitrinler', []);
-        siparisler = safeParseJSON('orders', []);
-    }
-}
-    
     // Bildirim göster
     function bildirimGoster(mesaj, tip = 'success') {
       const bildirimAlani = document.getElementById('bildirimAlani');
@@ -3476,35 +3445,28 @@ if (stokGizleCheckbox) {
 
 // document.addEventListener('DOMContentLoaded', init); // init() fonksiyonunuzu burada çağırıyorsanız
 
-// GitHub'dan ürün verilerini çek
-async function loadProductsFromGitHub() {
-    try {
-        // GitHub'daki JSON dosyasından verileri çek
-        const response = await fetch('https://raw.githubusercontent.com/Benimsitem/main/main/data/urunler.json');
-        
-        if (response.ok) {
-            const urunler = await response.json();
-            console.log('GitHub\'dan ürünler yüklendi:', urunler.length);
-            
-            // Hem LocalStorage'e kaydet (hız için)
-            localStorage.setItem('urunler', JSON.stringify(urunler));
-            
-            return urunler;
-        }
-    } catch (error) {
-        console.log('GitHub yüklenemedi, LocalStorage kullanılıyor:', error);
-    }
-    
-    // GitHub'dan yüklenemezse LocalStorage'den devam et
-    return JSON.parse(localStorage.getItem('urunler') || '[]');
-}
+// GitHub'a Yedekle: ürünler.json dosyasını indir
+document.addEventListener('DOMContentLoaded', function() {
+  const githubBtn = document.getElementById('githubYedekleBtn');
+  if (githubBtn) {
+    githubBtn.addEventListener('click', function() {
+      const urunler = localStorage.getItem('urunler') || '[]';
+      const blob = new Blob([urunler], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'urunler.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    });
+  }
+});
 
-// Ürünleri GitHub'a kaydet
-async function saveProductsToGitHub(urunler) {
-    // Bu kısmı şimdilik atlayalım - önce test edelim
-    console.log('GitHub\'a kaydedilecek ürünler:', urunler);
-    return true;
-}
+
   </script>
   <script src="js/jspdf.umd.min.js"></script>
   <script src="js/DejaVuSans.js"></script>

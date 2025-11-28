@@ -685,7 +685,7 @@
 
     function kategoriYukle() {
       const urunler = safeParseJSON('urunler', []);
-      const kategoriler = [...new Set(urunler.map(u => u.kategori).filter(k => k))].sort();
+      const kategoriler = [...new Set(urunler.flatMap(u => Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : [])).filter(k => k))].sort();
       const liste = document.getElementById('kategoriListesi');
       if (!liste) {
         console.error('Kategori listesi bulunamadı!');
@@ -815,7 +815,12 @@
       const stokDurumu = stokMiktari > 0 ? `${stokMiktari} adet` : 'Tükenmiş';
       const sepeteEkleDisabled = stokMiktari <= 0 ? 'disabled' : '';
 
-      const benzerUrunler = urunler.filter(u => u.kategori === urun.kategori && u.id !== urun.id).slice(0,8);
+      const benzerUrunler = urunler.filter(u => {
+        if (u.id === urun.id) return false;
+        const a = Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : []);
+        const b = Array.isArray(urun.kategoriler) ? urun.kategoriler : (urun.kategori ? [urun.kategori] : []);
+        return a.some(x => b.includes(x));
+      }).slice(0,8);
 
       mainContent.innerHTML = `
         <div class="product-view">
@@ -824,7 +829,7 @@
               <nav aria-label="breadcrumb" class="mb-2">
                 <ol class="breadcrumb small mb-0">
                   <li class="breadcrumb-item"><a href="index.html">Anasayfa</a></li>
-                  <li class="breadcrumb-item"><a href="index.html?kategori=${encodeURIComponent(urun.kategori || '')}">${escapeHTML(urun.kategori || 'Kategori')}</a></li>
+                  <li class="breadcrumb-item"><a href="index.html?kategori=${encodeURIComponent((Array.isArray(urun.kategoriler) && urun.kategoriler[0]) || (urun.kategori||''))}">${escapeHTML((Array.isArray(urun.kategoriler) && urun.kategoriler[0]) || (urun.kategori || 'Kategori'))}</a></li>
                   <li class="breadcrumb-item active" aria-current="page">${escapeHTML(urun.ad || 'Ürün')}</li>
                 </ol>
               </nav>
