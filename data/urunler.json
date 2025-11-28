@@ -8,7 +8,7 @@
       "resim": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=300&h=300&fit=crop",
       "marka": "Apple",
       "markaLogo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiMwMDAwMDAiLz4KPHBhdGggZD0iTTQwIDQ0QzQ0LjQxODMgNDQgNDggNDAuNDE4MyA0OCAzNkM0OCAzMS41ODE3IDQ0LjQxODMgMjggNDAgMjhDMTUuNTgxNyAyOCAzMiAyOCAzNiAzMkMzMiAyOCAzMS41ODE3IDMyIDM2IDM2QzMxLjU4MTcgNDAgMjggNDAgMzIgNDBDMjggNDAgMjggNDQuNDE4MyAzMiA0OEMyOCA0OCAzMS41ODE3IDUyIDM2IDUyQzMxLjU4MTcgNTYgMzYgNTYgNDAgNTZDNDQgNTYgNDQgNTIgNDggNTJDNDQgNTIgNDQuNDE4MyA0OCA0OCA0NEM0NC40MTgzIDQ0IDQwIDQ0IDQwIDQ0WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+",
-      "stok": 8,
+      "stok": 7,
       "stokKodu": "APL-001",
       "anasayfadaGoster": true,
       "yeniUrun": true,
@@ -25,7 +25,7 @@
       "resim": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop",
       "marka": "Nike",
       "markaLogo": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiByeD0iMTIiIGZpbGw9IiMyMjIyMjIiLz4KPHBhdGggZD0iTTIwIDUwTDMwIDMwTDUwIDUwTDU1IDQ1TDM1IDI1TDU1IDVINDBMMjAgMjVMMjUgMzBMMjAgMzVWMzBIMTVWNTBIMjBaTTYwIDUwVjIwSDY1VjUwSDYwWk01NSA0NVYyNUg1MFY0NUg1NVoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==",
-      "stok": 25,
+      "stok": 24,
       "stokKodu": "NK-202",
       "anasayfadaGoster": true,
       "yeniUrun": false,
@@ -109,5 +109,35 @@
     "Elektronik"
   ],
   "vitrinler": [],
-  "siparisler": []
+  "siparisler": [
+    {
+      "id": "ORD-1764351323289",
+      "userEmail": "vedat@hotmail.com",
+      "date": "2025-11-28T17:35:23.289Z",
+      "items": [
+        {
+          "id": "u-2",
+          "ad": "Nike Air Max",
+          "fiyat": 1519.9920000000002,
+          "adet": 1,
+          "resim": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop",
+          "indirim": 20
+        },
+        {
+          "id": "u-1",
+          "ad": "iPhone 14 Pro Max",
+          "fiyat": 33999.9915,
+          "adet": 1,
+          "resim": "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=300&h=300&fit=crop",
+          "indirim": 15
+        }
+      ],
+      "total": "35519.98",
+      "status": "pending",
+      "fullName": "Vedat Deniz",
+      "address": "Hfdd",
+      "phone": "5551111111",
+      "note": ""
+    }
+  ]
 }
