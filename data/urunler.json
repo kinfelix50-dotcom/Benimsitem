@@ -91,7 +91,6 @@
       "fiyat": 3299.99,
       "indirim": 30,
       "resim": "https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/img/rowenta.jpeg",
-      "kategori": "Yeni",
       "marka": "Sony",
       "markaLogo": "",
       "stok": 12,
@@ -99,11 +98,15 @@
       "anasayfadaGoster": true,
       "detay": "",
       "yeniUrun": false,
-      "ucretsizKargo": true
+      "ucretsizKargo": true,
+      "kategoriler": [
+        "Yeni"
+      ]
     }
   ],
   "kategoriler": [
-    "Yeni"
+    "Yeni",
+    "Elektronik"
   ],
   "vitrinler": [],
   "siparisler": []
