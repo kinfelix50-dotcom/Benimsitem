@@ -87,10 +87,11 @@
     },
     {
       "id": "u-6",
-      "ad": "Sony WH-1000XM4",
+      "ad": "Test ürün",
       "fiyat": 3299.99,
       "indirim": 30,
       "resim": "https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/img/rowenta.jpeg",
+      "kategori": "Yeni",
       "marka": "Sony",
       "markaLogo": "",
       "stok": 12,
@@ -98,10 +99,7 @@
       "anasayfadaGoster": true,
       "detay": "",
       "yeniUrun": false,
-      "ucretsizKargo": true,
-      "kategoriler": [
-        "Yeni"
-      ]
+      "ucretsizKargo": true
     }
   ],
   "kategoriler": [
