@@ -99,4 +99,105 @@ body { background-color: #f8f9fa; }
     .vitrin-bolumu p, #detayModalIcerik p {
       margin-bottom: 1rem;
       line-height: 1.6;
+  }
+
+  .admin-filters-container {
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 992px) {
+    .admin-filters-container .row > [class^='col-'] {
+      margin-bottom: 8px;
+    }
+    .admin-filters-container .form-label {
+      font-size: 0.95rem;
+    }
+    .admin-filters-container .form-control {
+      font-size: 0.95rem;
+      min-width: 80px;
+    }
+  }
+  @media (max-width: 576px) {
+    .admin-filters-container .row {
+      flex-direction: column !important;
+    }
+    .admin-filters-container .form-label {
+      font-size: 0.9rem;
+    }
+    .admin-filters-container .form-control {
+      font-size: 0.9rem;
+      min-width: 60px;
+    }
+    .admin-filters-container .btn {
+      font-size: 0.9rem;
+      padding: 0.3rem 0.7rem;
+    }
+  }
+  [...existing code...]
+
+  /* Mobil ve tablet uyumluluk için responsive stiller */
+  @media (max-width: 992px) {
+    .content-section {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .urun-table th, .urun-table td {
+      font-size: 0.85rem;
+      padding: 6px;
+    }
+    .urun-row-img, .order-item-img {
+      width: 35px;
+      height: 35px;
+    }
+    .urun-table .detay-column {
+      max-width: 100px;
+    }
+    .kategori-list-item {
+      padding: 0.5rem 0.7rem;
+      font-size: 0.95rem;
+    }
+    .nav-tabs .nav-link {
+      font-size: 0.95rem;
+      padding: 0.5rem 0.7rem;
+    }
+    .alert-fixed {
+      width: 98%;
+      max-width: 98vw;
+      font-size: 0.95rem;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .container, .container-fluid {
+      padding-left: 5px !important;
+      padding-right: 5px !important;
+    }
+    .content-section {
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .urun-table th, .urun-table td {
+      font-size: 0.8rem;
+      padding: 4px;
+    }
+    .urun-row-img, .order-item-img {
+      width: 28px;
+      height: 28px;
+    }
+    .urun-table .detay-column {
+      max-width: 60px;
+    }
+    .kategori-list-item {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.9rem;
+    }
+    .nav-tabs .nav-link {
+      font-size: 0.9rem;
+      padding: 0.3rem 0.5rem;
+    }
+    .alert-fixed {
+      width: 100%;
+      max-width: 100vw;
+      font-size: 0.9rem;
+    }
+  }
     }
