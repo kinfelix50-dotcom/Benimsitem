@@ -107,6 +107,16 @@
   "kategoriler": [
     "Yeni"
   ],
-  "vitrinler": [],
+  "vitrinler": [
+    {
+      "id": "v-mij9vl1puti54",
+      "ad": "Yeni vitrin",
+      "urunIds": [
+        "u-1",
+        "u-2",
+        "u-3"
+      ]
+    }
+  ],
   "siparisler": []
 }
