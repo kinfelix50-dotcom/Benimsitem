@@ -405,6 +405,111 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
   <script src="DejaVuSans.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script>
+// ============ GITHUB AYARLARI =============
+const GITHUB_USERNAME = "kinfelix50-dotcom";
+const GITHUB_REPO = "Benimsitem";
+const GITHUB_FILE_PATH = "data/urunler.json";
+const GITHUB_TOKEN = ""; // Public repo ise boş bırakabilirsin
+
+// ============ GITHUB'DAN VERİ ÇEK ============
+async function githubdanTumVeriyiGetir() {
+
+    const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
+
+    const response = await fetch(url, {
+        headers: GITHUB_TOKEN ? { "Authorization": `token ${GITHUB_TOKEN}` } : {}
+    });
+
+    if (!response.ok) {
+        document.getElementById("productList").innerHTML =
+            "<p class='text-danger text-center'>GitHub verisi alınamadı!</p>";
+        return;
+    }
+
+    // Base64 çöz
+    const file = await response.json();
+    const decodedJSON = JSON.parse(
+        decodeURIComponent(escape(atob(file.content)))
+    );
+
+    // JSON formatı:
+    // { urunler: [...], kategoriler: [...], vitrinler: [...], siparisler: [...] }
+
+    const urunler = decodedJSON.urunler || [];
+    const kategoriler = decodedJSON.kategoriler || [];
+    const vitrinler = decodedJSON.vitrinler || [];
+    const siparisler = decodedJSON.siparisler || [];
+
+    // Sayfaya bastır
+    urunleriListele(urunler);
+    kategorileriMenudeGoster(kategoriler);
+    vitrinleriSliderdaGoster(vitrinler);
+
+    console.log("GitHub veri seti:", decodedJSON);
+}
+
+// ============ ÜRÜNLERİ EKREANA BAS =============
+function urunleriListele(urunler) {
+    const container = document.getElementById("productList");
+    container.innerHTML = "";
+
+    if (urunler.length === 0) {
+        container.innerHTML = "<p class='text-muted text-center'>Henüz ürün yok.</p>";
+        return;
+    }
+
+    urunler.forEach(urun => {
+        const html = `
+        <div class="col-md-3 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="${urun.resim || 'no-image.png'}" class="card-img-top" alt="${urun.ad}">
+                <div class="card-body">
+                    <h5 class="card-title">${urun.ad}</h5>
+                    <p class="card-text">${urun.aciklama || ''}</p>
+                    <p class="fw-bold text-primary">${urun.fiyat} TL</p>
+                    <button class="btn btn-success w-100">Sepete Ekle</button>
+                </div>
+            </div>
+        </div>`;
+        container.innerHTML += html;
+    });
+}
+
+// ============ KATEGORİLERİ MENÜDE GÖSTER ============
+function kategorileriMenudeGoster(kategoriler) {
+    const menu = document.getElementById("kategoriMenu");
+    if (!menu) return;
+
+    kategoriler.forEach(kat => {
+        menu.innerHTML += `<li><a href="#">${kat.ad}</a></li>`;
+    });
+}
+
+// ============ VİTRİN SLIDER GÖSTER ============
+function vitrinleriSliderdaGoster(vitrinler) {
+    const slider = document.getElementById("vitrinSlider");
+    if (!slider) return;
+
+    vitrinler.forEach(v => {
+        slider.innerHTML += `
+            <div class="carousel-item">
+                <img src="${v.resim}" class="d-block w-100" alt="${v.baslik}">
+                <div class="carousel-caption d-none d-md-block">
+                    <h5>${v.baslik}</h5>
+                    <p>${v.aciklama}</p>
+                </div>
+            </div>`;
+    });
+
+    // İlk slide aktif olsun
+    const first = slider.querySelector(".carousel-item");
+    if (first) first.classList.add("active");
+}
+
+// Sayfa açıldığında GitHub’dan tüm veriyi çek
+document.addEventListener("DOMContentLoaded", githubdanTumVeriyiGetir);
+</script>
 <script>
 // Sayfa okları için global fonksiyonlar - GÜNCELLENMİŞ HALİ
 function homeNextPageClick() {
@@ -2318,7 +2423,7 @@ window.applyAdminPriceMask = function(root = document) {
       }
     });
   </script>
- 
+     
   
 </body>
 </html>
