@@ -3573,6 +3573,43 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById("githubYedekleBtn").addEventListener("click", githubaKaydet);
 
 document.getElementById("githubGeriYukleBtn").addEventListener("click", githubdanGeriYukle);
+async function githubdanGeriYukle() {
+  try {
+    bildirimGoster("GitHub'dan yedek çekiliyor...", "info");
+
+    // raw.githubusercontent kullanıyoruz (daha basit, JSON doğrudan geliyor)
+    const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error('GitHub raw fetch hata:', response.status, response.statusText);
+      bildirimGoster("GitHub'dan yedek alınamadı! (dosya bulunamadı veya erişim engellendi)", "danger");
+      return;
+    }
+
+    // raw JSON olarak alıyoruz
+    const decoded = await response.json();
+
+    // Gelen veriyi localStorage'a yaz
+    localStorage.setItem("urunler", JSON.stringify(decoded.urunler || []));
+    localStorage.setItem("kategoriler", JSON.stringify(decoded.kategoriler || []));
+    localStorage.setItem("vitrinler", JSON.stringify(decoded.vitrinler || []));
+    localStorage.setItem("orders", JSON.stringify(decoded.siparisler || []));
+
+    bildirimGoster("GitHub yedeği başarıyla geri yüklendi!", "success");
+
+    // Görünümleri güncelle
+    if (typeof urunleriListele === "function") urunleriListele();
+    if (typeof kategorileriListele === "function") kategorileriListele();
+    if (typeof vitrinleriListele === "function") vitrinleriListele();
+    if (typeof siparisleriListele === "function") siparisleriListele();
+
+  } catch (err) {
+    console.error('githubdanGeriYukle hata:', err);
+    bildirimGoster("Geri yükleme sırasında hata oluştu!", "danger");
+  }
+}
+
   </script>
   <script src="js/jspdf.umd.min.js"></script>
   <script src="js/DejaVuSans.js"></script>
