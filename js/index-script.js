@@ -140,10 +140,8 @@ function printOrderAsPDF(orderId) {
     theme: 'striped',
     styles: {
       fontSize: 9,
-      cellPadding: 3,
-
-      function urunleriGoster(filtreKategori = null, aramaKelimesi = null) {
-          const urunListesi = document.getElementById('productList');
+      cellPadding: 3
+    },
     headStyles: {
       fillColor: primaryColor,
       textColor: '#ffffff',

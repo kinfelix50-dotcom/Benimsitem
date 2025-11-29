@@ -1,5 +1,4 @@
-<script>
-    let urunler = [];
+  let urunler = [];
     let kategoriler = [];
     let vitrinler = [];
     let siparisler = [];
@@ -1239,4 +1238,3 @@ function kategoriDuzenle() {
         });
       }
     });
-</script>
