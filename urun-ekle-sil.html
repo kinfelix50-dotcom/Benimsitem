@@ -616,17 +616,12 @@
           <label class="form-check-label" for="fiyatlariGizle">Fiyatları Gizle (Sadece Anasayfa)</label>
         </div>
       </div>
-      
         <div class="col-12 col-sm-auto">
           <button id="githubYedekleBtn" class="btn btn-secondary" type="button">
             <i class="fab fa-github me-2"></i>GitHub'a Yedekle
           </button>
         </div>
-        <button id="githubGeriYukleBtn" class="btn btn-warning">
-    <i class="fas fa-sync-alt me-2"></i>GitHub’dan Geri Yükle
-</button>
     </div>
-    
   </div>
 </div>
 <!-- Toplu kategori işlemleri: kategori seçici + butonlar -->
@@ -844,49 +839,6 @@
     </div>
   </div>
   <script>
-    const GITHUB_USERNAME = "kinfelix50-dotcom";
-const GITHUB_REPO = "Benimsitem";
-const GITHUB_FILE_PATH = "data/urunler.json"; 
-const GITHUB_TOKEN = "";  
-
-async function githubdanGeriYukle() {
-    try {
-        bildirimGoster("GitHub'dan yedek çekiliyor...", "info");
-
-        const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
-
-        const response = await fetch(url, {
-            headers: { "Authorization": `token ${GITHUB_TOKEN}` }
-        });
-
-        if (!response.ok) {
-            bildirimGoster("GitHub'dan yedek alınamadı!", "danger");
-            return;
-        }
-
-        const fileData = await response.json();
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
-
-        // Gelen veriyi localStorage'a yaz
-        localStorage.setItem("urunler", JSON.stringify(decoded.urunler || []));
-        localStorage.setItem("kategoriler", JSON.stringify(decoded.kategoriler || []));
-        localStorage.setItem("vitrinler", JSON.stringify(decoded.vitrinler || []));
-        localStorage.setItem("orders", JSON.stringify(decoded.siparisler || []));
-
-        bildirimGoster("GitHub yedeği başarıyla geri yüklendi!", "success");
-
-        // Tüm sayfaları yenile
-        if (typeof urunleriListele === "function") urunleriListele();
-        if (typeof kategorileriListele === "function") kategorileriListele();
-        if (typeof vitrinleriListele === "function") vitrinleriListele();
-        if (typeof siparisleriListele === "function") siparisleriListele();
-
-    } catch (err) {
-        console.error(err);
-        bildirimGoster("Geri yükleme sırasında hata oluştu!", "danger");
-    }
-}
-      
     let urunler = [];
     let kategoriler = [];
     let vitrinler = [];
@@ -915,62 +867,6 @@ async function githubdanGeriYukle() {
         return defaultValue;
       }
     }
-    async function githubaKaydet() {
-    try {
-        bildirimGoster("GitHub'a yedekleniyor...", "info");
-
-        // Kaydedilecek veri
-        const data = {
-            urunler: safeParseJSON("urunler", []),
-            kategoriler: safeParseJSON("kategoriler", []),
-            vitrinler: safeParseJSON("vitrinler", []),
-            siparisler: safeParseJSON("orders", [])
-        };
-
-        const jsonData = JSON.stringify(data, null, 2);
-        const base64Data = btoa(unescape(encodeURIComponent(jsonData)));
-
-        // GitHub API adresi
-        const url = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`;
-
-        // Önce dosya var mı kontrol et -> SHA almak için
-        let sha = undefined;
-        const getFile = await fetch(url, {
-            headers: { "Authorization": `token ${GITHUB_TOKEN}` }
-        });
-
-        if (getFile.ok) {
-            const fileInfo = await getFile.json();
-            sha = fileInfo.sha;
-        }
-
-        // Dosyayı yükle
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Authorization": `token ${GITHUB_TOKEN}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: "Admin panelinden ürün yedeği",
-                content: base64Data,
-                sha: sha
-            })
-        });
-
-        if (response.ok) {
-            bildirimGoster("GitHub'a başarıyla kaydedildi!", "success");
-        } else {
-            const error = await response.json();
-            console.error(error);
-            bildirimGoster("GitHub'a yükleme hatası!", "danger");
-        }
-
-    } catch (err) {
-        console.error(err);
-        bildirimGoster("GitHub kaydetme sırasında hata oluştu!", "danger");
-    }
-}
     // HTML karakterlerini güvenli hale getir
     function escapeHTML(str) {
       if (str == null) return '';
@@ -3570,45 +3466,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-document.getElementById("githubYedekleBtn").addEventListener("click", githubaKaydet);
-
-document.getElementById("githubGeriYukleBtn").addEventListener("click", githubdanGeriYukle);
-async function githubdanGeriYukle() {
-  try {
-    bildirimGoster("GitHub'dan yedek çekiliyor...", "info");
-
-    // raw.githubusercontent kullanıyoruz (daha basit, JSON doğrudan geliyor)
-    const url = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error('GitHub raw fetch hata:', response.status, response.statusText);
-      bildirimGoster("GitHub'dan yedek alınamadı! (dosya bulunamadı veya erişim engellendi)", "danger");
-      return;
-    }
-
-    // raw JSON olarak alıyoruz
-    const decoded = await response.json();
-
-    // Gelen veriyi localStorage'a yaz
-    localStorage.setItem("urunler", JSON.stringify(decoded.urunler || []));
-    localStorage.setItem("kategoriler", JSON.stringify(decoded.kategoriler || []));
-    localStorage.setItem("vitrinler", JSON.stringify(decoded.vitrinler || []));
-    localStorage.setItem("orders", JSON.stringify(decoded.siparisler || []));
-
-    bildirimGoster("GitHub yedeği başarıyla geri yüklendi!", "success");
-
-    // Görünümleri güncelle
-    if (typeof urunleriListele === "function") urunleriListele();
-    if (typeof kategorileriListele === "function") kategorileriListele();
-    if (typeof vitrinleriListele === "function") vitrinleriListele();
-    if (typeof siparisleriListele === "function") siparisleriListele();
-
-  } catch (err) {
-    console.error('githubdanGeriYukle hata:', err);
-    bildirimGoster("Geri yükleme sırasında hata oluştu!", "danger");
-  }
-}
 
   </script>
   <script src="js/jspdf.umd.min.js"></script>
