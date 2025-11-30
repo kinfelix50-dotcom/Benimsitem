@@ -14,7 +14,7 @@
   <!-- DejaVuSans fontu (isteğe bağlı, yoksa Helvetica kullanılacak) -->
   <script src="js/DejaVuSans.js"></script>
   <!-- Ana script dosyanız -->
-  <script src="js/admin-script.js"></script>
+  
  
  
   <style>
@@ -424,7 +424,7 @@
   </div>
   <!-- Reklam Bantı -->
   <div class="ad-banner">
-    <span>Tüm Ürünlerde %20 İndirim Fırsatını Kaçırma!</span>
+    <span>SATIŞLARIMIZ TOPTANDIR PAREKENDE SATIŞIMIZ YOKTUR</span>
     <div class="countdown" id="countdown">
       <i class="bi bi-clock clock-icon"></i>
       <span id="hours">00</span>:
@@ -1684,6 +1684,7 @@ function getSelectedProductIds() {
 }
 
 // Seçili ürünlere kategori ekle (mevcut kategori üzerine yazılır)
+
 function topluKategoriEkle() {
   console.log('topluKategoriEkle çağrıldı');
   const sel = document.getElementById('bulkKategoriSelect');
@@ -1713,7 +1714,6 @@ function topluKategoriEkle() {
   urunleriGoster(); urunSecenekleriniYukle(); vitrinBloklariGoster();
 }
 
-// Seçili ürünlerden hedef kategoriyi kaldır
 function topluKategoriCikar() {
   console.log('topluKategoriCikar çağrıldı');
   const sel = document.getElementById('bulkKategoriSelect');
@@ -1751,190 +1751,118 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('bulkCikarBtn')?.addEventListener('click', topluKategoriCikar);
 });
 
-    async function urunKaydet(e) {
-      e.preventDefault();
-      const ad = document.getElementById('urunAd').value.trim();
-      const fiyat = parseFloat(document.getElementById('urunFiyat').value);
-      const indirim = parseInt(document.getElementById('urunIndirim').value) || 0;
-      const urunResimFile = document.getElementById('urunResimFile').files[0];
-      const urunResimUrl = document.getElementById('urunResim').value.trim();
-      const seciliKategoriler = Array.from(document.getElementById('urunKategori').selectedOptions).map(o => o.value);
-      const marka = document.getElementById('urunMarka').value.trim();
-      const markaLogoFile = document.getElementById('markaLogoFile').files[0];
-      const markaLogoUrl = document.getElementById('markaLogo').value.trim();
-      const stok = parseInt(document.getElementById('urunStok').value);
-      const stokKodu = duzenlenenUrunId ? document.getElementById('stokKodu').value.trim() : stokKoduOlustur();
-      const detay = document.getElementById('urunDetay').value.trim();
-      const yeniUrun = document.getElementById('yeniUrun').checked;
-      const ucretsizKargo = document.getElementById('ucretsizKargo').checked;
-      const anasayfadaGoster = document.getElementById('anasayfadaGoster').checked;
-      let isValid = true;
-      if (!ad) {
-        document.getElementById('urunAd').classList.add('is-invalid');
+  async function urunKaydet() {
+    const ad = urunAd.value.trim();
+    const fiyat = parseFloat(urunFiyat.value);
+    const indirim = parseInt(urunIndirim.value) || 0;
+
+    const urunResimFile = urunResimFileInput.files[0];
+    const urunResimUrl = urunResim.value.trim();
+
+    // ✔ Çoklu kategori al
+    const seciliKategoriler = Array.from(urunKategori.selectedOptions).map(o => o.value);
+
+    const marka = urunMarka.value.trim() || "Belirtilmemiş";
+    const markaLogoFile = markaLogoFileInput.files[0];
+    const markaLogoUrl = markaLogo.value.trim();
+    const stok = parseInt(urunStok.value);
+
+    const stokKodu = duzenlenenUrunId ? stokKoduInput.value.trim() : stokKoduOlustur();
+    const detay = urunDetay.value.trim();
+    const yeniUrun = yeniUrunCheckbox.checked;
+    const ucretsizKargo = ucretsizKargoCheckbox.checked;
+    const anasayfadaGoster = anasayfadaGosterCheckbox.checked;
+
+    let isValid = true;
+
+    // VALIDASYON
+    if (!ad) { urunAd.classList.add("is-invalid"); isValid = false; } 
+    else urunAd.classList.remove("is-invalid");
+
+    if (!fiyat || fiyat <= 0) { urunFiyat.classList.add("is-invalid"); isValid = false; }
+    else urunFiyat.classList.remove("is-invalid");
+
+    if (indirim < 0 || indirim > 100) { urunIndirim.classList.add("is-invalid"); isValid = false; }
+    else urunIndirim.classList.remove("is-invalid");
+
+    if (!urunResimFile && !urunResimUrl) { urunResim.classList.add("is-invalid"); isValid = false; }
+    else urunResim.classList.remove("is-invalid");
+
+    // ✔ Çoklu kategori zorunlu
+    if (seciliKategoriler.length === 0) {
+        urunKategori.classList.add("is-invalid");
         isValid = false;
-      } else {
-        document.getElementById('urunAd').classList.remove('is-invalid');
-      }
-      if (isNaN(fiyat) || fiyat <= 0) {
-        document.getElementById('urunFiyat').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunFiyat').classList.remove('is-invalid');
-      }
-      if (indirim < 0 || indirim > 100) {
-        document.getElementById('urunIndirim').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunIndirim').classList.remove('is-invalid');
-      }
-      if (!urunResimFile && !urunResimUrl) {
-        document.getElementById('urunResimFile').classList.add('is-invalid');
-        document.getElementById('urunResim').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunResimFile').classList.remove('is-invalid');
-        document.getElementById('urunResim').classList.remove('is-invalid');
-      }
-      if (urunResimUrl && !/^(https?:\/\/)/.test(urunResimUrl)) {
-        document.getElementById('urunResim').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunResim').classList.remove('is-invalid');
-      }
-      if (!seciliKategoriler || seciliKategoriler.length === 0) {
-        document.getElementById('urunKategori').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunKategori').classList.remove('is-invalid');
-      }
-      if (!marka) {
-        document.getElementById('urunMarka').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunMarka').classList.remove('is-invalid');
-      }
-      if (isNaN(stok) || stok < 0) {
-        document.getElementById('urunStok').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('urunStok').classList.remove('is-invalid');
-      }
-      if (urunResimFile && !urunResimFile.type.startsWith('image/')) {
-        document.getElementById('urunResimFile').classList.add('is-invalid');
-        bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
-        isValid = false;
-      }
-      if (urunResimFile && urunResimFile.size > 2 * 1024 * 1024) { // 2MB sınır
-        document.getElementById('urunResimFile').classList.add('is-invalid');
-        bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
-        isValid = false;
-      }
-      if (markaLogoFile && !markaLogoFile.type.startsWith('image/')) {
-        document.getElementById('markaLogoFile').classList.add('is-invalid');
-        bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
-        isValid = false;
-      }
-      if (markaLogoFile && markaLogoFile.size > 2 * 1024 * 1024) { // 2MB sınır
-        document.getElementById('markaLogoFile').classList.add('is-invalid');
-        bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
-        isValid = false;
-      }
-      if (markaLogoUrl && !/^(https?:\/\/)/.test(markaLogoUrl)) {
-        document.getElementById('markaLogo').classList.add('is-invalid');
-        isValid = false;
-      } else {
-        document.getElementById('markaLogo').classList.remove('is-invalid');
-      }
-      if (!isValid) {
-        bildirimGoster('Zorunlu alanları doğru doldurun! İndirim 0-100 arası.', 'danger');
-        return;
-      }
-      if (!duzenlenenUrunId && urunler.some(u => u.stokKodu === stokKodu)) {
-        bildirimGoster('Bu stok kodu zaten kullanımda, lütfen farklı bir kod girin veya boş bırakın.', 'danger');
-        return;
-      }
-      if (duzenlenenUrunId) {
-        const existingProductWithSameStokKodu = urunler.find(u => u.stokKodu === stokKodu && u.id !== duzenlenenUrunId);
-        if (existingProductWithSameStokKodu) {
-          bildirimGoster('Bu stok kodu başka bir ürüne ait, lütfen farklı bir kod girin.', 'danger');
-          return;
-        }
-      }
-      let resim = urunResimUrl || 'https://via.placeholder.com/150';
-      if (urunResimFile) {
-        try {
-          resim = await dosyaToBase64(urunResimFile);
-        } catch (err) {
-          console.error('Dosya yükleme hatası:', err);
-          bildirimGoster('Ürün resmi yüklenemedi!', 'danger');
-          return;
-        }
-      }
-      let markaLogo = markaLogoUrl || '';
-      if (markaLogoFile) {
-        try {
-          markaLogo = await dosyaToBase64(markaLogoFile);
-        } catch (err) {
-          console.error('Dosya yükleme hatası:', err);
-          bildirimGoster('Marka logosu yüklenemedi!', 'danger');
-          return;
-        }
-      } else if (!markaLogoUrl) {
-        markaLogo = 'https://via.placeholder.com/35 ';
-      }
-      const urun = {
-        id: duzenlenenUrunId || generateUniqueId('u-'),
-        ad,
-        fiyat,
-        indirim,
-        resim,
-        kategoriler: seciliKategoriler,
-        marka,
-        markaLogo,
-        stok,
-        stokKodu,
-        anasayfadaGoster,
-        detay,
-        yeniUrun,
-        ucretsizKargo
-      };
-      if (duzenlenenUrunId) {
-        const i = urunler.findIndex(u => u.id === duzenlenenUrunId);
-        if (i !== -1) {
-          urunler[i] = urun;
-          bildirimGoster('Ürün güncellendi!');
-        }
-      } else {
-        urunler.push(urun);
-        bildirimGoster('Ürün eklendi!');
-      }
-      localStorage.setItem('urunler', JSON.stringify(urunler));
-      formuTemizle();
-      urunleriGoster();
-      vitrinBloklariGoster();
-      urunSecenekleriniYukle();
-      siparisleriGoster();
+    } else {
+        urunKategori.classList.remove("is-invalid");
     }
-    function formuTemizle() {
-  document.getElementById('urunForm').reset();
-  document.getElementById('urunId').value = '';
-  document.getElementById('stokKodu').value = stokKoduOlustur();
-  document.getElementById('markaLogo').value = '';
-  document.getElementById('markaLogoFile').value = '';
-  document.getElementById('markaLogoPreview').classList.add('d-none');
-  document.getElementById('urunResim').value = '';
-  document.getElementById('urunResimFile').value = '';
-  document.getElementById('urunResimPreview').classList.add('d-none');
-  document.getElementById('ekleDuzenleBtn').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Ekle';
-  document.getElementById('urunFormBaslik').textContent = 'Yeni Ürün Ekle';
-  document.getElementById('urunMarka').value = 'Belirtilmemiş'; // Varsayılan olarak "Belirtilmemiş" ayarla
-  const kategoriSelect = document.getElementById('urunKategori');
-  if (kategoriSelect) Array.from(kategoriSelect.options).forEach(o => o.selected = false);
-  duzenlenenUrunId = null;
-  document.querySelectorAll('.form-control, .form-select, #markaLogoFile, #urunResimFile').forEach(input => {
-    input.classList.remove('is-invalid');
-  });
+
+    if (!isValid) {
+        bildirimGoster("Zorunlu alanlar eksik", "danger");
+        return;
+    }
+
+    // Resim
+    let resim = urunResimUrl;
+    if (urunResimFile) resim = URL.createObjectURL(urunResimFile);
+
+    let markaLogoFinal = markaLogoUrl;
+    if (markaLogoFile) markaLogoFinal = URL.createObjectURL(markaLogoFile);
+
+    // 🔥 ÜRÜN GÜNCELLEME
+    if (duzenlenenUrunId) {
+        const u = urunler.find(u => u.id === duzenlenenUrunId);
+        if (!u) return;
+
+        u.ad = ad;
+        u.fiyat = fiyat;
+        u.indirim = indirim;
+        u.resim = resim;
+        u.marka = marka;
+        u.markaLogo = markaLogoFinal;
+        u.stok = stok;
+        u.stokKodu = stokKodu;
+        u.detay = detay;
+        u.yeniUrun = yeniUrun;
+        u.ucretsizKargo = ucretsizKargo;
+        u.anasayfadaGoster = anasayfadaGoster;
+
+        // ✔ Çoklu kategori güncelle
+        u.kategoriler = [...seciliKategoriler];
+
+        bildirimGoster("Ürün güncellendi", "success");
+    }
+
+    // 🔥 YENİ ÜRÜN EKLEME
+    else {
+        urunler.push({
+            id: Date.now().toString(),
+            ad,
+            fiyat,
+            indirim,
+            resim,
+            marka,
+            markaLogo: markaLogoFinal,
+            stok,
+            stokKodu,
+            detay,
+            yeniUrun,
+            ucretsizKargo,
+            anasayfadaGoster,
+
+            // ✔ Çoklu kategori kaydet
+            kategoriler: [...seciliKategoriler]
+        });
+
+        bildirimGoster("Ürün eklendi", "success");
+    }
+
+    localStorage.setItem("urunler", JSON.stringify(urunler));
+    urunleriGoster();
+
+    const modal = bootstrap.Modal.getInstance(urunModal);
+    modal.hide();
 }
+
 function urunDuzenle(id) {
   const u = urunler.find(u => u.id === id);
   if (u) {
@@ -1988,42 +1916,68 @@ function urunDuzenle(id) {
   // Sayfa en üstüne kaydır
   window.scrollTo(0, 0);
 }
-async function urunKaydet(e) {
-  e.preventDefault();
+// ✔ Çoklu kategoriyi seçili hale getir
+Array.from(document.getElementById("urunKategori").options).forEach(opt => {
+    opt.selected = u.kategoriler.includes(opt.value);
+});
+
+// İndirim alanını isteğe bağlı yapmak için urunKaydet fonksiyonunu güncelle
+async function urunKaydet() {
+  console.log('urunKaydet çalıştı');
+
   const ad = document.getElementById('urunAd').value.trim();
   const fiyat = parseFloat(document.getElementById('urunFiyat').value);
-  const indirim = parseInt(document.getElementById('urunIndirim').value) || 0;
+  const indirimRaw = document.getElementById('urunIndirim').value.trim();
+  // İndirim artık tamamen isteğe bağlı - boş bırakılabilir
+  const indirim = indirimRaw === '' ? 0 : parseInt(indirimRaw, 10);
+
   const urunResimFile = document.getElementById('urunResimFile').files[0];
   const urunResimUrl = document.getElementById('urunResim').value.trim();
-  const kategori = document.getElementById('urunKategori').value;
-  const marka = document.getElementById('urunMarka').value.trim() || 'Belirtilmemiş'; // Boşsa veya "Belirtilmemiş" kabul et
+
+  // Çoklu kategori alımı
+  const seciliKategoriler = Array.from(document.getElementById('urunKategori').selectedOptions)
+                                 .map(opt => opt.value);
+
+  const marka = document.getElementById('urunMarka').value.trim() || 'Belirtilmemiş';
   const markaLogoFile = document.getElementById('markaLogoFile').files[0];
   const markaLogoUrl = document.getElementById('markaLogo').value.trim();
-  const stok = parseInt(document.getElementById('urunStok').value);
+  const stok = parseInt(document.getElementById('urunStok').value, 10) || 0;
+
   const stokKodu = duzenlenenUrunId ? document.getElementById('stokKodu').value.trim() : stokKoduOlustur();
   const detay = document.getElementById('urunDetay').value.trim();
   const yeniUrun = document.getElementById('yeniUrun').checked;
   const ucretsizKargo = document.getElementById('ucretsizKargo').checked;
   const anasayfadaGoster = document.getElementById('anasayfadaGoster').checked;
+
   let isValid = true;
-  if (!ad) {
-    document.getElementById('urunAd').classList.add('is-invalid');
-    isValid = false;
-  } else {
-    document.getElementById('urunAd').classList.remove('is-invalid');
+
+  // VALIDASYON - Sadece zorunlu alanlar
+  if (!ad) { 
+    document.getElementById('urunAd').classList.add('is-invalid'); 
+    isValid = false; 
+  } else { 
+    document.getElementById('urunAd').classList.remove('is-invalid'); 
   }
-  if (isNaN(fiyat) || fiyat <= 0) {
-    document.getElementById('urunFiyat').classList.add('is-invalid');
-    isValid = false;
-  } else {
-    document.getElementById('urunFiyat').classList.remove('is-invalid');
+
+  if (isNaN(fiyat) || fiyat <= 0) { 
+    document.getElementById('urunFiyat').classList.add('is-invalid'); 
+    isValid = false; 
+  } else { 
+    document.getElementById('urunFiyat').classList.remove('is-invalid'); 
   }
-  if (indirim < 0 || indirim > 100) {
-    document.getElementById('urunIndirim').classList.add('is-invalid');
-    isValid = false;
+
+  // İndirim artık tamamen isteğe bağlı, sadece girilmişse kontrol et
+  if (indirimRaw !== '') {
+    if (isNaN(indirim) || indirim < 0 || indirim > 100) {
+      document.getElementById('urunIndirim').classList.add('is-invalid');
+      isValid = false;
+    } else {
+      document.getElementById('urunIndirim').classList.remove('is-invalid');
+    }
   } else {
     document.getElementById('urunIndirim').classList.remove('is-invalid');
   }
+
   if (!urunResimFile && !urunResimUrl) {
     document.getElementById('urunResimFile').classList.add('is-invalid');
     document.getElementById('urunResim').classList.add('is-invalid');
@@ -2032,119 +1986,180 @@ async function urunKaydet(e) {
     document.getElementById('urunResimFile').classList.remove('is-invalid');
     document.getElementById('urunResim').classList.remove('is-invalid');
   }
-  if (urunResimUrl && !/^(https?:\/\/)/.test(urunResimUrl)) {
-    document.getElementById('urunResim').classList.add('is-invalid');
-    isValid = false;
-  } else {
-    document.getElementById('urunResim').classList.remove('is-invalid');
-  }
-  if (!kategori) {
-    document.getElementById('urunKategori').classList.add('is-invalid');
-    isValid = false;
+
+  // Kategori artık zorunlu değil
+  if (seciliKategoriler && seciliKategoriler.length > 0) {
+    document.getElementById('urunKategori').classList.remove('is-invalid');
   } else {
     document.getElementById('urunKategori').classList.remove('is-invalid');
   }
-  if (isNaN(stok) || stok < 0) {
-    document.getElementById('urunStok').classList.add('is-invalid');
-    isValid = false;
-  } else {
-    document.getElementById('urunStok').classList.remove('is-invalid');
-  }
-  if (urunResimFile && !urunResimFile.type.startsWith('image/')) {
-    document.getElementById('urunResimFile').classList.add('is-invalid');
-    bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
-    isValid = false;
-  }
-  if (urunResimFile && urunResimFile.size > 2 * 1024 * 1024) { // 2MB sınır
-    document.getElementById('urunResimFile').classList.add('is-invalid');
-    bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
-    isValid = false;
-  }
-  if (markaLogoFile && !markaLogoFile.type.startsWith('image/')) {
-    document.getElementById('markaLogoFile').classList.add('is-invalid');
-    bildirimGoster('Sadece resim dosyaları yüklenebilir!', 'danger');
-    isValid = false;
-  }
-  if (markaLogoFile && markaLogoFile.size > 2 * 1024 * 1024) { // 2MB sınır
-    document.getElementById('markaLogoFile').classList.add('is-invalid');
-    bildirimGoster('Dosya boyutu 2MB\'tan büyük olamaz!', 'danger');
-    isValid = false;
-  }
-  if (markaLogoUrl && !/^(https?:\/\/)/.test(markaLogoUrl)) {
-    document.getElementById('markaLogo').classList.add('is-invalid');
-    isValid = false;
-  } else {
-    document.getElementById('markaLogo').classList.remove('is-invalid');
-  }
+
   if (!isValid) {
-    bildirimGoster('Zorunlu alanları doğru doldurun! İndirim 0-100 arası.', 'danger');
+    bildirimGoster('Zorunlu alanları doğru doldurun!', 'danger');
     return;
   }
-  if (!duzenlenenUrunId && urunler.some(u => u.stokKodu === stokKodu)) {
-    bildirimGoster('Bu stok kodu zaten kullanımda, lütfen farklı bir kod girin veya boş bırakın.', 'danger');
-    return;
-  }
-  if (duzenlenenUrunId) {
-    const existingProductWithSameStokKodu = urunler.find(u => u.stokKodu === stokKodu && u.id !== duzenlenenUrunId);
-    if (existingProductWithSameStokKodu) {
-      bildirimGoster('Bu stok kodu başka bir ürüne ait, lütfen farklı bir kod girin.', 'danger');
-      return;
-    }
-  }
-  let resim = urunResimUrl || 'https://via.placeholder.com/150';
+
+  // Resim öncelik: dosya -> url
+  let resim = urunResimUrl || '';
   if (urunResimFile) {
     try {
       resim = await dosyaToBase64(urunResimFile);
     } catch (err) {
-      console.error('Dosya yükleme hatası:', err);
-      bildirimGoster('Ürün resmi yüklenemedi!', 'danger');
-      return;
+      console.error('resim okuma hata', err);
     }
   }
+
   let markaLogo = markaLogoUrl || '';
   if (markaLogoFile) {
     try {
       markaLogo = await dosyaToBase64(markaLogoFile);
     } catch (err) {
-      console.error('Dosya yükleme hatası:', err);
-      bildirimGoster('Marka logosu yüklenemedi!', 'danger');
-      return;
+      console.error('marka logo okuma hata', err);
     }
-  } else if (!markaLogoUrl) {
-    markaLogo = '';
   }
-  const urun = {
-    id: duzenlenenUrunId || generateUniqueId('u-'),
-    ad,
-    fiyat,
-    indirim,
-    resim,
-    kategori,
-    marka,
-    markaLogo,
-    stok,
-    stokKodu,
-    anasayfadaGoster,
-    detay,
-    yeniUrun,
-    ucretsizKargo
-  };
+
   if (duzenlenenUrunId) {
-    const i = urunler.findIndex(u => u.id === duzenlenenUrunId);
-    if (i !== -1) {
-      urunler[i] = urun;
-      bildirimGoster('Ürün güncellendi!');
-    }
+    const u = urunler.find(x => x.id === duzenlenenUrunId);
+    if (!u) return;
+    u.ad = ad;
+    u.fiyat = fiyat;
+    u.indirim = indirim; // 0 veya girilen değer
+    u.resim = resim;
+    u.marka = marka;
+    u.markaLogo = markaLogo;
+    u.stok = stok;
+    u.stokKodu = stokKodu;
+    u.detay = detay;
+    u.yeniUrun = yeniUrun;
+    u.ucretsizKargo = ucretsizKargo;
+    u.anasayfadaGoster = anasayfadaGoster;
+    u.kategoriler = Array.isArray(seciliKategoriler) ? [...seciliKategoriler] : [];
+    bildirimGoster('Ürün güncellendi!', 'success');
   } else {
-    urunler.push(urun);
-    bildirimGoster('Ürün eklendi!');
+    const yeni = {
+      id: Date.now().toString(),
+      ad,
+      fiyat,
+      indirim, // 0 veya girilen değer
+      resim,
+      marka,
+      markaLogo,
+      stok,
+      stokKodu,
+      detay,
+      yeniUrun,
+      ucretsizKargo,
+      anasayfadaGoster,
+      kategoriler: Array.isArray(seciliKategoriler) ? [...seciliKategoriler] : []
+    };
+    urunler.push(yeni);
+    bildirimGoster('Yeni ürün eklendi!', 'success');
   }
+
   localStorage.setItem('urunler', JSON.stringify(urunler));
-  formuTemizle();
   urunleriGoster();
+  duzenlenenUrunId = null;
+
+  // Formu temizle
+  formuTemizle();
+}
+
+// Formu temizleme fonksiyonu
+function formuTemizle() {
+  document.getElementById('urunForm').reset();
+  document.getElementById('urunId').value = '';
+  document.getElementById('urunFormBaslik').textContent = 'Yeni Ürün Ekle';
+  document.getElementById('ekleDuzenleBtn').innerHTML = '<i class="fas fa-plus-circle me-2"></i>Ekle';
+  document.getElementById('urunResimPreview').classList.add('d-none');
+  document.getElementById('markaLogoPreview').classList.add('d-none');
+  duzenlenenUrunId = null;
+  
+  // Stok kodunu otomatik oluştur
+  document.getElementById('stokKodu').value = stokKoduOlustur();
+}
+
+// Çoklu kategori işlemleri için düzeltilmiş fonksiyonlar
+function topluKategoriEkle() {
+  console.log('topluKategoriEkle çağrıldı');
+  const sel = document.getElementById('bulkKategoriSelect');
+  if (!sel || !sel.value) { 
+    console.log('Kategori seçilmedi');
+    bildirimGoster('Önce hedef kategori seçin!', 'danger'); 
+    return; 
+  }
+  const hedef = sel.value;
+  console.log('Hedef kategori:', hedef);
+  const ids = getSelectedProductIds();
+  console.log('Seçili ürün IDleri:', ids);
+  if (!ids.length) { 
+    console.log('Ürün seçilmedi');
+    bildirimGoster('Lütfen en az bir ürün seçin!', 'warning'); 
+    return; 
+  }
+  
+  let updatedCount = 0;
+  urunler.forEach(u => {
+    if (ids.includes(u.id)) {
+      if (!Array.isArray(u.kategoriler)) u.kategoriler = [];
+      if (!u.kategoriler.includes(hedef)) {
+        u.kategoriler.push(hedef);
+        updatedCount++;
+        console.log('Ürün güncellendi:', u.id, u.kategoriler);
+      }
+    }
+  });
+  
+  localStorage.setItem('urunler', JSON.stringify(urunler));
+  bildirimGoster(`${updatedCount} ürün "${hedef}" kategorisine eklendi.`, 'success');
+  urunleriGoster(); 
+  urunSecenekleriniYukle(); 
   vitrinBloklariGoster();
-  urunSecenekleriniYukle();
-  siparisleriGoster();
+}
+
+function topluKategoriCikar() {
+  console.log('topluKategoriCikar çağrıldı');
+  const sel = document.getElementById('bulkKategoriSelect');
+  if (!sel || !sel.value) { 
+    console.log('Kategori seçilmedi');
+    bildirimGoster('Önce hedef kategori seçin!', 'danger'); 
+    return; 
+  }
+  const hedef = sel.value;
+  console.log('Hedef kategori:', hedef);
+  const ids = getSelectedProductIds();
+  console.log('Seçili ürün IDleri:', ids);
+  if (!ids.length) { 
+    console.log('Ürün seçilmedi');
+    bildirimGoster('Lütfen en az bir ürün seçin!', 'warning'); 
+    return; 
+  }
+  
+  let updatedCount = 0;
+  urunler.forEach(u => {
+    if (ids.includes(u.id) && Array.isArray(u.kategoriler) && u.kategoriler.includes(hedef)) {
+      u.kategoriler = u.kategoriler.filter(k => k !== hedef);
+      updatedCount++;
+      console.log('Ürün güncellendi:', u.id, u.kategoriler);
+    }
+  });
+  
+  localStorage.setItem('urunler', JSON.stringify(urunler));
+  bildirimGoster(`${updatedCount} ürün "${hedef}" kategorisinden çıkarıldı.`, 'success');
+  urunleriGoster(); 
+  urunSecenekleriniYukle(); 
+  vitrinBloklariGoster();
+}
+
+// Seçili ürün ID'lerini al - düzeltilmiş versiyon
+function getSelectedProductIds() {
+  const checkboxes = document.querySelectorAll('.urun-secim-checkbox:checked');
+  console.log('Checked checkboxes bulundu:', checkboxes.length);
+  const ids = Array.from(checkboxes).map(cb => {
+    console.log('Checkbox data-id:', cb.dataset.id);
+    return cb.dataset.id;
+  }).filter(id => id); // null/undefined değerleri filtrele
+  console.log('Seçili ürün IDleri:', ids);
+  return ids;
 }
     function urunSil(id) {
       if (!confirm('Ürün silinsin mi? Bu işlem geri alınamaz!')) return;
