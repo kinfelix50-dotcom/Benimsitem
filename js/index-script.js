@@ -19,33 +19,6 @@ function safeParseJSON(key, defaultValue = {}) {
   }
 }
 
-// Ürünleri GitHub'dan çek
-async function fetchUrunlerFromGithub() {
-  try {
-    const url = 'https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/data/urunler.json';
-    console.log('fetchUrunlerFromGithub: fetching', url);
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error('fetchUrunlerFromGithub: HTTP', response.status, response.statusText);
-      throw new Error('GitHub ürünler.json yüklenemedi!');
-    }
-    const text = await response.text();
-    try {
-      const data = JSON.parse(text);
-      console.log('fetchUrunlerFromGithub: received', Array.isArray(data) ? data.length + ' items' : typeof data);
-      return data;
-    } catch (parseErr) {
-      console.error('fetchUrunlerFromGithub: JSON parse hatası:', parseErr);
-      console.error('fetchUrunlerFromGithub: raw content preview:\n', text.slice(0, 2000));
-      // Açıkça kullanıcının GitHub'daki JSON dosyasını düzeltmesi gerektiğini belirt
-      return [];
-    }
-  } catch (err) {
-    console.error('GitHub ürünler.json fetch hatası:', err);
-    return [];
-  }
-}
-
 function calculateDiscountedPrice(originalPrice, discountPercentage) {
   if (discountPercentage > 0 && discountPercentage <= 100) {
     return originalPrice * (1 - discountPercentage / 100);
@@ -140,7 +113,10 @@ function printOrderAsPDF(orderId) {
     theme: 'striped',
     styles: {
       fontSize: 9,
-      cellPadding: 3
+      cellPadding: 3,
+      lineColor: '#dee2e6',
+      lineWidth: 0.1,
+      textColor: textColor
     },
     headStyles: {
       fillColor: primaryColor,
@@ -625,173 +601,145 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function urunleriGoster(filtreKategori = null, aramaKelimesi = null) {
-      const urunListesi = document.getElementById('productList');
-      const productCarouselSection = document.querySelector('.product-carousel-section');
-      if (!urunListesi) return;
+    const urunListesi = document.getElementById('productList');
+    const productCarouselSection = document.querySelector('.product-carousel-section');
+    if (!urunListesi) return;
 
-      async function renderUrunler() {
-        console.log('renderUrunler: başlıyor', { filtreKategori, aramaKelimesi });
-        let urunler = safeParseJSON('urunler', []);
-        if (!Array.isArray(urunler) || urunler.length === 0) {
-          try {
-            console.log('renderUrunler: localStorage boş, GitHub’dan çekiliyor...');
-            const response = await fetch('https://raw.githubusercontent.com/kinfelix50-dotcom/Benimsitem/main/data/urunler.json');
-            if (response.ok) {
-              urunler = await response.json();
-              console.log('renderUrunler: GitHub’dan çekildi, ürün sayısı =', Array.isArray(urunler) ? urunler.length : 'non-array');
-            } else {
-              console.error('renderUrunler: GitHub fetch HTTP', response.status, response.statusText);
-            }
-          } catch (err) {
-            console.error('renderUrunler: GitHub ürünler.json fetch hatası:', err);
-          }
-        } else {
-          console.log('renderUrunler: localStorage üzerinden ürün sayısı =', urunler.length);
+    if (filtreKategori || aramaKelimesi) {
+      if (productCarouselSection) productCarouselSection.style.display = 'none';
+    } else {
+      if (productCarouselSection) productCarouselSection.style.display = 'block';
+    }
+
+    urunListesi.innerHTML = '';
+    const urunler = safeParseJSON('urunler', []);
+    let filtrelenmisUrunler = urunler;
+
+    if (!filtreKategori && !aramaKelimesi) {
+      filtrelenmisUrunler = urunler.filter(urun => urun.anasayfadaGoster === true);
+    }
+
+    if (filtreKategori) {
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => filtreKategori === 'hepsi' ? true : urun.kategori === filtreKategori);
+    }
+
+    if (aramaKelimesi) {
+      const lowerCaseArama = aramaKelimesi.toLowerCase();
+      filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.ad.toLowerCase().includes(lowerCaseArama));
+    }
+
+    if (filtrelenmisUrunler.length === 0) {
+      urunListesi.innerHTML = '<div class="col-12"><p class="text-muted text-center">Ürün bulunamadı.</p></div>';
+      return;
+    }
+
+    filtrelenmisUrunler.forEach(urun => {
+      urun.stok = urun.stok !== undefined ? urun.stok : 0;
+      const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger">Stokta yok</span>';
+      const stokKodu = urun.stokKodu || 'Bilinmiyor';
+
+      const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
+
+      const urunCard = document.createElement('div');
+      urunCard.classList.add('col-6', 'col-md-4', 'col-lg-3');
+      urunCard.innerHTML = `
+        <div class="card product-card h-100 border-0 shadow-sm">
+          <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/130'">
+          <div class="product-badges">
+            ${urun.isNew ? '<span class="badge bg-primary text-white">Yeni</span>' : ''}
+            ${urun.indirim > 0 ? `<span class="badge bg-danger text-white">%${urun.indirim} İndirim</span>` : ''}
+          </div>
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title text-center">${escapeHTML(urun.ad)}</h5>
+            <p class="card-text text-muted small text-center">Stok Kodu: ${escapeHTML(stokKodu)}</p>
+            <p class="card-text text-muted small text-center">${stokDurumu}</p>
+            <div class="text-center mt-auto">
+              ${urun.indirim > 0 ? `
+                <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} TL</p>
+                <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} TL</h4>
+              ` : `
+                <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} TL</h4>
+              `}
+              <div class="d-flex flex-column align-items-center gap-2">
+                <div class="input-group input-group-sm" style="width: 100px;">
+                  <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
+                  <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}">
+                  <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}">+</button>
+                </div>
+                <button class="btn btn-primary btn-sm sepete-ekle mt-2"
+                  data-urun-id="${escapeHTML(urun.id)}"
+                  data-urun-ad="${escapeHTML(urun.ad)}"
+                  data-urun-fiyat="${indirimliFiyat}"
+                  data-urun-resim="${escapeHTML(urun.resim)}"
+                  data-urun-stok="${urun.stok}"
+                  data-urun-indirim="${urun.indirim || 0}"
+                  ${urun.stok === 0 ? 'disabled' : ''}>
+                  <i class="bi bi-cart-plus"></i> Sepete Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      urunListesi.appendChild(urunCard);
+
+      urunCard.addEventListener('click', function (e) {
+        if (!e.target.closest('.sepete-ekle') && !e.target.closest('.input-group') && 
+!e.target.classList.contains('azalt') && !e.target.classList.contains('artir')) {
+          window.location.href = `urun-detay.html?id=${escapeHTML(urun.id)}`;
         }
+      });
 
-        if (filtreKategori || aramaKelimesi) {
-          if (productCarouselSection) productCarouselSection.style.display = 'none';
-        } else {
-          if (productCarouselSection) productCarouselSection.style.display = 'block';
+      const azaltBtn = urunCard.querySelector('.azalt');
+      const artirBtn = urunCard.querySelector('.artir');
+      const inputEl = urunCard.querySelector('.adet-input');
+      const sepeteEkleBtn = urunCard.querySelector('.sepete-ekle');
+
+      azaltBtn.addEventListener('click', () => {
+        let val = parseInt(inputEl.value);
+        if (val > 1) inputEl.value = val - 1;
+      });
+
+      artirBtn.addEventListener('click', () => {
+        let val = parseInt(inputEl.value);
+        if (val < urun.stok) {
+          inputEl.value = val + 1;
         }
+      });
 
-        urunListesi.innerHTML = '';
-        let filtrelenmisUrunler = urunler;
-
-        if (!filtreKategori && !aramaKelimesi) {
-          filtrelenmisUrunler = urunler.filter(urun => urun.anasayfadaGoster === true);
+      inputEl.addEventListener('change', () => {
+        let val = parseInt(inputEl.value);
+        if (isNaN(val) || val < 1) {
+          inputEl.value = 1;
+        } else if (val > urun.stok) {
+          inputEl.value = urun.stok;
         }
+      });
 
-        if (filtreKategori) {
-          filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => {
-            if (filtreKategori === 'hepsi') return true;
-            if (Array.isArray(urun.kategoriler)) {
-              return urun.kategoriler.includes(filtreKategori);
-            }
-            return urun.kategori === filtreKategori;
-          });
-        }
-
-        if (aramaKelimesi) {
-          const lowerCaseArama = aramaKelimesi.toLowerCase();
-          filtrelenmisUrunler = filtrelenmisUrunler.filter(urun => urun.ad.toLowerCase().includes(lowerCaseArama));
-        }
-
-        if (!filtrelenmisUrunler || filtrelenmisUrunler.length === 0) {
-          urunListesi.innerHTML = '<div class="col-12"><p class="text-muted text-center">Ürün bulunamadı.</p></div>';
+      sepeteEkleBtn.addEventListener('click', function () {
+        const urunBilgisi = safeParseJSON('urunler', []).find(p => p.id === this.dataset.urunId);
+        const eklenecekAdet = parseInt(inputEl.value);
+        if (!urunBilgisi ||!urunBilgisi.stok < eklenecekAdet) {
+          alert(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`);
+          inputEl.value = urunBilgisi ? urunBilgisi.stok : 1;
           return;
         }
 
-        filtrelenmisUrunler.forEach(urun => {
-          urun.stok = urun.stok !== undefined ? urun.stok : 0;
-          const stokDurumu = urun.stok > 0 ? `${urun.stok} adet stokta` : '<span class="text-danger">Stokta yok</span>';
-          const stokKodu = urun.stokKodu || 'Bilinmiyor';
-
-          const indirimliFiyat = calculateDiscountedPrice(urun.fiyat, urun.indirim);
-
-          const urunCard = document.createElement('div');
-          urunCard.classList.add('col-6', 'col-md-4', 'col-lg-3');
-          urunCard.innerHTML = `
-            <div class="card product-card h-100 border-0 shadow-sm">
-              <img src="${encodeURI(escapeHTML(urun.resim))}" class="product-image" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/130'">
-              <div class="product-badges">
-                ${urun.isNew ? '<span class="badge bg-primary text-white">Yeni</span>' : ''}
-                ${urun.indirim > 0 ? `<span class="badge bg-danger text-white">%${urun.indirim} İndirim</span>` : ''}
-              </div>
-              <div class="card-body d-flex flex-column">
-                <h5 class="card-title text-center">${escapeHTML(urun.ad)}</h5>
-                <p class="card-text text-muted small text-center">Stok Kodu: ${escapeHTML(stokKodu)}</p>
-                <p class="card-text text-muted small text-center">${stokDurumu}</p>
-                <div class="text-center mt-auto">
-                  ${urun.indirim > 0 ? `
-                    <p class="card-text original-price">${Number(urun.fiyat).toFixed(2)} TL</p>
-                    <h4 class="card-price discount-price">${indirimliFiyat.toFixed(2)} TL</h4>
-                  ` : `
-                    <h4 class="card-price">${Number(urun.fiyat).toFixed(2)} TL</h4>
-                  `}
-                  <div class="d-flex flex-column align-items-center gap-2">
-                    <div class="input-group input-group-sm" style="width: 100px;">
-                      <button class="btn btn-outline-secondary azalt" type="button" data-urun-id="${escapeHTML(urun.id)}">-</button>
-                      <input type="number" class="form-control text-center adet-input" value="1" min="1" max="${urun.stok}">
-                      <button class="btn btn-outline-secondary artir" type="button" data-urun-id="${escapeHTML(urun.id)}">+</button>
-                    </div>
-                    <button class="btn btn-primary btn-sm sepete-ekle mt-2"
-                      data-urun-id="${escapeHTML(urun.id)}"
-                      data-urun-ad="${escapeHTML(urun.ad)}"
-                      data-urun-fiyat="${indirimliFiyat}"
-                      data-urun-resim="${escapeHTML(urun.resim)}"
-                      data-urun-stok="${urun.stok}"
-                      data-urun-indirim="${urun.indirim || 0}"
-                      ${urun.stok === 0 ? 'disabled' : ''}>
-                      <i class="bi bi-cart-plus"></i> Sepete Ekle
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-          urunListesi.appendChild(urunCard);
-
-          urunCard.addEventListener('click', function (e) {
-            if (!e.target.closest('.sepete-ekle') && !e.target.closest('.input-group') && 
-  !e.target.classList.contains('azalt') && !e.target.classList.contains('artir')) {
-              window.location.href = `urun-detay.html?id=${escapeHTML(urun.id)}`;
-            }
-          });
-
-          const azaltBtn = urunCard.querySelector('.azalt');
-          const artirBtn = urunCard.querySelector('.artir');
-          const inputEl = urunCard.querySelector('.adet-input');
-          const sepeteEkleBtn = urunCard.querySelector('.sepete-ekle');
-
-          azaltBtn.addEventListener('click', () => {
-            let val = parseInt(inputEl.value);
-            if (val > 1) inputEl.value = val - 1;
-          });
-
-          artirBtn.addEventListener('click', () => {
-            let val = parseInt(inputEl.value);
-            if (val < urun.stok) {
-              inputEl.value = val + 1;
-            }
-          });
-
-          inputEl.addEventListener('change', () => {
-            let val = parseInt(inputEl.value);
-            if (isNaN(val) || val < 1) {
-              inputEl.value = 1;
-            } else if (val > urun.stok) {
-              inputEl.value = urun.stok;
-            }
-          });
-
-          sepeteEkleBtn.addEventListener('click', function () {
-            const urunBilgisi = urunler.find(p => p.id === this.dataset.urunId);
-            const eklenecekAdet = parseInt(inputEl.value);
-            if (!urunBilgisi || urunBilgisi.stok < eklenecekAdet) {
-              alert(`Yetersiz stok! Sadece ${urunBilgisi ? urunBilgisi.stok : 0} adet eklenebilir.`);
-              inputEl.value = urunBilgisi ? urunBilgisi.stok : 1;
-              return;
-            }
-
-            const urun = {
-              id: this.dataset.urunId,
-              ad: this.dataset.urunAd,
-              fiyat: parseFloat(this.dataset.urunFiyat),
-              adet: eklenecekAdet,
-              resim: this.dataset.urunResim,
-              stok: parseInt(this.dataset.urunStok),
-              indirim: parseFloat(this.dataset.urunIndirim),
-              stokKodu: urunBilgisi.stokKodu || 'N/A'
-            };
-            sepet.ekle(urun);
-            inputEl.value = '1';
-          });
-        });
-      }
-
-      renderUrunler();
-    }
+        const urun = {
+          id: this.dataset.urunId,
+          ad: this.dataset.urunAd,
+          fiyat: parseFloat(this.dataset.urunFiyat),
+          adet: eklenecekAdet,
+          resim: this.dataset.urunResim,
+          stok: parseInt(this.dataset.urunStok),
+          indirim: parseFloat(this.dataset.urunIndirim),
+          stokKodu: urunBilgisi.stokKodu || 'N/A'
+        };
+        sepet.ekle(urun);
+        inputEl.value = '1';
+      });
+    });
+  }
 
   // Adres Yönetimi Fonksiyonları
   function displayAddresses() {
@@ -1050,7 +998,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // --- Markalar Tabı ---
   function getBenzersizMarkalar() {
-    // GitHub'dan ürünleri çek (senkronize değil, markaları localStorage'dan al)
     const urunler = safeParseJSON('urunler', []);
     return [...new Set(urunler.map(urun => urun.marka).filter(marka => marka && marka !== 'Belirtilmemiş'))].map(marka => {
       const urun = urunler.find(u => u.marka === marka);
@@ -1094,30 +1041,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   markalariGoster();
-
-  // Sayfa yüklendiğinde ürünleri GitHub'dan çek ve urunleriGoster ile göster
-  document.addEventListener('DOMContentLoaded', async function() {
-    let urunler = await fetchUrunlerFromGithub();
-    if ((!urunler || !Array.isArray(urunler) || urunler.length === 0)) {
-      console.warn('Ana GitHub kaynağından ürün alınamadı veya boş. Yerel fallback denenecek.');
-      try {
-        const resp = await fetch('./data/urunler.json');
-        if (resp.ok) {
-          urunler = await resp.json();
-          console.log('Fallback: ./data/urunler.json yüklendi, ürün sayısı =', Array.isArray(urunler) ? urunler.length : 'non-array');
-        } else {
-          console.warn('Fallback dosyası bulunamadı (./data/urunler.json):', resp.status);
-        }
-      } catch (e) {
-        console.warn('Fallback fetch hatası:', e);
-      }
-    }
-
-    if (urunler && Array.isArray(urunler)) {
-      localStorage.setItem('urunler', JSON.stringify(urunler));
-    }
-    urunleriGoster();
-  });
 
   const changePasswordForm = document.getElementById('changePasswordForm');
   if (changePasswordForm) {

@@ -577,4 +577,20 @@ document.addEventListener('DOMContentLoaded', () => {
   navbarGuncelle();
   urunGoster();
   initializePasswordForm();
+  
+  // Fiyat gizleme fonksiyonlarını çağır
+  setTimeout(() => {
+    if (typeof fiyatlariGizle === 'function') fiyatlariGizle();
+    if (typeof benzerUrunFiyatlariGizle === 'function') benzerUrunFiyatlariGizle();
+    if (typeof mobileFiyatlariGizle === 'function') mobileFiyatlariGizle();
+  }, 100);
+
+  // localStorage değişikliklerini dinle
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'adminHidePrices') {
+      if (typeof fiyatlariGizle === 'function') fiyatlariGizle();
+      if (typeof benzerUrunFiyatlariGizle === 'function') benzerUrunFiyatlariGizle();
+      if (typeof mobileFiyatlariGizle === 'function') mobileFiyatlariGizle();
+    }
+  });
 });
