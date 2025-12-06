@@ -132,6 +132,8 @@ body { background-color: #f8f9fa; }
       padding: 0.3rem 0.7rem;
     }
   }
+  [...existing code...]
+
   /* Mobil ve tablet uyumluluk için responsive stiller */
   @media (max-width: 992px) {
     .content-section {
@@ -198,4 +200,4 @@ body { background-color: #f8f9fa; }
       font-size: 0.9rem;
     }
   }
-  
+    }
