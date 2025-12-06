@@ -2273,29 +2273,50 @@ async function sunucuyaYedekKaydet(yedekJSON) {
 
 
     
-   // yedek.json dosyasını sunucudan otomatik yükle
-async function otomatikYedekYukle() {
+   async function otomatikYedekYukle() {
     try {
-        console.log('Yedek dosyası yükleniyor...');
+        console.log('Yedek dosyası yüklenmeye çalışılıyor...');
         
-        // yedek.json dosyasını fetch ile oku
-        const response = await fetch('https://kinfelix50-dotcom.github.io/Benimsitem/data/yedek.json', {
+        // GitHub Pages URL'sini kullan
+        const yedekURL = 'https://kinfelix50-dotcom.github.io/Benimsitem/data/yedek.json';
+        console.log('Yedek dosya URL:', yedekURL);
+        
+        // CORS sorunlarını aşmak için daha esnek bir istek yapalım
+        const response = await fetch(yedekURL, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Cache-Control': 'no-cache' // Cache'i bypass et
-            }
+                'Content-Type': 'application/json',
+                // Cache'i bypass etmek için farklı bir yöntem
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            mode: 'cors', // CORS modunu açıkça belirt
+            credentials: 'omit' // Kimlik bilgisi gönderme
         });
+        
+        console.log('Fetch response status:', response.status, response.statusText);
         
         // Eğer dosya yoksa veya hata varsa, mevcut verilerle devam et
         if (!response.ok) {
-            console.warn('Yedek dosyası bulunamadı veya okunamadı. Mevcut veriler kullanılacak.');
+            console.warn(`Yedek dosyası bulunamadı veya okunamadı. Status: ${response.status} - ${response.statusText}`);
+            console.log('Mevcut localStorage verileri kullanılacak.');
+            
+            // Mevcut verileri yükle
+            loadData();
+            kategorileriYukle();
+            urunleriGoster();
+            vitrinBloklariGoster();
+            siparisleriGoster();
+            urunSecenekleriniYukle();
+            
             return;
         }
         
         // JSON verisini parse et
         const yedek = await response.json();
-        console.log('Yedek dosyası okundu:', yedek);
+        console.log('Yedek dosyası başarıyla okundu, veri yapısı:', Object.keys(yedek));
         
         // Eğer yedek dosyası boşsa veya geçersizse
         if (!yedek || typeof yedek !== 'object') {
@@ -2306,83 +2327,155 @@ async function otomatikYedekYukle() {
         // Yedekteki verileri mevcut verilerle birleştir
         let toplamGuncellenen = 0;
         let toplamEklenen = 0;
+        let toplamSilinen = 0;
         
-        // Ürünleri birleştir
-        if (yedek.urunler && Array.isArray(yedek.urunler)) {
-            yedek.urunler.forEach(yedekUrun => {
-                // Ürün ID'si yoksa oluştur
-                if (!yedekUrun.id) {
-                    yedekUrun.id = generateUniqueId('u-');
-                }
-                
-                const mevcutIndex = urunler.findIndex(u => u.id === yedekUrun.id);
-                if (mevcutIndex !== -1) {
-                    // Aynı ID'ye sahip ürün varsa, yedekteki verilerle güncelle
-                    urunler[mevcutIndex] = { ...urunler[mevcutIndex], ...yedekUrun };
-                    toplamGuncellenen++;
-                } else {
-                    // Yoksa yeni ürün olarak ekle
-                    urunler.push(yedekUrun);
-                    toplamEklenen++;
-                }
-            });
-        }
+        // 1. ÖNCE: Yedek dosyasındaki tüm verileri temizle ve yedekten yükle
+        // Bu opsiyonel - sadece tam senkronizasyon için
+        const tamSenkronizasyon = confirm('Yedek dosyası bulundu. Tüm verileri yedek dosyası ile senkronize etmek istiyor musunuz? (Mevcut verilerin üzerine yazılacak)');
         
-        // Kategorileri birleştir (tekrar etmesin)
-        if (yedek.kategoriler && Array.isArray(yedek.kategoriler)) {
-            yedek.kategoriler.forEach(kategori => {
-                if (!kategoriler.includes(kategori)) {
-                    kategoriler.push(kategori);
-                }
-            });
-        }
-        
-        // Vitrinleri birleştir
-        if (yedek.vitrinler && Array.isArray(yedek.vitrinler)) {
-            yedek.vitrinler.forEach(yedekVitrin => {
-                if (!yedekVitrin.id) {
-                    yedekVitrin.id = generateUniqueId('v-');
-                }
-                
-                const mevcutIndex = vitrinler.findIndex(v => v.id === yedekVitrin.id);
-                if (mevcutIndex !== -1) {
-                    vitrinler[mevcutIndex] = { ...vitrinler[mevcutIndex], ...yedekVitrin };
-                } else {
-                    vitrinler.push(yedekVitrin);
-                }
-            });
-        }
-        
-        // Siparişleri birleştir
-        if (yedek.siparisler && Array.isArray(yedek.siparisler)) {
-            yedek.siparisler.forEach(yedekSiparis => {
-                if (!yedekSiparis.id) {
-                    yedekSiparis.id = generateUniqueId('s-');
-                }
-                
-                const mevcutIndex = siparisler.findIndex(s => s.id === yedekSiparis.id);
-                if (mevcutIndex !== -1) {
-                    siparisler[mevcutIndex] = { ...siparisler[mevcutIndex], ...yedekSiparis };
-                } else {
-                    siparisler.push(yedekSiparis);
-                }
-            });
-        }
-        
-        // Adresleri birleştir
-        if (yedek.adresler && Array.isArray(yedek.adresler)) {
-            yedek.adresler.forEach(yedekAdres => {
-                if (!yedekAdres.id) {
-                    yedekAdres.id = generateUniqueId('a-');
-                }
-                
-                const mevcutIndex = adresler.findIndex(a => a.id === yedekAdres.id);
-                if (mevcutIndex !== -1) {
-                    adresler[mevcutIndex] = { ...adresler[mevcutIndex], ...yedekAdres };
-                } else {
-                    adresler.push(yedekAdres);
-                }
-            });
+        if (tamSenkronizasyon) {
+            // Tam senkronizasyon: Tüm verileri yedekten yükle
+            console.log('Tam senkronizasyon başlatılıyor...');
+            
+            // Ürünleri yükle
+            if (yedek.urunler && Array.isArray(yedek.urunler)) {
+                urunler = yedek.urunler.map(urun => ({
+                    ...urun,
+                    id: urun.id || generateUniqueId('u-'),
+                    // Eski veri yapısı uyumluluğu
+                    kategoriler: urun.kategoriler || (urun.kategori ? [urun.kategori] : []),
+                    anasayfadaGoster: !!urun.anasayfadaGoster,
+                    yeniUrun: !!urun.yeniUrun,
+                    ucretsizKargo: !!urun.ucretsizKargo,
+                    // Stok kodunu kontrol et
+                    stokKodu: urun.stokKodu || generateUniqueId('STK-')
+                }));
+                toplamEklenen = urunler.length;
+                console.log(`${urunler.length} ürün yedekten yüklendi.`);
+            }
+            
+            // Kategorileri yükle
+            if (yedek.kategoriler && Array.isArray(yedek.kategoriler)) {
+                kategoriler = [...new Set(yedek.kategoriler)]; // Tekrarları kaldır
+                console.log(`${kategoriler.length} kategori yedekten yüklendi.`);
+            }
+            
+            // Vitrinleri yükle
+            if (yedek.vitrinler && Array.isArray(yedek.vitrinler)) {
+                vitrinler = yedek.vitrinler.map(vitrin => ({
+                    ...vitrin,
+                    id: vitrin.id || generateUniqueId('v-')
+                }));
+                console.log(`${vitrinler.length} vitrin yedekten yüklendi.`);
+            }
+            
+            // Siparişleri yükle
+            if (yedek.siparisler && Array.isArray(yedek.siparisler)) {
+                siparisler = yedek.siparisler.map(siparis => ({
+                    ...siparis,
+                    id: siparis.id || generateUniqueId('s-')
+                }));
+                console.log(`${siparisler.length} sipariş yedekten yüklendi.`);
+            }
+            
+            // Adresleri yükle
+            if (yedek.adresler && Array.isArray(yedek.adresler)) {
+                adresler = yedek.adresler.map(adres => ({
+                    ...adres,
+                    id: adres.id || generateUniqueId('a-')
+                }));
+                console.log(`${adresler.length} adres yedekten yüklendi.`);
+            }
+            
+        } else {
+            // Kısmi senkronizasyon: Sadece yeni ve güncellenmiş verileri ekle
+            console.log('Kısmi senkronizasyon (birleştirme) başlatılıyor...');
+            
+            // Ürünleri birleştir
+            if (yedek.urunler && Array.isArray(yedek.urunler)) {
+                yedek.urunler.forEach(yedekUrun => {
+                    // Ürün ID'si yoksa oluştur
+                    if (!yedekUrun.id) {
+                        yedekUrun.id = generateUniqueId('u-');
+                    }
+                    
+                    const mevcutIndex = urunler.findIndex(u => u.id === yedekUrun.id);
+                    if (mevcutIndex !== -1) {
+                        // Aynı ID'ye sahip ürün varsa, yedekteki verilerle güncelle
+                        urunler[mevcutIndex] = { 
+                            ...urunler[mevcutIndex], 
+                            ...yedekUrun,
+                            // Eski veri yapısı uyumluluğu
+                            kategoriler: yedekUrun.kategoriler || (yedekUrun.kategori ? [yedekUrun.kategori] : urunler[mevcutIndex].kategoriler || [])
+                        };
+                        toplamGuncellenen++;
+                    } else {
+                        // Yoksa yeni ürün olarak ekle
+                        urunler.push({
+                            ...yedekUrun,
+                            kategoriler: yedekUrun.kategoriler || (yedekUrun.kategori ? [yedekUrun.kategori] : [])
+                        });
+                        toplamEklenen++;
+                    }
+                });
+            }
+            
+            // Kategorileri birleştir (tekrar etmesin)
+            if (yedek.kategoriler && Array.isArray(yedek.kategoriler)) {
+                yedek.kategoriler.forEach(kategori => {
+                    if (kategori && !kategoriler.includes(kategori)) {
+                        kategoriler.push(kategori);
+                    }
+                });
+            }
+            
+            // Vitrinleri birleştir
+            if (yedek.vitrinler && Array.isArray(yedek.vitrinler)) {
+                yedek.vitrinler.forEach(yedekVitrin => {
+                    if (!yedekVitrin.id) {
+                        yedekVitrin.id = generateUniqueId('v-');
+                    }
+                    
+                    const mevcutIndex = vitrinler.findIndex(v => v.id === yedekVitrin.id);
+                    if (mevcutIndex !== -1) {
+                        vitrinler[mevcutIndex] = { ...vitrinler[mevcutIndex], ...yedekVitrin };
+                    } else {
+                        vitrinler.push(yedekVitrin);
+                    }
+                });
+            }
+            
+            // Siparişleri birleştir
+            if (yedek.siparisler && Array.isArray(yedek.siparisler)) {
+                yedek.siparisler.forEach(yedekSiparis => {
+                    if (!yedekSiparis.id) {
+                        yedekSiparis.id = generateUniqueId('s-');
+                    }
+                    
+                    const mevcutIndex = siparisler.findIndex(s => s.id === yedekSiparis.id);
+                    if (mevcutIndex !== -1) {
+                        siparisler[mevcutIndex] = { ...siparisler[mevcutIndex], ...yedekSiparis };
+                    } else {
+                        siparisler.push(yedekSiparis);
+                    }
+                });
+            }
+            
+            // Adresleri birleştir
+            if (yedek.adresler && Array.isArray(yedek.adresler)) {
+                yedek.adresler.forEach(yedekAdres => {
+                    if (!yedekAdres.id) {
+                        yedekAdres.id = generateUniqueId('a-');
+                    }
+                    
+                    const mevcutIndex = adresler.findIndex(a => a.id === yedekAdres.id);
+                    if (mevcutIndex !== -1) {
+                        adresler[mevcutIndex] = { ...adresler[mevcutIndex], ...yedekAdres };
+                    } else {
+                        adresler.push(yedekAdres);
+                    }
+                });
+            }
         }
         
         // Güncellenmiş verileri localStorage'a kaydet
@@ -2394,32 +2487,69 @@ async function otomatikYedekYukle() {
         
         console.log(`Yedek yükleme tamamlandı: ${toplamEklenen} yeni kayıt eklendi, ${toplamGuncellenen} kayıt güncellendi.`);
         
+        // Sayfayı güncelle
+        kategorileriYukle();
+        urunleriGoster();
+        vitrinBloklariGoster();
+        siparisleriGoster();
+        urunSecenekleriniYukle();
+        
         // Kullanıcıya bildirim göster
         if (toplamEklenen > 0 || toplamGuncellenen > 0) {
             bildirimGoster(`Yedek dosyası yüklendi: ${toplamEklenen} yeni, ${toplamGuncellenen} güncellendi`, 'success');
+        } else if (tamSenkronizasyon) {
+            bildirimGoster('Tüm veriler yedek dosyası ile senkronize edildi!', 'success');
+        } else {
+            bildirimGoster('Yedek dosyası yüklendi, ancak yeni veri bulunamadı.', 'info');
         }
         
     } catch (error) {
         console.error('Yedek yükleme hatası:', error);
+        bildirimGoster('Yedek dosyası yüklenirken hata oluştu! ' + error.message, 'danger');
+        
         // Hata durumunda mevcut verilerle devam et
+        loadData();
+        kategorileriYukle();
+        urunleriGoster();
+        vitrinBloklariGoster();
+        siparisleriGoster();
+        urunSecenekleriniYukle();
     }
 }
 
-// DOMContentLoaded içinde otomatik yedek yüklemeyi çağır
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Önce mevcut verileri localStorage'dan yükle
-    loadData();
+    console.log('DOM yüklendi, veriler yükleniyor...');
     
-    // Yedek dosyasını yükle (yedek.json)
-    await otomatikYedekYukle();
-    
-    // Diğer işlemler
-    kategorileriYukle();
-    urunleriGoster();
-    vitrinBloklariGoster();
-    siparisleriGoster();
-    urunSecenekleriniYukle();
+    try {
+        // Önce mevcut verileri localStorage'dan yükle
+        loadData();
+        console.log('Mevcut veriler yüklendi:', {
+            urunler: urunler.length,
+            kategoriler: kategoriler.length,
+            vitrinler: vitrinler.length,
+            siparisler: siparisler.length
+        });
+        
+        // Yedek dosyasını otomatik yükle (yedek.json)
+        console.log('Yedek dosyası yüklenmeye başlanıyor...');
+        await otomatikYedekYukle();
+        
+        // Diğer işlemler
+        kategorileriYukle();
+        urunleriGoster();
+        vitrinBloklariGoster();
+        siparisleriGoster();
+        urunSecenekleriniYukle();
+        
+        console.log('Tüm veriler başarıyla yüklendi!');
+        
+    } catch (error) {
+        console.error('Başlangıç yükleme hatası:', error);
+        bildirimGoster('Veriler yüklenirken hata oluştu!', 'danger');
+    }
 });
+
 
     function urunSecenekleriniYukle() {
       const vitrinUrunSecimi = document.getElementById('vitrinUrunSecimi');
@@ -2456,6 +2586,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         vitrinUrunSecimi.appendChild(div);
       });
     }
+    
+    
     function vitrinBloklariGoster() {
       const vitrinListesi = document.getElementById('vitrinListesi');
       if (!vitrinListesi) return;
@@ -2519,6 +2651,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => vitrinSil(btn.dataset.id));
       });
     }
+    
+    
     function vitrinKaydet(e) {
       e.preventDefault();
       try {
@@ -2575,6 +2709,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       duzenlenenVitrinId = null;
       document.querySelectorAll('.vitrin-urun-checkbox').forEach(cb => cb.checked = false);
     }
+    
+    
     function vitrinDuzenle(id) {
       const vitrin = vitrinler.find(v => v.id === id);
       if (vitrin) {
