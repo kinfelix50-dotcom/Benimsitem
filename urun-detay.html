@@ -23,125 +23,237 @@
   
   
   <style>
-    /* Temel düzen ve modern ürün detay stilleri */
-    :root{
-      --primary:#EB8220;
-      --muted:#6c757d;
-      --card-bg:#ffffff;
-      --shadow: 0 6px 24px rgba(0,0,0,0.08);
+    /* --- Genel Ayarlar --- */
+    body { background-color: #ffffff !important; }
+    .product-card, .brands-section { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important; }
+    .product-scroll-item { margin-right: 3px; }
+    .modal-img { max-height: 80vh; width: 100%; object-fit: contain; }
+    .modal-content { border-radius: 8px; }
+    .modal-header { background-color: #f8f9fa; border-bottom: 1px solid #ddd; }
+    .modal-title { color: #2c3e50; font-weight: 600; }
+    .invalid-feedback { display: none; }
+    .is-invalid ~ .invalid-feedback { display: block; }
+
+    /* --- Üst Reklam Bantı (Ad Banner) --- */
+    .ad-banner {
+      background-color: #025c90; color: white; height: 40px; display: flex;
+      align-items: center; justify-content: center; font-size: 0.75rem;
+      font-weight: bold; padding: 0 8px; overflow: hidden; white-space: nowrap;
     }
-    body{background:#f7f7f8;font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,'Noto Sans',sans-serif}
-    .product-view{background:var(--card-bg);border-radius:12px;box-shadow:var(--shadow);padding:24px;margin-bottom:24px}
-    .gallery-main{border-radius:8px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
-    .gallery-main img{max-width:100%;height:auto;object-fit:contain}
-    .thumbnails{display:flex;gap:8px;margin-top:12px}
-    .thumb{width:64px;height:64px;border-radius:6px;overflow:hidden;border:1px solid #e9e9e9;cursor:pointer}
-    .thumb img{width:100%;height:100%;object-fit:cover}
-    .product-title{font-size:1.4rem;font-weight:700;margin-bottom:6px}
-    .product-meta{color:var(--muted);font-size:0.9rem;margin-bottom:12px}
-    .price-old{color:#9aa0a6;text-decoration:line-through;margin-right:10px}
-    .price-current{color:var(--primary);font-size:1.6rem;font-weight:700}
-    .badge-list .badge{margin-right:6px}
-    .buy-panel{position:sticky;top:90px;background:var(--card-bg);padding:16px;border-radius:10px;box-shadow:var(--shadow)}
-    /* Adet kontrolü: esnek ve dokunmatik uyumlu */
-    .qty-control{
-      display:inline-flex;
-      align-items:center;
-      gap:0.35rem;
-      min-width:100px;
-      max-width:220px;
+    .countdown {
+      font-size: 0.75rem; margin-left: 8px; display: flex; align-items: center;
     }
-    .qty-control .btn{
-      width:40px;
-      height:40px;
-      padding:0;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border-radius:6px;
+    .countdown span {
+      display: inline-block; margin: 0 2px; padding: 2px 5px; border-radius: 3px;
     }
-    .qty-control input[type=number]{
-      width:72px;
-      height:40px;
-      padding:0.25rem 0.35rem;
-      text-align:center;
-      border-radius:6px;
+    .clock-icon { margin-right: 4px; font-size: 0.9rem; }
+
+    /* --- Navbar ve Butonlar --- */
+    .navbar-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .navbar-brand { text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000; }
+    .navbar-buttons { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+    .navbar-buttons .btn {
+      background-color: #fff !important; border-color: #dddddd !important;
+      padding: 6px !important; width: 45px; height: 45px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .qty-control input[type=number]::-webkit-inner-spin-button,
-    .qty-control input[type=number]::-webkit-outer-spin-button{ -webkit-appearance: none; margin:0 }
-    .qty-control input[type=number]{ -moz-appearance: textfield }
-    /* Yeni stepper stilleri (modern görünüm) */
-    .qty-stepper{display:inline-flex;align-items:center;gap:0.4rem;background:#fff;border:1px solid #e9e9e9;padding:4px;border-radius:8px}
-    .qty-stepper .qty-btn{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px}
-    .qty-stepper .qty-input{width:72px;height:36px;border:none;padding:0.25rem 0.35rem;text-align:center;background:transparent}
-    .qty-stepper .qty-input:focus{outline:none;box-shadow:none}
-    .tab-content .urun-detay-text p{margin-bottom:0.8rem}
-    .benzer-urunler-container{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    .benzer-urun-kart{width:160px;border-radius:8px;overflow:hidden}
-    .benzer-urun-img{height:110px;object-fit:contain}
-    @media (max-width:991px){.buy-panel{position:relative;top:auto;margin-top:16px}}
-    /* Mobil uyumluluk iyileştirmeleri */
+    .navbar-buttons .btn i { color: #000 !important; font-size: 1.6rem !important; line-height: 1 !important; }
+    .navbar-buttons .btn:hover { background-color: #333333 !important; border-color: #333333 !important; }
+    .navbar-buttons .btn:hover i { color: #fff !important; }
+    .navbar-buttons .cart-badge {
+      position: absolute; top: -5px; right: -5px; font-size: 0.7rem; padding: 0.2rem 0.5rem;
+    }
+
+    /* --- Offcanvas (Yan Menü) Ayarları --- */
+    .offcanvas-header { background-color: #f8f9fa; border-bottom: 1px solid #ddd; }
+    .offcanvas-title { font-weight: 600; color: #2c3e50; }
+    .offcanvas-body { padding: 0; }
+    .offcanvas-body .list-group-item { border: none; padding: 15px 20px; font-size: 1rem; color: #2c3e50; transition: background-color 0.2s; }
+    .offcanvas-body .list-group-item:hover { background-color: #f1f1f1; }
+
+    /* --- Ürün Detay Alanı --- */
+    .product-img { max-height: 390px; object-fit: contain; width: 100%; border-radius: 0px; }
+    .product-badges { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .product-badges .badge { padding: 5px 10px; font-size: 0.75rem; }
+    
+    .product-price-text { font-size: 1.3rem; font-weight: 600; color: #dc3545; }
+    .original-price-text { font-size: 1.2rem; color: #888; text-decoration: line-through; }
+    .stock-status { font-size: 0.9rem; color: #28a745; }
+    .stock-out { color: #dc3545; }
+    .quantity-input { max-width: 120px; }
+    .urun-detay-text { font-size: 1rem; line-height: 1.6; color: #333; }
+    .urun-detay-text p { margin-bottom: 1rem; }
+    .accordion-button { font-size: 1rem; font-weight: 500; }
+    .accordion-body { padding: 1rem; }
+    .order-item-img { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; }
+    .accordion-button:not(.collapsed) { background-color: #f8f9fa; color: #2c3e50; }
+    .accordion-button:focus { box-shadow: none; }
+
+    
+
+    /* --- Footer --- */
+    .footer { background-color: #000; color: #ecf0f1; padding: 40px 0 0; margin-top: 10px; }
+    .footer-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 30px; padding: 0 20px; }
+    .footer-section { flex: 1; min-width: 250px; margin-bottom: 20px; }
+    .footer-section h4 { color: #f39c12; margin-bottom: 10px; font-size: 1.2rem; }
+    .social-links { display: flex; gap: 15px; }
+    .social-icon { color: #ecf0f1; font-size: 24px; transition: color 0.3s; }
+    .social-icon:hover { color: #f39c12; }
+    .footer-links, .contact-info { list-style: none; padding: 0; margin: 0; }
+    .footer-links li, .contact-info li { margin-bottom: 10px; }
+    .footer-links a { color: #ecf0f1; text-decoration: none; transition: color 0.3s; }
+    .footer-links a:hover { color: #f39c12; }
+    .contact-info li { display: flex; align-items: center; gap: 10px; }
+    .newsletter-form { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .newsletter-form input { padding: 8px; border: none; border-radius: 4px; }
+    .newsletter-form button { padding: 8px; border: none; background-color: #f39c12; color: #fff; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+    .newsletter-form button:hover { background-color: #e67e22; }
+    .copyright { background-color: #2c3e50; text-align: center; padding: 10px 0; color: #bdc3c7; }
+
+    /* --- Medya Sorguları (Responsive Ayarlar) --- */
     @media (max-width: 768px) {
-      .product-view { padding: 16px; }
-      .gallery-main { height: 300px; }
-      .gallery-main img { max-height: 100%; width: auto; }
-      .thumbnails { justify-content: center; }
-      .thumb { width: 50px; height: 50px; }
-      .product-title { font-size: 1.2rem; }
-      .price-current { font-size: 1.4rem; }
-      .qty-control { width: 100px; }
-      .buy-panel { padding: 12px; }
-      .buy-panel .btn { font-size: 0.9rem; }
-      .benzer-urunler-container { justify-content: center; }
-      .benzer-urun-kart { width: 140px; }
-      .benzer-urun-img { height: 100px; }
-      .tab-content .urun-detay-text p { font-size: 0.9rem; }
-      .ad-banner { padding: 6px 8px; font-size: 0.9rem; }
-      .countdown span { font-size: 0.8rem; }
+      .footer-container { flex-direction: column; align-items: center; text-align: center; }
+      .social-links, .contact-info li { justify-content: center; }
+      .navbar-container { flex-direction: row; justify-content: space-between; align-items: center; }
+      .navbar-buttons { justify-content: flex-end; }
+      .benzer-urun-kart { width: 130px; }
     }
-    @media (max-width: 576px) {
-      .product-view { padding: 12px; }
-      .gallery-main { height: 250px; }
-      .thumbnails { gap: 4px; }
-      .thumb { width: 40px; height: 40px; }
-      .product-title { font-size: 1.1rem; }
-      .price-current { font-size: 1.3rem; }
-      .qty-control { width: 80px; }
-      .benzer-urun-kart { width: 120px; }
-      .benzer-urun-img { height: 80px; }
-      .navbar-brand { font-size: 1.1rem; }
-      .footer-section { margin-bottom: 20px; }
-      .social-links { justify-content: center; }
+    
+   /* BENZER ÜRÜN KARTLARI İÇİN DÜZELTMELER */
+.benzer-urun-kart {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #eaeaea;
+    transition: box-shadow 0.3s ease;
+}
+
+.benzer-urun-kart:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* RESİMLERİ BÜYÜTTÜK */
+.benzer-urun-img {
+    width: 100%;
+    height: 180px; /* 160px'ten 180px'e büyüttük */
+    object-fit: contain;
+    padding: 5px; /* Padding'i azalttık */
+    background: #fefefe;
+}
+
+.benzer-urun-kart .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 10px 10px 10px !important; /* Üst padding'i azalttık */
+}
+
+/* ÜRÜN İSMİ KÜÇÜK FONT - MESAFEYİ AZALTTIK */
+.benzer-urun-kart .card-title {
+    font-size: 0.85rem !important;
+    line-height: 1.2; /* Satır aralığını azalttık */
+    min-height: 2.2em; /* Minimum yüksekliği azalttık */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    color: #333;
+    margin-bottom: 4px !important; /* Alt boşluğu azalttık */
+}
+
+/* KATEGORİ METNİ MESAFESİNİ AZALTTIK */
+.benzer-urun-kart .card-body p.text-muted {
+    margin-bottom: 8px !important; /* 12px'ten 8px'e düşürdük */
+    font-size: 0.75rem;
+}
+
+/* FİYAT SARI RENK - MESAFEYİ AZALTTIK */
+.benzer-urun-fiyat {
+    color: #ff9900 !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem;
+    margin-top: 4px !important; /* auto'dan 4px'e düşürdük */
+    margin-bottom: 2px !important; /* Alt boşluk ekledik */
+}
+
+.benzer-urun-orijinal-fiyat {
+    color: #999 !important;
+    font-size: 0.8rem;
+    text-decoration: line-through;
+    margin-bottom: 1px !important; /* 2px'ten 1px'e düşürdük */
+}
+
+.benzer-urun-kart .benzer-urun-badges {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    z-index: 1;
+}
+
+.benzer-urun-kart .benzer-urun-badges .badge {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+}
+
+/* STOK BİLGİSİ MESAFESİNİ AZALTTIK */
+.benzer-urun-kart .text-success,
+.benzer-urun-kart .text-danger {
+    margin-top: 2px !important; /* 1px'ten 2px'e çıkardık ama hala az */
+    font-size: 0.75rem;
+}
+
+/* Mobil uyumluluk */
+@media (max-width: 768px) {
+    .benzer-urun-img {
+        height: 160px; /* 140px'ten 160px'e büyüttük */
+        padding: 5px;
     }
-    /* Küçük ayarlar */
-    .ad-banner{background:linear-gradient(90deg,#025c90,#0177b6);color:#fff;padding:8px 12px}
-    /* Navbar buton ikonlarının beyaz zemin üzerinde görünmesi için */
-    .navbar-buttons .btn i { color: #000 !important; }
-    .navbar-buttons .btn { background-color: transparent !important; border-color: transparent !important; }
-    /* Mobil navbar iyileştirmeleri */
-    @media (max-width: 991px) {
-      .navbar-buttons { margin-top: 10px; }
-      .navbar-buttons .btn { margin: 2px; }
-      .ad-banner { padding: 6px 8px; font-size: 0.9rem; }
+    .benzer-urun-kart .card-title {
+        font-size: 0.8rem !important;
+        min-height: 2em; /* 2.6em'den 2em'e düşürdük */
+        margin-bottom: 3px !important;
     }
-    /* Mobil iyileştirmeleri: sabit alt çubuğun yüksekliği ve vücut alt boşluğu */
-    .mobile-buy-bar{height:62px}
-    @media (max-width: 991px){
-      body{padding-bottom:80px}
+    .benzer-urun-fiyat {
+        font-size: 0.9rem;
+        margin-top: 3px !important;
     }
-    /* Thumbnails küçük ekranlarda yatay kaydırılabilir olsun */
-    @media (max-width: 576px){
-      .thumbnails{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
-      .thumbnails .thumb{flex:0 0 auto}
+    .benzer-urun-kart .card-body p.text-muted {
+        margin-bottom: 6px !important;
     }
-    /* Ürün fiyatı ve toplamın mobil görünümü */
-    .price-current{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-    .price-current #totalPrice{font-size:0.9rem;color:#6c757d}
-    @media (max-width:768px){
-      .mobile-buy-bar .btn{padding:.5rem .75rem;font-size:0.95rem}
-      .d-grid.gap-2.flex-grow-1 .btn{padding:.5rem .75rem}
+}
+
+@media (max-width: 576px) {
+    .benzer-urun-img {
+        height: 140px; /* 120px'ten 140px'e büyüttük */
+        padding: 4px;
     }
+    .benzer-urun-kart .card-title {
+        font-size: 0.75rem !important;
+        min-height: 1.8em; /* 2.4em'den 1.8em'e düşürdük */
+        margin-bottom: 2px !important;
+    }
+    .benzer-urun-fiyat {
+        font-size: 0.85rem;
+        margin-top: 2px !important;
+    }
+    .benzer-urun-kart .card-body p.text-muted {
+        margin-bottom: 4px !important;
+        font-size: 0.7rem;
+    }
+    .benzer-urun-kart .benzer-urun-badges .badge {
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+}
   </style>
+
 </head>
 <body class="bg-light">
   <!-- Sepet Bildirimi -->
@@ -161,19 +273,15 @@
   </div>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-white sticky-top shadow">
-    <div class="container">
-      <a class="navbar-brand m-0" href="index.html" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000;">
-        MehtapStore
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <div class="navbar-buttons ms-auto" id="navbarButtons"></div>
-      </div>
-    </div>
-  </nav>
+  <nav class="navbar navbar-light bg-white sticky-top shadow">
+  <div class="container navbar-container">
+    <a class="navbar-brand m-0" href="index.html" style="text-shadow: 0px 1px 2px #bbbfc8; font-weight: 600; color: #000000;">
+      MehtapStore
+    </a>
+    <div class="navbar-buttons" id="navbarButtons"></div>
+  </div>
+</nav>
+
 
   <!-- Kategori Menüsü -->
   <div class="offcanvas offcanvas-end" tabindex="-1" id="kategoriOffcanvas" aria-labelledby="kategoriOffcanvasLabel">
@@ -267,44 +375,42 @@
   <!-- Ana İçerik -->
   <main class="container py-4" id="mainContent"></main>
 
-  <!-- Footer -->
+   <!-- Footer -->
   <footer class="footer">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-3 col-md-6 footer-section">
-          <a href="index.html" class="footer-brand-text">MehtapStore</a>
-          <p>Bültenimize abone olun, kampanya ve yeniliklerden ilk siz haberdar olun.</p>
-          <form class="newsletter-form">
-            <input type="email" placeholder="E-posta adresiniz" required>
-            <button type="submit">Abone Ol</button>
-          </form>
+    <div class="footer-container">
+      <div class="footer-section">
+        <a href="index.html" class="footer-brand-text">MehtapStore</a>
+        <p>Bültenimize abone olun, kampanya ve yeniliklerden ilk siz haberdar olun.</p>
+        <form class="newsletter-form">
+          <input type="email" placeholder="E-posta adresiniz" required>
+          <button type="submit">Abone Ol</button>
+        </form>
+      </div>
+      <div class="footer-section">
+        <h4>Bizi Takip Edin</h4>
+        <div class="social-links">
+          <a href="#" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
+          <a href="#" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
+          <a href="#" target="_blank" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
         </div>
-        <div class="col-lg-3 col-md-6 footer-section">
-          <h4>Bizi Takip Edin</h4>
-          <div class="social-links">
-            <a href="#" target="_blank" class="social-icon"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
-            <a href="#" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
-            <a href="#" target="_blank" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
-          </div>
-        </div>
-        <div class="col-lg-3 col-md-6 footer-section">
-          <h4>Hızlı Linkler</h4>
-          <ul class="footer-links">
-            <li><a href="/kullanim-kosullari">Kullanım Koşulları</a></li>
-            <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a></li>
-            <li><a href="/cerez-politikasi">Çerez Politikası</a></li>
-            <li><a href="/iptal-iade">İptal ve İade Koşulları</a></li>
-          </ul>
-        </div>
-        <div class="col-lg-3 col-md-6 footer-section">
-          <h4>İletişim</h4>
-          <ul class="contact-info">
-            <li><i class="fas fa-envelope"></i> info@mehtapstore.com</li>
-            <li><i class="fas fa-phone"></i> 0 (555) 123 45 67</li>
-            <li><i class="fas fa-map-marker-alt"></i> Van, Türkiye</li>
-          </ul>
-        </div>
+      </div>
+      <div class="footer-section">
+        <h4>Hızlı Linkler</h4>
+        <ul class="footer-links">
+          <li><a href="/kullanim-kosullari">Kullanım Koşulları</a></li>
+          <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a></li>
+          <li><a href="/cerez-politikasi">Çerez Politikası</a></li>
+          <li><a href="/iptal-iade">İptal ve İade Koşulları</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>İletişim</h4>
+        <ul class="contact-info">
+          <li><i class="fas fa-envelope"></i> info@mehtapstore.com</li>
+          <li><i class="fas fa-phone"></i> 0 (555) 123 45 67</li>
+          <li><i class="fas fa-map-marker-alt"></i> Van, Türkiye</li>
+        </ul>
       </div>
     </div>
     <div class="copyright">
@@ -778,7 +884,7 @@
             </div>
             <div class="card-body p-2">
               <h5 class="card-title" style="font-size: 1rem;">${escapeHTML(urun.ad || 'Belirtilmemiş')}</h5>
-              <p class="text-muted mb-1" style="font-size: 0.85rem;">${escapeHTML(urun.kategori || 'Belirtilmemiş')}</p>
+             
               <p class="${urun.indirim > 0 ? 'benzer-urun-orijinal-fiyat' : 'd-none'}">${(urun.fiyat || 0).toFixed(2)} TL</p>
               <p class="benzer-urun-fiyat">${indirimliFiyat.toFixed(2)} TL</p>
               <p class="${stokMiktari <= 0 ? 'text-danger' : 'text-muted'} mb-0" style="font-size: 0.85rem;">Stok: ${stokMiktari > 0 ? `${stokMiktari} adet` : 'Tükenmiş'}</p>
@@ -816,11 +922,13 @@
       const sepeteEkleDisabled = stokMiktari <= 0 ? 'disabled' : '';
 
       const benzerUrunler = urunler.filter(u => {
-        if (u.id === urun.id) return false;
-        const a = Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : []);
-        const b = Array.isArray(urun.kategoriler) ? urun.kategoriler : (urun.kategori ? [urun.kategori] : []);
-        return a.some(x => b.includes(x));
-      }).slice(0,8);
+  if (u.id === urun.id) return false;
+  // Stok kontrolü: sadece stok miktarı > 0 olan ürünleri göster
+  if (u.stok <= 0) return false;
+  const a = Array.isArray(u.kategoriler) ? u.kategoriler : (u.kategori ? [u.kategori] : []);
+  const b = Array.isArray(urun.kategoriler) ? urun.kategoriler : (urun.kategori ? [urun.kategori] : []);
+  return a.some(x => b.includes(x));
+}).slice(0,8);
 
       mainContent.innerHTML = `
         <div class="product-view">
@@ -1024,13 +1132,29 @@
         const qty = parseInt(qtyEl.value) || 1;
         const unit = parseFloat(priceEl.dataset.unitPrice) || parseFloat(priceEl.textContent) || 0;
         const total = (unit * qty).toFixed(2);
-        totalEl.textContent = 'Toplam: ' + total + ' TL';
+        
+        // Fiyat gizlemesi kontrol et
+        const isHidden = localStorage.getItem('adminHidePrices') === '1';
+        const displayText = isHidden ? '***' : ('Toplam: ' + total + ' TL');
+        totalEl.textContent = displayText;
+        
+        // Orijinal fiyatı data özniteliğinde sakla
+        totalEl.dataset.orijinalFiyat = 'Toplam: ' + total + ' TL';
+        
         // update mobile buy-bar if present
         const mobileUnitEl = document.getElementById('mobileUnitPrice');
         const mobileTotalEl = document.getElementById('mobileTotalPrice');
-        if (mobileUnitEl) mobileUnitEl.textContent = unit.toFixed(2) + ' TL';
-        if (mobileUnitEl) mobileUnitEl.setAttribute('data-unit-price', unit);
-        if (mobileTotalEl) mobileTotalEl.textContent = 'Toplam: ' + total + ' TL';
+        if (mobileUnitEl) {
+          const unitDisplay = isHidden ? '***' : (unit.toFixed(2) + ' TL');
+          mobileUnitEl.textContent = unitDisplay;
+          mobileUnitEl.dataset.orijinalFiyat = unit.toFixed(2) + ' TL';
+          mobileUnitEl.setAttribute('data-unit-price', unit);
+        }
+        if (mobileTotalEl) {
+          const totalDisplay = isHidden ? '***' : ('Toplam: ' + total + ' TL');
+          mobileTotalEl.textContent = totalDisplay;
+          mobileTotalEl.dataset.orijinalFiyat = 'Toplam: ' + total + ' TL';
+        }
       }
 
       // İlk yüklemede toplamı ayarla
@@ -1140,6 +1264,22 @@
       sepet.guncelle();
       urunGoster();
       initializePasswordForm();
+      
+      // Fiyat gizleme fonksiyonlarını çağır
+      setTimeout(() => {
+        if (typeof fiyatlariGizle === 'function') fiyatlariGizle();
+        if (typeof benzerUrunFiyatlariGizle === 'function') benzerUrunFiyatlariGizle();
+        if (typeof mobileFiyatlariGizle === 'function') mobileFiyatlariGizle();
+      }, 100);
+
+      // localStorage değişikliklerini dinle
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'adminHidePrices') {
+          if (typeof fiyatlariGizle === 'function') fiyatlariGizle();
+          if (typeof benzerUrunFiyatlariGizle === 'function') benzerUrunFiyatlariGizle();
+          if (typeof mobileFiyatlariGizle === 'function') mobileFiyatlariGizle();
+        }
+      });
     });
   </script>
   <script>
@@ -1170,19 +1310,19 @@
   <script>
       // Fiyatları gizleme fonksiyonu
       function fiyatlariGizle() {
-        const fiyatElementleri = document.querySelectorAll('.price-current, .price-old');
+        const fiyatElementleri = document.querySelectorAll('.price-current, .price-old, #totalPrice, #mobileUnitPrice, #mobileTotalPrice');
         const gizliMesaj = '***';
 
         if (localStorage.getItem('adminHidePrices') === '1') {
           fiyatElementleri.forEach(el => {
-            if (!el.dataset.orijinalFiyat) {
+            if (el && !el.dataset.orijinalFiyat) {
               el.dataset.orijinalFiyat = el.textContent.trim();
             }
-            el.textContent = gizliMesaj;
+            if (el) el.textContent = gizliMesaj;
           });
         } else {
           fiyatElementleri.forEach(el => {
-            if (el.dataset.orijinalFiyat) {
+            if (el && el.dataset.orijinalFiyat) {
               el.textContent = el.dataset.orijinalFiyat;
               delete el.dataset.orijinalFiyat;
             }
@@ -1192,17 +1332,21 @@
 
       // Sayfa yüklendiğinde fiyatları kontrol et
       document.addEventListener('DOMContentLoaded', () => {
-        fiyatlariGizle();
+        // Sayfanın tam yüklenmesi için biraz bekle
+        setTimeout(() => {
+          fiyatlariGizle();
+          benzerUrunFiyatlariGizle();
+        }, 100);
 
         // localStorage değişikliklerini dinle
         window.addEventListener('storage', (event) => {
           if (event.key === 'adminHidePrices') {
             fiyatlariGizle();
+            benzerUrunFiyatlariGizle();
           }
         });
       });
-    </script>
-    <script>
+
       // Benzer ürünlerde fiyatları gizleme fonksiyonu
       function benzerUrunFiyatlariGizle() {
         const benzerFiyatElementleri = document.querySelectorAll('.benzer-urun-fiyat, .benzer-urun-orijinal-fiyat');
@@ -1210,14 +1354,14 @@
 
         if (localStorage.getItem('adminHidePrices') === '1') {
           benzerFiyatElementleri.forEach(el => {
-            if (!el.dataset.orijinalFiyat) {
+            if (el && !el.dataset.orijinalFiyat) {
               el.dataset.orijinalFiyat = el.textContent.trim();
             }
-            el.textContent = gizliMesaj;
+            if (el) el.textContent = gizliMesaj;
           });
         } else {
           benzerFiyatElementleri.forEach(el => {
-            if (el.dataset.orijinalFiyat) {
+            if (el && el.dataset.orijinalFiyat) {
               el.textContent = el.dataset.orijinalFiyat;
               delete el.dataset.orijinalFiyat;
             }
@@ -1225,16 +1369,27 @@
         }
       }
 
-      // Sayfa yüklendiğinde ve localStorage değiştiğinde benzer ürün fiyatlarını kontrol et
-      document.addEventListener('DOMContentLoaded', () => {
-        benzerUrunFiyatlariGizle();
+      // Mobil çubuk fiyatlarını gizleme
+      function mobileFiyatlariGizle() {
+        const mobileFiyatElementleri = document.querySelectorAll('#mobileUnitPrice, #mobileTotalPrice');
+        const gizliMesaj = '***';
 
-        window.addEventListener('storage', (event) => {
-          if (event.key === 'adminHidePrices') {
-            benzerUrunFiyatlariGizle();
-          }
-        });
-      });
+        if (localStorage.getItem('adminHidePrices') === '1') {
+          mobileFiyatElementleri.forEach(el => {
+            if (el && !el.dataset.orijinalFiyat) {
+              el.dataset.orijinalFiyat = el.textContent.trim();
+            }
+            if (el) el.textContent = gizliMesaj;
+          });
+        } else {
+          mobileFiyatElementleri.forEach(el => {
+            if (el && el.dataset.orijinalFiyat) {
+              el.textContent = el.dataset.orijinalFiyat;
+              delete el.dataset.orijinalFiyat;
+            }
+          });
+        }
+      }
     </script>
   
 </body>
