@@ -1422,7 +1422,7 @@ function exportOrderToExcel(orderId) {
               <div class="small text-muted mt-1">${(urun.kategoriler && urun.kategoriler.length) ? escapeHTML(urun.kategoriler.join(', ')) : 'Kategorisiz'}</div>
           </td>
           <td class="marka-logo-column">
-            <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/35')}" class="marka-logo-img" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/35'">
+            <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/35')}" class="marka-logo-img" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="console.log('Admin tablo logo yüklenemedi:', this.src); this.src='https://via.placeholder.com/35'">
           </td>
           <td>${escapeHTML(urun.marka || 'Belirtilmemiş')}</td>
           <td>
@@ -1451,7 +1451,7 @@ function exportOrderToExcel(orderId) {
         const modal = new bootstrap.Modal(document.getElementById('detayModal'));
         document.getElementById('detayModalIcerik').innerHTML = `
           <img src="${escapeHTML(urun.resim)}" class="urun-resmi" alt="${escapeHTML(urun.ad)}" onerror="this.src='https://via.placeholder.com/150'">
-          <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/60')}" class="detay-marka-logo" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="this.src='https://via.placeholder.com/60'">
+          <img src="${escapeHTML(urun.markaLogo || 'https://via.placeholder.com/60')}" class="detay-marka-logo" alt="${escapeHTML(urun.marka || 'Logo Yok')}" onerror="console.log('Admin detay logo yüklenemedi:', this.src); this.src='https://via.placeholder.com/60'">
           <p><strong>Marka:</strong> ${escapeHTML(urun.marka || 'Belirtilmemiş')}</p>
           ${formatDescriptionToParagraphs(urun.detay)}
         `;
@@ -1875,7 +1875,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
       } else if (!markaLogoUrl) {
-        markaLogo = '';
+        markaLogo = 'https://via.placeholder.com/35 ';
       }
       const urun = {
         id: duzenlenenUrunId || generateUniqueId('u-'),
@@ -1950,24 +1950,6 @@ function urunDuzenle(id) {
     document.getElementById('yeniUrun').checked = u.yeniUrun;
     document.getElementById('ucretsizKargo').checked = u.ucretsizKargo;
     document.getElementById('urunDetay').value = u.detay || '';
-    
-    // Marka logosu önizleme
-    const markaLogoPreview = document.getElementById('markaLogoPreview');
-    if (u.markaLogo && u.markaLogo.trim()) {
-      if (u.markaLogo.startsWith('data:image')) {
-        markaLogoPreview.src = u.markaLogo;
-        document.getElementById('markaLogo').value = '';
-      } else {
-        markaLogoPreview.src = u.markaLogo;
-        document.getElementById('markaLogo').value = u.markaLogo;
-      }
-      markaLogoPreview.classList.remove('d-none');
-    } else {
-      markaLogoPreview.classList.add('d-none');
-      document.getElementById('markaLogo').value = '';
-    }
-    document.getElementById('markaLogoFile').value = '';
-    
     // Ürün resmi önizleme
     const urunResimPreview = document.getElementById('urunResimPreview');
     if (u.resim) {
