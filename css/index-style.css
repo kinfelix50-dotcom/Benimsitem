@@ -34,7 +34,7 @@ body {
 }
 
 .product-image {
-  width: 100%;
+  width: 90%;
   object-fit: contain;
   border-radius: 8px;
   display: block;
@@ -100,7 +100,7 @@ body {
 }
 
 .productList .product-card .card-title {
-  font-size: 1rem;
+  font-size: 0.8rem;
   margin-bottom: 2px !important;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -241,8 +241,8 @@ body {
 }
 
 .product-scroll-item .product-image {
-  height: 160px; /* Görsel yüksekliği */
-  flex: 0 0 160px;
+  height: 150px; /* Görsel yüksekliği */
+  flex: 0 0 150px;
   border-radius: 5px 5px 0 0;
 }
 
@@ -342,8 +342,7 @@ body {
 
 /* ========================================================================
    5. Kaydırma Çubuğu Stilleri (product-scroll-container & brands-scroll-container)
-   ======================================================================== */
-
+   */
 .product-scroll-container, 
 .brands-scroll-container {
   /* Firefox Scrollbar */
@@ -351,30 +350,7 @@ body {
   scrollbar-width: auto;
 }
 
-.product-scroll-container::-webkit-scrollbar,
-.brands-scroll-container::-webkit-scrollbar {
-  height: 10px;
-}
-
-.product-scroll-container::-webkit-scrollbar-track,
-.brands-scroll-container::-webkit-scrollbar-track {
-  background-color: #f1f1f1;
-  border-radius: 5px;
-}
-
-.product-scroll-container::-webkit-scrollbar-thumb,
-.brands-scroll-container::-webkit-scrollbar-thumb {
-  background-color: #007bff;
-  border-radius: 5px;
-  border: 2px solid #f1f1f1;
-}
-
-.product-scroll-container::-webkit-scrollbar-thumb:hover,
-.brands-scroll-container::-webkit-scrollbar-thumb:hover {
-  background-color: #0056b3;
-}
-
-/* ========================================================================
+ ========================================================================
    6. Markalar Bölümü Stilleri (Brands)
    ======================================================================== */
 
@@ -652,7 +628,7 @@ body {
 .about-feature i {
   color: #007bff;
 }
-.about-feature h5 {
+.about-feature h {
   font-weight: 600;
   margin-top: 0.5rem;
 }
@@ -691,76 +667,6 @@ body {
   font-size: 0.9rem;
 }
 .admin-price-placeholder { color: #6c757d; font-style: italic; }
-
-
-/* ========================================================================
-   9. Mobil Ayarlar (@media queries)
-   ======================================================================== */
-
-@media (max-width: 768px) {
-  /* Footer Mobil Ayarları */
-  .footer-container {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  .social-links,
-  .contact-info li {
-    justify-content: center;
-  }
-  .newsletter-form {
-    align-items: center;
-  }
-  .newsletter-form input,
-  .newsletter-form button {
-    width: 100%;
-    max-width: 300px;
-  }
 }
-
-@media (max-width: 576px) {
-  /* Ürün Listesi Mobil Ayarları */
-  .productList .product-card .card-body {
-    padding: 10px !important;
-  }
-  .productList .product-card .card-title {
-    font-size: 0.8rem;
-    margin-bottom: 3px !important;
-  }
-  .productList .product-card .card-text.text-muted,
-  .productList .product-card .original-price,
-  .productList .product-card .card-price,
-  .productList .product-card .discount-price {
-    font-size: 0.75rem;
-    margin-bottom: 2px !important;
-  }
-  .productList .product-card .original-price {
-    font-size: 0.7rem;
-  }
-  .productList .product-card .card-price,
-  .productList .product-card .discount-price {
-    font-size: 0.8rem;
-  }
-  .productList .product-card .text-center.mt-auto {
-    margin-bottom: 6px !important;
-    gap: 3px;
-  }
-  .productList .product-card .btn.sepete-ekle {
-    min-height: 24px;
-    padding: 0.15rem 0.4rem;
-  }
-  .productList .product-badges {
-    top: 3px;
-    left: 3px;
-    gap: 2px;
-  }
-  .productList .product-badges .badge,
-  .productList .product-badges .new-product-badge,
-  .productList .product-badges .free-shipping-badge,
-  .productList .product-badges .discount-badge {
-    padding: 1px 1px;
-    font-size: 0.55rem;
-    border-radius: 2px;
-  }
 
 }
