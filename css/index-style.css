@@ -194,7 +194,7 @@ body {
 
 .vitrin-bolumu {
   margin-bottom: 15px;
-  padding: 10px 0;
+  padding: 15px 0px;
 }
 
 .vitrin-bolumu h2 {
@@ -203,34 +203,38 @@ body {
   font-weight: 600;
   margin-bottom: 20px;
   /* Başlık stilini sadeleştirdik */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important; 
-  padding: 4px 30px;
-  width: 100%;
+  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.2) !important; 
+  padding: 4px 10px;
+  width: 355px;
   border-radius: 5px;
   text-align: center;
   color: #000;
   font-size: 20px;
   background-color: #ffffff;
+  margin-left: -10px;
 }
 
 .product-scroll-container {
   display: flex;
   overflow-x: auto;
-  padding: 3px 0; /* Daha az padding */
+  padding: 5px 0px; /* Daha az padding */
   gap: 5px; /* Daha az boşluk */
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.15) !important;
+  margin-right: -10px;
+  margin-left: -10px;
 }
 
 .product-scroll-item {
   flex: 0 0 auto;
-  width: 165px; /* Sabit genişlik */
+  width: 175px; /* Sabit genişlik */
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   margin-right: 3px;
+  margin-left: -1px;
 }
 
 /* Vitrin Kartları İçin Özel Stiller */
@@ -362,7 +366,7 @@ body {
 .brands-scroll-container {
   display: flex;
   overflow-x: auto;
-  padding: 10px 0;
+  padding: 0px 0;
   gap: 5px;
 }
 
